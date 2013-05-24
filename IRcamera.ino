@@ -77,27 +77,33 @@ void setup(){
         px1[i] = i * increment;                    // creates a gradient across pixels for testing
     }
 
-    writeBMPImage(px1, w, h);
+    writeBMPImage(px1,"testinggg.txt", w, h);
 
 }
 
 void loop(){
 
-        
+  static int i=0;
+    i++;
+  Serial.println(i);
+  analogWrite(9, i);
     
 }
 
-void writeBMPImage(int * input, int w, int h){
+void writeBMPImage(int * input, char fileName[], int w, int h){
 
     // SD setup
+    // as of now, this function does NOT write to the filename. Instead, it writes to 
+    // "toDebug.bmp"
+    
     //Serial.begin(9600);
     //if (!sd.init(SPI_FULL_SPEED, cardPin)) {
     //    sd.initErrorHalt();
     //    Serial.println("---");
     //}
-
-
-    File dataFile = SD.open("rewrite2.bmp", FILE_WRITE);
+    Serial.println("In the writeBMPImage... ");
+    Serial.println(fileName);
+    File dataFile = SD.open("toDebug.bmp", FILE_WRITE);
     // set fileSize (used in bmp header)
     int rowSize = 4 * ((3*w + 3)/4);            // how many bytes in the row (used to create padding)
     int fileSize = 54 + h*rowSize;                // headers (54 bytes) + pixel data

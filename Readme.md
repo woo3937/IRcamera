@@ -33,6 +33,8 @@ Physical Directions
    sensor on top of this, so it can rotate in both the horizontal and vertical
    directions.
 
+   That description is best shown with a picture: ![picture][picture]
+
 
 [1]:http://www.cheap-thermocam.net/old-version/
 [servos]:https://www.sparkfun.com/products/9065
@@ -40,5 +42,4 @@ Physical Directions
 [arduino]:https://www.sparkfun.com/products/11021
 [ir3accurate]:http://www.futureelectronics.com/en/technologies/semiconductors/analog/sensors/temperature/Pages/3003055-MLX90614ESF-DCI-000-TU.aspx?IM=0
 [SD]:https://www.sparkfun.com/products/9802
-[header]:http://en.wikipedia.org/wiki/Pin_header
-
+[header]:http://en.wikipedia.org/wiki/Pin\_header

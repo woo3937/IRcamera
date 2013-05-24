@@ -33,7 +33,8 @@ Physical Directions
    sensor on top of this, so it can rotate in both the horizontal and vertical
    directions.
 
-   That description is best shown with a picture: ![picture][picture]
+   That description is best shown with a picture, even though I'm not all the
+   way doing that yet (if it's past June 2013, please tell me to fix it): ![picture][picture]
 
 
 [1]:http://www.cheap-thermocam.net/old-version/
@@ -43,3 +44,4 @@ Physical Directions
 [ir3accurate]:http://www.futureelectronics.com/en/technologies/semiconductors/analog/sensors/temperature/Pages/3003055-MLX90614ESF-DCI-000-TU.aspx?IM=0
 [SD]:https://www.sparkfun.com/products/9802
 [header]:http://en.wikipedia.org/wiki/Pin\_header
+[picture]:https://raw.github.com/scottsievert/IRcamera/master/pan-tilt-brackets.jpg

@@ -5,9 +5,7 @@ later date.
 
 This project is based off the instructions at [cheap-thermocam.tk][1]. These
 instructions aren't very good, and many of the links are dead. Since I find that
-frustrating, some better instructions are below. At this date (the start of the
-project), it looks like the sole thing I'm using from that website is the parts
-list and some of the hardware layouts.
+frustrating, some better instructions are below.
 
 
 Parts List

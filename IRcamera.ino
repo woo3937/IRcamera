@@ -83,11 +83,34 @@ void setup(){
 
 void loop(){
 
-  static int i=0;
-    i++;
-  Serial.println(i);
-  analogWrite(9, i);
+
+  // it's going between 0 and 15 degrees
+  // HARDWARE BUG: I'm pretty sure a servo is bad. One always goes, no matter what. Swapping inputs doesn't help.
+  delay(1000);
+  gotoPixel(40, 40, 9, 10, 100, 100);
+  delay(1000);
+  gotoPixel(0, 0, 9, 10, 100, 100);
+  //analogWrite(9, 15);
+  //analogWrite(9, 100);
+  delay(100);
+  //analogWrite(10, j);
+  
     
+}
+
+void gotoPixel(int vertical, int horizontal, int vertPin, int horizPin, int height, int width){
+    // hard coded: the width of the image.
+    // right now, it assumes we want a picture (100/255) * 170 degrees wide
+    // 100 is the value that's hard coded in
+    
+    int vertPWM = vertical  * 100 / height;
+    int horizPWM = horizontal * 100 / width;
+    analogWrite(horizPin, horizPWM);
+    analogWrite(vertPin, vertPWM);
+    delay(80);
+    // delay 40ms
+        
+    return;
 }
 
 void writeBMPImage(int * input, char fileName[], int w, int h){

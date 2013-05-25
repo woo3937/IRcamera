@@ -10,7 +10,7 @@ frustrating, some better instructions are below.
 
 Parts List
 =========
-* [IR Sensor][iraccurate]
+* [IR Sensor][ir3accurate]
 * [Arduino Uno R3][arduino]
 * SD card and [SD card shield][SD]
 * [Pan tilt brackets][pan]
@@ -35,6 +35,15 @@ Physical Directions
 
    That description is best shown with a picture, even though I'm not all the
    way doing that yet (if it's past June 2013, please tell me to fix it): ![picture][picture]
+
+3. Servos operate by reading in a PWM signal, and go to that value. For example,
+   if you put out a PWM signal of 50%, the servo would go to the location range
+   of motion * 0.50. In my case, the servos can read values between 0 and 255,
+   so 170 * X / 255, where X is the duty cycle you set with analogWrite (see
+   gotoPixel for more info) or 127 for the above example. 
+
+4. That's all the work, so far, that I've completed. I'll be updating this as I
+   go along.
 
 
 [1]:http://www.cheap-thermocam.net/old-version/

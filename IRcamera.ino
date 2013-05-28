@@ -43,13 +43,15 @@ const uint8_t cardPin = 8;                    // pin that the SD is connected to
 
 
 void setup(){
+    
     Serial.begin(9600);
     while(!Serial);
+    //Serial.println("At beginning of setup...\n");
     pinMode(10, OUTPUT);
     if (!SD.begin(chipSelect)){
+        Serial.println("It did the SD-if statement");
         return;
     }
-    Serial.println("HERRE");
     Serial.println("Done with setup...");
     
     String dataString = "This is only a test...";
@@ -62,8 +64,8 @@ void setup(){
     
     char name[] = "9px_0000.bmp";             // filename convention (will auto-increment)
     // iteratively create pixel data
-    const int w = 4;                                     // image width in pixels
-    const int h = 2; 
+    const int w = 8;                                     // image width in pixels
+    const int h = 8; 
     int increment = 256/(w*h);                // divide color range (0-255) by total # of px
 
                                        // " height
@@ -76,14 +78,15 @@ void setup(){
     for (int i=0; i<imgSize; i++) {
         px1[i] = i * increment;                    // creates a gradient across pixels for testing
     }
-
+    Serial.println("Beginning write...");
     writeBMPImage(px1,"testinggg.txt", w, h);
+    Serial.println("Ending write...");
 
 }
 
 void loop(){
 
-
+  Serial.println("We are in the loop");
   // it's going between 0 and 15 degrees
   // HARDWARE BUG: I'm pretty sure a servo is bad. One always goes, no matter what. Swapping inputs doesn't help.
   delay(1000);
@@ -114,7 +117,8 @@ void gotoPixel(int vertical, int horizontal, int vertPin, int horizPin, int heig
 }
 
 void writeBMPImage(int * input, char fileName[], int w, int h){
-
+    Serial.println("width == "); Serial.println(w);
+    Serial.println("height == "); Serial.println(h);
     // SD setup
     // as of now, this function does NOT write to the filename. Instead, it writes to 
     // "toDebug.bmp"
@@ -125,7 +129,7 @@ void writeBMPImage(int * input, char fileName[], int w, int h){
     //    Serial.println("---");
     //}
     Serial.println("In the writeBMPImage... ");
-    Serial.println(fileName);
+    Serial.println("toDebug.bmp");
     File dataFile = SD.open("toDebug.bmp", FILE_WRITE);
     // set fileSize (used in bmp header)
     int rowSize = 4 * ((3*w + 3)/4);            // how many bytes in the row (used to create padding)
@@ -141,7 +145,8 @@ void writeBMPImage(int * input, char fileName[], int w, int h){
 
     for (int y=0; y<h; y++) {
         for (int x=0; x<w; x++) {
-            int colorVal = input[y*w + x];                                                // classic formula for px listed in line
+            int colorVal = input[y*w + x];            // classic formula for px listed in line
+            Serial.println(colorVal);
             img[(y*w + x)*3+0] = (unsigned char)(colorVal);        // R
             img[(y*w + x)*3+1] = (unsigned char)(colorVal);        // G
             img[(y*w + x)*3+2] = (unsigned char)(colorVal);        // B
@@ -152,7 +157,7 @@ void writeBMPImage(int * input, char fileName[], int w, int h){
     // print px and img data for debugging
     if (0) {
         Serial.print("\nWriting \"");
-        //Serial.print(name);
+        Serial.print("toDebug.bmp");
         Serial.print("\" to file...\n");
         for (int i=0; i<w*h; i++) {
             Serial.print(input[i]);

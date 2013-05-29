@@ -54,37 +54,34 @@ void setup(){
         Serial.println("It did the SD-if statement");
         return;
     }
-    Serial.println("Done with setup...");
-    
-    String dataString = "Will it write to the image?";
-    
-    File dataFile = SD.open("wed1025.txt", FILE_WRITE);
-    if(dataFile){
-        dataFile.println(dataString);
-        dataFile.close();
-    }
-    
+    Serial.println("Done with serial port setup...\n");
+
+
     char name[] = "9px_0000.bmp";             // filename convention (will auto-increment)
     // iteratively create pixel data
-    const int w = 3;                                     // image width in pixels
-    const int h = 2; 
+    const int w = 100;                                     // image width in pixels
+    const int h = 1; 
+    Serial.println("Before the malloc call");
+    int * px1 = (int *)malloc(sizeof(int) * w * h);
+    Serial.println("After the malloc call\n");
     int increment = 256/(w*h);                // divide color range (0-255) by total # of px
 
                                        // " height
     const boolean debugPrint = true;        // print details of process over serial?
 
     const int imgSize = w*h;
-    int px1[w*h];                                                // actual pixel data (grayscale - added programatically below)
+    //Serial.println("Before the pix1[w*h] declaration");
+    //int px1[w*h];                                                // actual pixel data (grayscale - added programatically below)
 
     // assumes we have a grey-scale image
     for (int i=0; i<imgSize; i++) {
         px1[i] = i * increment;                    // creates a gradient across pixels for testing
     }
-    Serial.println("Beginning write...");
+    Serial.println("Beginning write..."); delay(2);
     writeBMPImage(px1,"testinggg.txt", w, h);
     Serial.println("Ending write...");
     
-    writePlainTextImage(px1, 4, 4);
+    //writePlainTextImage(px1, 4, 4);
 
 }
 
@@ -133,11 +130,15 @@ void writeBMPImage(int * input, char fileName[], int w, int h){
     //    Serial.println("---");
     //}
     Serial.println("In the writeBMPImage... ");
-    Serial.println("toDebug.bmp");
+   
+    
+    char name[] = "img4.bmp";
+    // DEBUG: make it so you can pass a name in...
     
     File dataFile;
-    if(SD.exists("toDebug42.bmp")) SD.remove("toDebug42.bmp");
-    dataFile = SD.open("toDebug42.txt", FILE_WRITE);
+    // we can't open a file that already exists...
+    if(SD.exists(name)) SD.remove(name);
+    dataFile = SD.open(name, FILE_WRITE);
     //while(!dataFile);
     Serial.write("dataFile == ");Serial.println(dataFile);
     // set fileSize (used in bmp header)
@@ -158,7 +159,7 @@ void writeBMPImage(int * input, char fileName[], int w, int h){
             //Serial.println(colorVal);
             img[(y*w + x)*3+0] = (unsigned char)(colorVal);        // R
             img[(y*w + x)*3+1] = (unsigned char)(colorVal);        // G
-            img[(y*w + x)*3+2] = (unsigned char)(colorVal);        // B
+            img[(y*w + x)*3+2] = (unsigned char)(colorVal+50);        // B
             // padding (the 4th byte) will be added later as needed...
         }
     }
@@ -166,7 +167,7 @@ void writeBMPImage(int * input, char fileName[], int w, int h){
     // print px and img data for debugging
     if (0) {
         Serial.print("\nWriting \"");
-        Serial.print("toDebug.bmp");
+        Serial.print("\"");Serial.print(name); Serial.print("\" ");
         Serial.print("\" to file...\n");
         for (int i=0; i<w*h; i++) {
             Serial.print(input[i]);
@@ -204,14 +205,18 @@ void writeBMPImage(int * input, char fileName[], int w, int h){
     //Serial.println(*bmpInfoHeader);
     // write the file (thanks forum!)
     dataFile.write(bmpFileHeader, sizeof(bmpFileHeader));
+    delay(100);
     dataFile.write(bmpInfoHeader, sizeof(bmpInfoHeader));
+    delay(100);
     //file.write(bmpFileHeader, sizeof(bmpFileHeader));        // write file header
     //file.write(bmpInfoHeader, sizeof(bmpInfoHeader));        // " info header
 
     for (int i=0; i<h; i++) {                                                        // iterate image array
         dataFile.write(img+(w*(h-i-1)*3), 3*w);
+        delay(2);
         //file.write(img+(w*(h-i-1)*3), 3*w);                                // write px data
         dataFile.write(bmpPad, (4-(w*3)%4)%4);                                 // and padding as needed
+        delay(2);
     }
     dataFile.close();                                                                                // close file when done writing
 
@@ -224,7 +229,7 @@ void writePlainTextImage(int * pix, int w, int h){
     int x; 
     int y;
     
-    File file = SD.open("writePlain.txt");
+    File file = SD.open("wxn.txt");
     
     for(y=0; y<h; y++){
       for (x=0; x<w; x++){

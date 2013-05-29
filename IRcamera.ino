@@ -31,9 +31,10 @@
  */
 
 #include <SD.h>
-#include <SDFat.h>
-#include <SDFatUtil.h>
-const int chipSelect = 4;
+//#include <SDFat.h>
+//#include <SDFatUtil.h>
+const int chipSelect = 8;
+// must change from 4 to 8!
 
 //SdFat sd;
 //SdFile file;
@@ -47,16 +48,17 @@ void setup(){
     Serial.begin(9600);
     while(!Serial);
     //Serial.println("At beginning of setup...\n");
-    pinMode(10, OUTPUT);
+    pinMode(10, OUTPUT); pinMode(9, OUTPUT);
+    digitalWrite(10, HIGH);
     if (!SD.begin(chipSelect)){
         Serial.println("It did the SD-if statement");
         return;
     }
     Serial.println("Done with setup...");
     
-    String dataString = "This is only a test...";
+    String dataString = "Will it write to the image?";
     
-    File dataFile = SD.open("trail2.txt", FILE_WRITE);
+    File dataFile = SD.open("wed1025.txt", FILE_WRITE);
     if(dataFile){
         dataFile.println(dataString);
         dataFile.close();
@@ -64,8 +66,8 @@ void setup(){
     
     char name[] = "9px_0000.bmp";             // filename convention (will auto-increment)
     // iteratively create pixel data
-    const int w = 8;                                     // image width in pixels
-    const int h = 8; 
+    const int w = 3;                                     // image width in pixels
+    const int h = 2; 
     int increment = 256/(w*h);                // divide color range (0-255) by total # of px
 
                                        // " height
@@ -81,6 +83,8 @@ void setup(){
     Serial.println("Beginning write...");
     writeBMPImage(px1,"testinggg.txt", w, h);
     Serial.println("Ending write...");
+    
+    writePlainTextImage(px1, 4, 4);
 
 }
 
@@ -117,8 +121,8 @@ void gotoPixel(int vertical, int horizontal, int vertPin, int horizPin, int heig
 }
 
 void writeBMPImage(int * input, char fileName[], int w, int h){
-    Serial.println("width == "); Serial.println(w);
-    Serial.println("height == "); Serial.println(h);
+    //Serial.write("width == "); Serial.println(w);
+    //Serial.write("height == "); Serial.println(h);
     // SD setup
     // as of now, this function does NOT write to the filename. Instead, it writes to 
     // "toDebug.bmp"
@@ -130,7 +134,12 @@ void writeBMPImage(int * input, char fileName[], int w, int h){
     //}
     Serial.println("In the writeBMPImage... ");
     Serial.println("toDebug.bmp");
-    File dataFile = SD.open("toDebug.bmp", FILE_WRITE);
+    
+    File dataFile;
+    if(SD.exists("toDebug42.bmp")) SD.remove("toDebug42.bmp");
+    dataFile = SD.open("toDebug42.txt", FILE_WRITE);
+    //while(!dataFile);
+    Serial.write("dataFile == ");Serial.println(dataFile);
     // set fileSize (used in bmp header)
     int rowSize = 4 * ((3*w + 3)/4);            // how many bytes in the row (used to create padding)
     int fileSize = 54 + h*rowSize;                // headers (54 bytes) + pixel data
@@ -146,7 +155,7 @@ void writeBMPImage(int * input, char fileName[], int w, int h){
     for (int y=0; y<h; y++) {
         for (int x=0; x<w; x++) {
             int colorVal = input[y*w + x];            // classic formula for px listed in line
-            Serial.println(colorVal);
+            //Serial.println(colorVal);
             img[(y*w + x)*3+0] = (unsigned char)(colorVal);        // R
             img[(y*w + x)*3+1] = (unsigned char)(colorVal);        // G
             img[(y*w + x)*3+2] = (unsigned char)(colorVal);        // B
@@ -209,6 +218,20 @@ void writeBMPImage(int * input, char fileName[], int w, int h){
     if (0) {
         Serial.print("\n\n---\n");
     }
+}
+
+void writePlainTextImage(int * pix, int w, int h){
+    int x; 
+    int y;
     
+    File file = SD.open("writePlain.txt");
     
+    for(y=0; y<h; y++){
+      for (x=0; x<w; x++){
+        file.print(x); file.write(",");
+      }
+    }
+    file.close();
+    
+  
 }

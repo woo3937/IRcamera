@@ -59,8 +59,8 @@ void setup(){
 
     char name[] = "9px_0000.bmp";             // filename convention (will auto-increment)
     // iteratively create pixel data
-    const int w = 100;                                     // image width in pixels
-    const int h = 1; 
+    const int w = 13;                                     // image width in pixels
+    const int h = 10; 
     Serial.println("Before the malloc call");
     int * px1 = (int *)malloc(sizeof(int) * w * h);
     Serial.println("After the malloc call\n");
@@ -129,10 +129,13 @@ void writeBMPImage(int * input, char fileName[], int w, int h){
     //    sd.initErrorHalt();
     //    Serial.println("---");
     //}
-    Serial.println("In the writeBMPImage... ");
+    char name[] = "img4.bmp";
+    Serial.print("In the writeBMPImage, writing ");
+    Serial.write(name);
+    Serial.write("\n");
    
     
-    char name[] = "img4.bmp";
+
     // DEBUG: make it so you can pass a name in...
     
     File dataFile;
@@ -158,8 +161,8 @@ void writeBMPImage(int * input, char fileName[], int w, int h){
             int colorVal = input[y*w + x];            // classic formula for px listed in line
             //Serial.println(colorVal);
             img[(y*w + x)*3+0] = (unsigned char)(colorVal);        // R
-            img[(y*w + x)*3+1] = (unsigned char)(colorVal);        // G
-            img[(y*w + x)*3+2] = (unsigned char)(colorVal+50);        // B
+            img[(y*w + x)*3+1] = (unsigned char)((255-colorVal)/2);        // G
+            img[(y*w + x)*3+2] = (unsigned char)(255 - colorVal);        // B
             // padding (the 4th byte) will be added later as needed...
         }
     }
@@ -201,7 +204,7 @@ void writeBMPImage(int * input, char fileName[], int w, int h){
     bmpInfoHeader[10] = (unsigned char)(             h >> 16);
     bmpInfoHeader[11] = (unsigned char)(             h >> 24);
     
-    Serial.write(bmpFileHeader, sizeof(bmpFileHeader));
+    //Serial.write(bmpFileHeader, sizeof(bmpFileHeader));
     //Serial.println(*bmpInfoHeader);
     // write the file (thanks forum!)
     dataFile.write(bmpFileHeader, sizeof(bmpFileHeader));

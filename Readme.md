@@ -54,6 +54,7 @@ Physical Directions
    
 6. If you're using an Arduino with a different clock frequency, you have to
    include the lines (untested!)
+
     #ifndef F_CPU 
     #define F_CPU 16000000UL 
     #endif 

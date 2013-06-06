@@ -88,31 +88,58 @@ void setup(){
     
     //writePlainTextImage(px1, 4, 4);
     //Wire.begin(0x5A);
-    //setupIR();
+    setupIR();
 
 }
 
 void loop(){
 
-  Serial.println("We are in the loop");
-  // it's going between 0 and 15 degrees
-  // HARDWARE BUG: I'm pretty sure a servo is bad. One always goes, no matter what. Swapping inputs doesn't help.
-  delay(1000);
-  gotoPixel(90, 90, 9, 10, 100, 100);
-  delay(1000);
-  gotoPixel(10, 10, 9, 10, 100, 100);
-  //analogWrite(9, 15);
-  //analogWrite(9, 100);
-  delay(100);
+//  Serial.println("We are in the loop");
+//  // it's going between 0 and 15 degrees
+//  // HARDWARE BUG: I'm pretty sure a servo is bad. One always goes, no matter what. Swapping inputs doesn't help.
+//  delay(1000);
+//  gotoPixel(90, 90, 9, 10, 100, 100);
+//  delay(1000);
+//  gotoPixel(10, 10, 9, 10, 100, 100);
+//  //analogWrite(9, 15);
+//  //analogWrite(9, 100);
+//  delay(100);
   //analogWrite(10, j);
   
   //i2c_eeprom_write_byte(0x5A, 0x02, 0x12);
-  
-    
+  float temp = readTemp();
+    Serial.print(temp); Serial.println(" degrees Celcius");
 }
 
 void setupIR(){
-
+    i2c_init();
+    
+    // enabling pullups
+    PORTC = (1 << PORTC4) | (1 << PORTC5); 
+}
+float readTemp(){
+    // for this specific IR sensor. change if using a different one.
+    int dev = 0x5A << 1;
+    int data_low;
+    int data_high;
+    int pec;
+    
+    // from the comment by Sensorjunkie at http://forum.arduino.cc/index.php/topic,21317.0.html
+    i2c_start_wait(dev + I2C_WRITE);
+    i2c_write(0x07);
+    i2c_rep_start(dev+I2C_READ);
+    data_low = i2c_readAck();
+    data_high = i2c_readAck();
+    pec = i2c_readNak();
+    i2c_stop();
+    
+    double tempFactor = 0.02;
+    float temp=0;
+    
+    // from the datasheet
+    int data = (data_high << 8) + data_low;
+    temp = data * 0.02 - 273.15;
+    return temp;
 }
 
 

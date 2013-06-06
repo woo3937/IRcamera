@@ -42,9 +42,24 @@ Physical Directions
    so 170 * X / 255, where X is the duty cycle you set with analogWrite (see
    gotoPixel for more info) or 127 for the above example. 
 
-4. That's all the work, so far, that I've completed. I'll be updating this as I
-   go along.
+4. Following [this thread][thread] on the forums (and the comment by
+   SensorJunkie a ways down), I connected 3.3V and ground to the corresponding
+   pins (datasheet time!) on the IR sensor, analog pin 4 to SDA and analog pin 5
+   to SCK.
 
+5. I downloaded `i2cmaster.h` from [this website][i2cmaster], and renamed
+   `twimaster.c` to `twimaster.cpp`. Yes, I know it sounds weird -- I think it's
+   something to do with how the Arduino IDE defines functions. If I didn't do
+   it, I got errors about having duplicate functions defined. 
+   
+6. If you're using an Arduino with a different clock frequency, you have to
+   include the lines (untested!)
+    #ifndef F_CPU 
+    #define F_CPU 16000000UL 
+    #endif 
+
+    /* I2C clock in Hz */ 
+    #define SCL_CLOCK 50000L 
 
 [1]:http://www.cheap-thermocam.net/old-version/
 [servos]:https://www.sparkfun.com/products/9065
@@ -54,3 +69,4 @@ Physical Directions
 [SD]:https://www.sparkfun.com/products/9802
 [header]:http://en.wikipedia.org/wiki/Pin\_header
 [picture]:https://raw.github.com/scottsievert/IRcamera/master/pan-tilt-brackets.jpg
+[i2cmaster]:homepage.hispeed.ch/peterfleury/avr-software.html

@@ -31,20 +31,25 @@
  */
 
 #include <SD.h>
+//#include <SPI.h>
+//#include <Wire.h>
+//#include <EEPROM.h>
+#include <i2cmaster.h>
+//#include <I2C.h>
 //#include <SDFat.h>
 //#include <SDFatUtil.h>
 const int chipSelect = 8;
-// must change from 4 to 8!
+// must change from 4 to 8! (8 on sparkfun shield)
 
 //SdFat sd;
 //SdFile file;
-const uint8_t cardPin = 8;                    // pin that the SD is connected to (d8 for SparkFun MicroSD shield)
+const uint8_t cardPin = 8;                    
+// pin that the SD is connected to (8 for SparkFun MicroSD shield, 4 for others )
 
 
 
 
 void setup(){
-    
     Serial.begin(9600);
     while(!Serial);
     //Serial.println("At beginning of setup...\n");
@@ -59,7 +64,7 @@ void setup(){
 
     char name[] = "9px_0000.bmp";             // filename convention (will auto-increment)
     // iteratively create pixel data
-    const int w = 13;                                     // image width in pixels
+    const int w = 10;                                     // image width in pixels
     const int h = 10; 
     Serial.println("Before the malloc call");
     int * px1 = (int *)malloc(sizeof(int) * w * h);
@@ -78,10 +83,12 @@ void setup(){
         px1[i] = i * increment;                    // creates a gradient across pixels for testing
     }
     Serial.println("Beginning write..."); delay(2);
-    writeBMPImage(px1,"testinggg.txt", w, h);
+    //writeBMPImage(px1,"testinggg.txt", w, h);
     Serial.println("Ending write...");
     
     //writePlainTextImage(px1, 4, 4);
+    //Wire.begin(0x5A);
+    //setupIR();
 
 }
 
@@ -91,16 +98,23 @@ void loop(){
   // it's going between 0 and 15 degrees
   // HARDWARE BUG: I'm pretty sure a servo is bad. One always goes, no matter what. Swapping inputs doesn't help.
   delay(1000);
-  gotoPixel(40, 40, 9, 10, 100, 100);
+  gotoPixel(90, 90, 9, 10, 100, 100);
   delay(1000);
-  gotoPixel(0, 0, 9, 10, 100, 100);
+  gotoPixel(10, 10, 9, 10, 100, 100);
   //analogWrite(9, 15);
   //analogWrite(9, 100);
   delay(100);
   //analogWrite(10, j);
   
+  //i2c_eeprom_write_byte(0x5A, 0x02, 0x12);
+  
     
 }
+
+void setupIR(){
+
+}
+
 
 void gotoPixel(int vertical, int horizontal, int vertPin, int horizPin, int height, int width){
     // hard coded: the width of the image.
@@ -117,6 +131,8 @@ void gotoPixel(int vertical, int horizontal, int vertPin, int horizPin, int heig
     return;
 }
 
+
+
 void writeBMPImage(int * input, char fileName[], int w, int h){
     //Serial.write("width == "); Serial.println(w);
     //Serial.write("height == "); Serial.println(h);
@@ -132,7 +148,7 @@ void writeBMPImage(int * input, char fileName[], int w, int h){
     char name[] = "img4.bmp";
     Serial.print("In the writeBMPImage, writing ");
     Serial.write(name);
-    Serial.write("\n");
+    Serial.write("\n\n");
    
     
 
@@ -147,11 +163,13 @@ void writeBMPImage(int * input, char fileName[], int w, int h){
     // set fileSize (used in bmp header)
     int rowSize = 4 * ((3*w + 3)/4);            // how many bytes in the row (used to create padding)
     int fileSize = 54 + h*rowSize;                // headers (54 bytes) + pixel data
-
+    Serial.write("fileSize == "); Serial.println(fileSize);
+    Serial.write("rowSize == "); Serial.println(rowSize);
     // create image data; heavily modified version via:
     // http://stackoverflow.com/a/2654860
     unsigned char *img = NULL;                        // image data
-    if (img) {                                                        // if there's already data in the array, clear it
+    if (img) {                                                        
+      // if there's already data in the array, clear it
         free(img);
     }
     img = (unsigned char *)malloc(3*w*h);
@@ -160,8 +178,8 @@ void writeBMPImage(int * input, char fileName[], int w, int h){
         for (int x=0; x<w; x++) {
             int colorVal = input[y*w + x];            // classic formula for px listed in line
             //Serial.println(colorVal);
-            img[(y*w + x)*3+0] = (unsigned char)(colorVal);        // R
-            img[(y*w + x)*3+1] = (unsigned char)((255-colorVal)/2);        // G
+            img[(y*w + x)*3+0] = (unsigned char)(colorVal-50);        // R
+            img[(y*w + x)*3+1] = (unsigned char)((255-colorVal));        // G
             img[(y*w + x)*3+2] = (unsigned char)(255 - colorVal);        // B
             // padding (the 4th byte) will be added later as needed...
         }
@@ -216,10 +234,10 @@ void writeBMPImage(int * input, char fileName[], int w, int h){
 
     for (int i=0; i<h; i++) {                                                        // iterate image array
         dataFile.write(img+(w*(h-i-1)*3), 3*w);
-        delay(2);
+        delay(200);
         //file.write(img+(w*(h-i-1)*3), 3*w);                                // write px data
         dataFile.write(bmpPad, (4-(w*3)%4)%4);                                 // and padding as needed
-        delay(2);
+        delay(200);
     }
     dataFile.close();                                                                                // close file when done writing
 

@@ -66,3 +66,4 @@ Physical Directions
 [header]:http://en.wikipedia.org/wiki/Pin\_header
 [picture]:https://raw.github.com/scottsievert/IRcamera/master/pan-tilt-brackets.jpg
 [i2cmaster]:homepage.hispeed.ch/peterfleury/avr-software.html
+[thread]:http://forum.arduino.cc/index.php/topic,21317.0.html

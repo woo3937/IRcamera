@@ -284,16 +284,15 @@ void writeBMPImage(int * input, char fileName[], int w, int h){
     delay(100);
     //file.write(bmpFileHeader, sizeof(bmpFileHeader));        // write file header
     //file.write(bmpInfoHeader, sizeof(bmpInfoHeader));        // " info header
-    Serial.println("Before the long for-loop");
+
     for (int i=0; i<h; i++) {                                                        // iterate image array
         dataFile.write(img+(w*(h-i-1)*3), 3*w);
-        delay(20);
+        delay(200);
         //file.write(img+(w*(h-i-1)*3), 3*w);                                // write px data
         dataFile.write(bmpPad, (4-(w*3)%4)%4);                                 // and padding as needed
-        delay(20);
+        delay(200);
     }
-    dataFile.close();     // close file when done writing
-    Serial.println("All done with writeBMPImage");
+    dataFile.close();                                                                                // close file when done writing
 
     if (0) {
         Serial.print("\n\n---\n");

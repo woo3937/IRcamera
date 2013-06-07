@@ -54,7 +54,7 @@ void setup(){
     while(!Serial);
     //Serial.println("At beginning of setup...\n");
     pinMode(10, OUTPUT); pinMode(9, OUTPUT);
-    digitalWrite(10, HIGH);
+    //digitalWrite(10, HIGH);
     if (!SD.begin(chipSelect)){
         Serial.println("It did the SD-if statement");
         return;
@@ -82,33 +82,52 @@ void setup(){
     for (int i=0; i<imgSize; i++) {
         px1[i] = i * increment;                    // creates a gradient across pixels for testing
     }
-    Serial.println("Beginning write..."); delay(2);
-    //writeBMPImage(px1,"testinggg.txt", w, h);
-    Serial.println("Ending write...");
+    
+//    Serial.println("Beginning write (in setup)..."); delay(2);
+//    writeBMPImage(px1,"testinggg.txt", w, h);
+//    Serial.println("Ending write (in setup)...");
     
     //writePlainTextImage(px1, 4, 4);
     //Wire.begin(0x5A);
     setupIR();
-
+    
+    int width = 4;
+    int height = 4;
+    
+    float * x = takePicture(width, height);
+    int * xx = (int *)malloc(sizeof(int)*width*height);
+    
+    for (int i=0; i<width*height; i++){
+        xx[i] = (int)x[i];
+    }
+    writeBMPImage(xx,"debug.bmp" ,width, height);
 }
 
 void loop(){
+  float temp = 0;
+  temp = readTemp();
+  Serial.print(temp); Serial.println(" degrees Celcius");
+}
 
-//  Serial.println("We are in the loop");
-//  // it's going between 0 and 15 degrees
-//  // HARDWARE BUG: I'm pretty sure a servo is bad. One always goes, no matter what. Swapping inputs doesn't help.
-//  delay(1000);
-//  gotoPixel(90, 90, 9, 10, 100, 100);
-//  delay(1000);
-//  gotoPixel(10, 10, 9, 10, 100, 100);
-//  //analogWrite(9, 15);
-//  //analogWrite(9, 100);
-//  delay(100);
-  //analogWrite(10, j);
+float* takePicture(int width, int height){
+    // assumes width, height of 11, 11
+    // 
+    int i, j;
+
+    int HORIZPIN = 9;
+    int VERTPIN = 10;
+    float * x = (float *)malloc(sizeof(float) * width * height);
+    for (i=0; i<width; i++){
+        Serial.println(i);
+        for (j=0; j<height; j++){
+            gotoPixel(i, j, HORIZPIN, VERTPIN, width, height);
+            x[i*width + j] = readTemp();
+            delay(100);
+        }      
+    }
+    
+    return x;
   
-  //i2c_eeprom_write_byte(0x5A, 0x02, 0x12);
-  float temp = readTemp();
-    Serial.print(temp); Serial.println(" degrees Celcius");
 }
 
 void setupIR(){

@@ -337,7 +337,7 @@ void writeBMPImage(int * input, char fileName[], int w, int h){
     if (0) {
         Serial.print("\n\n---\n");
     }
-}
+} 
 
 
 

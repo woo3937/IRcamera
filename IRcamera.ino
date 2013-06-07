@@ -1,13 +1,16 @@
+/* This code fails currently on the Arduino Uno. The Uno only has 2k of RAM
+ * -2013-06-07 
+ */
 /* TO WRITE TO THE SD CARD:
  *         - first, connect the SD card shield so ALL the pins connect
  *         - #include <SD.h>, const int chipSelect = 4
  *         - FILE dataFile = SD.open("datalog.txt", FILE_WRITE)
  *         - if(dataFile){
-                        dataFile.println(dataString);
-                        dataFile.close()
-
-    
-
+ *                      dataFile.println(dataString);
+ *                      dataFile.close()
+ *
+ *  
+ */
 /*
     SD card datalogger
  
@@ -31,13 +34,14 @@
  */
 
 #include <SD.h>
+#include <i2cmaster.h>
 //#include <SPI.h>
 //#include <Wire.h>
 //#include <EEPROM.h>
-#include <i2cmaster.h>
 //#include <I2C.h>
 //#include <SDFat.h>
 //#include <SDFatUtil.h>
+
 const int chipSelect = 8;
 // must change from 4 to 8! (8 on sparkfun shield)
 
@@ -50,79 +54,65 @@ const uint8_t cardPin = 8;
 
 
 void setup(){
+    // setting up the serial port
     Serial.begin(9600);
     while(!Serial);
-    //Serial.println("At beginning of setup...\n");
+
+    // setting up the output pins
     pinMode(10, OUTPUT); pinMode(9, OUTPUT);
-    //digitalWrite(10, HIGH);
     if (!SD.begin(chipSelect)){
         Serial.println("It did the SD-if statement");
         return;
     }
     Serial.println("Done with serial port setup...\n");
 
-
-    char name[] = "9px_0000.bmp";             // filename convention (will auto-increment)
-    // iteratively create pixel data
-    const int w = 10;                                     // image width in pixels
-    const int h = 10; 
-    Serial.println("Before the malloc call");
-    int * px1 = (int *)malloc(sizeof(int) * w * h);
-    Serial.println("After the malloc call\n");
-    int increment = 256/(w*h);                // divide color range (0-255) by total # of px
-
-                                       // " height
-    const boolean debugPrint = true;        // print details of process over serial?
-
-    const int imgSize = w*h;
-    //Serial.println("Before the pix1[w*h] declaration");
-    //int px1[w*h];                                                // actual pixel data (grayscale - added programatically below)
-
-    // assumes we have a grey-scale image
-    for (int i=0; i<imgSize; i++) {
-        px1[i] = i * increment;                    // creates a gradient across pixels for testing
-    }
-    
-//    Serial.println("Beginning write (in setup)..."); delay(2);
-//    writeBMPImage(px1,"testinggg.txt", w, h);
-//    Serial.println("Ending write (in setup)...");
-    
-    //writePlainTextImage(px1, 4, 4);
-    //Wire.begin(0x5A);
+    // setting up the IR
     setupIR();
     
-    int width = 4;
-    int height = 4;
+    // width, height < 10 (only 2k memory on the Uno)
+    int width = 15;
+    int height = 10;
     
     float * x = takePicture(width, height);
-    int * xx = (int *)malloc(sizeof(int)*width*height);
+    int   *xx = (int *)malloc(sizeof(int)*width*height);
     
     for (int i=0; i<width*height; i++){
-        xx[i] = (int)x[i];
+        xx[i] = (int)(x[i]*5);
     }
-    writeBMPImage(xx,"debug.bmp" ,width, height);
+
+    // fail because the Arduino Uno only has 2k of RAM
+    //writeBMPImage(xx,"debug.bmp" ,width, height);
+//    writePPMImage(xx, width, height, "debug.ppm");
 }
 
 void loop(){
   float temp = 0;
   temp = readTemp();
   Serial.print(temp); Serial.println(" degrees Celcius");
+  delay(1000);
 }
 
-float* takePicture(int width, int height){
+float * takePicture(long int width, long int height){
     // assumes width, height of 11, 11
     // 
-    int i, j;
-
+    int xx, yy;
+    
     int HORIZPIN = 9;
     int VERTPIN = 10;
     float * x = (float *)malloc(sizeof(float) * width * height);
-    for (i=0; i<width; i++){
-        Serial.println(i);
-        for (j=0; j<height; j++){
-            gotoPixel(i, j, HORIZPIN, VERTPIN, width, height);
-            x[i*width + j] = readTemp();
-            delay(100);
+
+    for (xx=0; xx<width; xx++){
+        Serial.print(width);Serial.print("   xx == ");Serial.println(xx);
+        for (yy=0; yy<height; yy++){
+            Serial.print("    "); Serial.println(j);
+            gotoPixel(xx, yy, HORIZPIN, VERTPIN, width, height);
+            x[i*width + j] = 0;
+            
+            x[yy*width + xx] = 115;//readTemp();
+//            delay(10);
+//            Serial.print("in takePicture(): readTemp== ");
+//            Serial.println(x[yy*width + xx]);
+//            delay(10);
         }      
     }
     
@@ -136,6 +126,58 @@ void setupIR(){
     // enabling pullups
     PORTC = (1 << PORTC4) | (1 << PORTC5); 
 }
+
+void writePPMImage(int * data, int w, int h, char filename[]){
+    // assumes that 0 < data[i] < 255
+  
+    // the file where we're going to write to
+    File dataFile;
+    char name[] = "test.ppm";
+    int height = h;
+    int width = w;
+    // we can't open a file that already exists...
+    if(SD.exists(name)) SD.remove(name);
+    dataFile = SD.open(name, FILE_WRITE);
+    
+    // P3 means RGB color in the PPM format
+    dataFile.println("P3");
+    
+    // width and height
+    dataFile.print(w); dataFile.print(" ");
+    dataFile.println(h);
+    
+    // setting the max color
+    dataFile.println(255);
+    
+    int xx, yy;
+    for (yy=0; yy<height; yy++){
+        for (xx=0; xx<width; xx++){
+            int R, G, B, C;
+            C = data[yy*width + xx];
+            Serial.print(C);
+            Serial.write(C);
+            Serial.println("   ");
+            R = C;
+            G = C;
+            B = C; // change R,G,B to a red-blue colormap later
+            dataFile.print(R); // R
+            dataFile.print(" "); 
+            
+            dataFile.print(G); // G
+            dataFile.print(" ");
+            
+            dataFile.print(B); // B
+            dataFile.print(" ");
+        }
+        dataFile.print("\n");
+    }
+    dataFile.close();
+  
+}
+
+
+
+
 float readTemp(){
     // for this specific IR sensor. change if using a different one.
     int dev = 0x5A << 1;
@@ -171,7 +213,7 @@ void gotoPixel(int vertical, int horizontal, int vertPin, int horizPin, int heig
     int horizPWM = horizontal * 100 / width;
     analogWrite(horizPin, horizPWM);
     analogWrite(vertPin, vertPWM);
-    delay(80);
+    //delay(80);
     // delay 40ms
         
     return;
@@ -180,6 +222,9 @@ void gotoPixel(int vertical, int horizontal, int vertPin, int horizPin, int heig
 
 
 void writeBMPImage(int * input, char fileName[], int w, int h){
+    // Works, but only for small (about 10x10) images. I'm saying "screw it" and
+    // encoding the image in the PPM format -- see writePPMImage instead.
+    
     //Serial.write("width == "); Serial.println(w);
     //Serial.write("height == "); Serial.println(h);
     // SD setup
@@ -191,7 +236,7 @@ void writeBMPImage(int * input, char fileName[], int w, int h){
     //    sd.initErrorHalt();
     //    Serial.println("---");
     //}
-    char name[] = "img4.bmp";
+    char name[] = "bur.bmp";
     Serial.print("In the writeBMPImage, writing ");
     Serial.write(name);
     Serial.write("\n\n");
@@ -224,9 +269,9 @@ void writeBMPImage(int * input, char fileName[], int w, int h){
         for (int x=0; x<w; x++) {
             int colorVal = input[y*w + x];            // classic formula for px listed in line
             //Serial.println(colorVal);
-            img[(y*w + x)*3+0] = (unsigned char)(colorVal-50);        // R
-            img[(y*w + x)*3+1] = (unsigned char)((255-colorVal));        // G
-            img[(y*w + x)*3+2] = (unsigned char)(255 - colorVal);        // B
+            img[(y*w + x)*3+0] = (unsigned char)(colorVal);        // R
+            img[(y*w + x)*3+1] = (unsigned char)((colorVal));        // G
+            img[(y*w + x)*3+2] = (unsigned char)(colorVal);        // B
             // padding (the 4th byte) will be added later as needed...
         }
     }
@@ -243,8 +288,10 @@ void writeBMPImage(int * input, char fileName[], int w, int h){
     }
 
     // create padding (based on the number of pixels in a row
-    unsigned char bmpPad[rowSize - 3*w];
-    for (int i=0; i<sizeof(bmpPad); i++) {                 // fill with 0s
+    //unsigned char bmpPad[rowSize - 3*w];
+    unsigned char * bmpPad = (unsigned char *)malloc(sizeof(unsigned char) * (rowSize - 3*w));
+    for (int i=0; i<rowSize-3*w; i++) {                 
+        // fill with 0s
         bmpPad[i] = 0;
     }
 
@@ -292,6 +339,8 @@ void writeBMPImage(int * input, char fileName[], int w, int h){
     }
 }
 
+
+
 void writePlainTextImage(int * pix, int w, int h){
     int x; 
     int y;
@@ -307,3 +356,10 @@ void writePlainTextImage(int * pix, int w, int h){
     
   
 }
+
+int freeRam () {
+  extern int __heap_start, *__brkval; 
+  int v; 
+  return (int) &v - (__brkval == 0 ? (int) &__heap_start : (int) __brkval); 
+}
+

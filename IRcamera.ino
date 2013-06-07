@@ -226,7 +226,7 @@ void writeBMPImage(int * input, char fileName[], int w, int h){
         free(img);
     }
     img = (unsigned char *)malloc(3*w*h);
-    Serial.println("Before the for-loop where the colors are assigned");
+
     for (int y=0; y<h; y++) {
         for (int x=0; x<w; x++) {
             int colorVal = input[y*w + x];            // classic formula for px listed in line
@@ -278,7 +278,6 @@ void writeBMPImage(int * input, char fileName[], int w, int h){
     //Serial.write(bmpFileHeader, sizeof(bmpFileHeader));
     //Serial.println(*bmpInfoHeader);
     // write the file (thanks forum!)
-    
     dataFile.write(bmpFileHeader, sizeof(bmpFileHeader));
     delay(100);
     dataFile.write(bmpInfoHeader, sizeof(bmpInfoHeader));
@@ -294,9 +293,7 @@ void writeBMPImage(int * input, char fileName[], int w, int h){
         delay(20);
     }
     dataFile.close();     // close file when done writing
-    delay(100);
     Serial.println("All done with writeBMPImage");
-    delay(100);
 
     if (0) {
         Serial.print("\n\n---\n");

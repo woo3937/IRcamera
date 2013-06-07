@@ -91,14 +91,19 @@ void setup(){
     //Wire.begin(0x5A);
     setupIR();
     
-    int width = 4;
-    int height = 4;
+    int width  = 9;
+    int height = 9;
     
     float * x = takePicture(width, height);
     int * xx = (int *)malloc(sizeof(int)*width*height);
     
     for (int i=0; i<width*height; i++){
-        xx[i] = (int)x[i];
+        xx[i] = (int)(x[i] * 10);
+    }
+    for(int i=0; i<width*height; i++){
+      Serial.print(i); Serial.print("     ");
+      Serial.print(xx[i]); Serial.print("   "); 
+      Serial.print(x[i]); Serial.println("   in setup");
     }
     writeBMPImage(xx,"debug.bmp" ,width, height);
 }
@@ -112,16 +117,18 @@ void loop(){
 float* takePicture(int width, int height){
     // assumes width, height of 11, 11
     // 
-    int i, j;
+    int xx, yy;
 
     int HORIZPIN = 9;
     int VERTPIN = 10;
     float * x = (float *)malloc(sizeof(float) * width * height);
-    for (i=0; i<width; i++){
-        Serial.println(i);
-        for (j=0; j<height; j++){
-            gotoPixel(i, j, HORIZPIN, VERTPIN, width, height);
-            x[i*width + j] = readTemp();
+    for (xx=0; xx<width; xx++){
+        Serial.println(xx);
+        for (yy=0; yy<height; yy++){
+            Serial.print("  "); Serial.print(yy);
+            gotoPixel(xx, yy, HORIZPIN, VERTPIN, width, height);
+            x[yy*width + xx] = readTemp();
+            Serial.print("   "); Serial.println(x[yy*width + xx]);
             delay(100);
         }      
     }
@@ -224,9 +231,9 @@ void writeBMPImage(int * input, char fileName[], int w, int h){
         for (int x=0; x<w; x++) {
             int colorVal = input[y*w + x];            // classic formula for px listed in line
             //Serial.println(colorVal);
-            img[(y*w + x)*3+0] = (unsigned char)(colorVal-50);        // R
-            img[(y*w + x)*3+1] = (unsigned char)((255-colorVal));        // G
-            img[(y*w + x)*3+2] = (unsigned char)(255 - colorVal);        // B
+            img[(y*w + x)*3+0] = (unsigned char)(colorVal);        // R
+            img[(y*w + x)*3+1] = (unsigned char)((colorVal));        // G
+            img[(y*w + x)*3+2] = (unsigned char)(colorVal);        // B
             // padding (the 4th byte) will be added later as needed...
         }
     }

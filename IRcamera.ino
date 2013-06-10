@@ -1,5 +1,9 @@
 /* This code fails currently on the Arduino Uno. The Uno only has 2k of RAM
  * -2013-06-07 
+ * 
+ * Then, we must use the SD card (~2GB) as our RAM. Slow, but nothing compared to
+ * servos.
+ * -2013-06-10
  */
 /* TO WRITE TO THE SD CARD:
  *         - first, connect the SD card shield so ALL the pins connect
@@ -35,6 +39,7 @@
 
 #include <SD.h>
 #include <i2cmaster.h>
+#include <math.h>
 //#include <SPI.h>
 //#include <Wire.h>
 //#include <EEPROM.h>
@@ -50,39 +55,110 @@ const int chipSelect = 8;
 const uint8_t cardPin = 8;                    
 // pin that the SD is connected to (8 for SparkFun MicroSD shield, 4 for others )
 
+// TODO: write readPixel()
+// seek is my friend
+// seek to a new position
+// print all 0's
 
+unsigned char readPixel(long int i, char * filename){
+    File dataFile = SD.open(filename);
+    dataFile.seek(11 + 3*i);
+    
+    unsigned char R = dataFile.read(); // R
+    unsigned char G = dataFile.read(); // G
+    unsigned char B = dataFile.read(); // B
+    
+    if(B == 255){
+        return G/3;
+    } else if (G == 255){
+        return 255 - B/3;
+    } else if (R == 255){
+        return 255 - G/3;
+    }
+    
+    // TODO: look at the gradient we want, and does G play a role?
+    // return G, since that it unused (?) in the scheme we want
+    return -1;
+    // for error...
+  
+}
 
+void writePixel(long int i, char * filename, unsigned char x){
+    // takes in an index, like arrays (0 based)
+    File dataFile;
+    dataFile = SD.open(filename, FILE_WRITE);
+//    Serial.print("dataFile == ");
+//    Serial.println(dataFile);
+//    Serial.println(filename);
+
+    
+
+    unsigned char R, G, B;  
+    if(x <= 85){
+        R = 0;
+        G = 3*x;
+        B = 255;
+      
+    } else if (x <= 170){
+        R = 3 * (x - 85);
+        G = 255;
+        B = 255 - 3*(x - 85);
+      
+    } else if (x <= 255){
+        R = 255;
+        G = 255 - 3*(x - 170);
+        B = 0;
+    } else Serial.println("writePixel: error!");
+    
+    boolean as = dataFile.seek(11 + 3*i + 4);
+    dataFile.write(R);
+    dataFile.write(G);
+    dataFile.write(B);
+    dataFile.close();
+}
 
 void setup(){
     // setting up the serial port
     Serial.begin(9600);
     while(!Serial);
+    
+    Serial.println("Start...");
+    
 
     // setting up the output pins
     pinMode(10, OUTPUT); pinMode(9, OUTPUT);
+    
+    // if the SD card isn't there, return
     if (!SD.begin(chipSelect)){
-        Serial.println("It did the SD-if statement");
         return;
     }
-    Serial.println("Done with serial port setup...\n");
 
     // setting up the IR
     setupIR();
     
     // width, height < 10 (only 2k memory on the Uno)
-    int width = 15;
-    int height = 10;
+    int width = 100;
+    int height = 100;
     
-    float * x = takePicture(width, height);
-    int   *xx = (int *)malloc(sizeof(int)*width*height);
+    //unsigned char * x = takePicture(width, height);
     
-    for (int i=0; i<width*height; i++){
-        xx[i] = (int)(x[i]*5);
+    // returns a filename, so we can pass it to other functions
+    // a filename of a total of 12 characters long (8.3 format)
+    char * name = initPPM(width, height);
+
+    //writePixel(2, name, 255);
+    
+    
+    for (int i=0; i<255; i++){
+        writePixel(i, name, i);
+        if (!i%100) Serial.println(i);
     }
 
-    // fail because the Arduino Uno only has 2k of RAM
-    //writeBMPImage(xx,"debug.bmp" ,width, height);
-//    writePPMImage(xx, width, height, "debug.ppm");
+    
+    // printing the free RAM
+    Serial.print("\n\nFree RAM:\n");
+    Serial.println(freeRam());
+    Serial.println("-----");
 }
 
 void loop(){
@@ -91,24 +167,72 @@ void loop(){
   Serial.print(temp); Serial.println(" degrees Celcius");
   delay(1000);
 }
+float readTemp(){
+    // for this specific IR sensor. change if using a different one.
+    int dev = 0x5A << 1;
+    int data_low;
+    int data_high;
+    int pec;
+    
+    // from the comment by Sensorjunkie at http://forum.arduino.cc/index.php/topic,21317.0.html
+    i2c_start_wait(dev + I2C_WRITE);
+    i2c_write(0x07);
+    i2c_rep_start(dev+I2C_READ);
+    data_low = i2c_readAck();
+    data_high = i2c_readAck();
+    pec = i2c_readNak();
+    i2c_stop();
+    
+    double tempFactor = 0.02;
+    float temp=0;
+    
+    // from the datasheet
+    int data = (data_high << 8) + data_low;
+    temp = data * 0.02 - 273.15;
+    return temp;
+}
 
-float * takePicture(long int width, long int height){
+
+void gotoPixel(int vertical, int horizontal, int vertPin, int horizPin, int height, int width){
+    // hard coded: the width of the image.
+    // right now, it assumes we want a picture (100/255) * 170 degrees wide
+    // 100 is the value that's hard coded in
+    
+    int vertPWM = vertical  * 100 / height;
+    int horizPWM = horizontal * 100 / width;
+    analogWrite(horizPin, horizPWM);
+    analogWrite(vertPin, vertPWM);
+    //delay(80);
+    // delay 40ms
+        
+    return;
+}
+
+unsigned char * takePicture(int width, int height){
     // assumes width, height of 11, 11
     // 
     int xx, yy;
     
     int HORIZPIN = 9;
     int VERTPIN = 10;
-    float * x = (float *)malloc(sizeof(float) * width * height);
+    unsigned char * x = (unsigned char *)malloc(sizeof(unsigned char) * width * height);
 
     for (xx=0; xx<width; xx++){
         Serial.print(width);Serial.print("   xx == ");Serial.println(xx);
         for (yy=0; yy<height; yy++){
-            Serial.print("    "); Serial.println(j);
+            Serial.print("    "); Serial.println(yy);
             gotoPixel(xx, yy, HORIZPIN, VERTPIN, width, height);
-            x[i*width + j] = 0;
+            x[yy*width + xx] = 0;
             
-            x[yy*width + xx] = 115;//readTemp();
+            // returns a floating point value
+            float temp = readTemp();
+
+            
+            // we're only taking values as low as -70
+            temp = temp + 70; 
+           
+            x[yy*width + xx] = (unsigned char) temp;
+//            Serial.print(temp, HEX); Serial.print("   "); Serial.println((unsigned char)temp, HEX); 
 //            delay(10);
 //            Serial.print("in takePicture(): readTemp== ");
 //            Serial.println(x[yy*width + xx]);
@@ -127,7 +251,78 @@ void setupIR(){
     PORTC = (1 << PORTC4) | (1 << PORTC5); 
 }
 
-void writePPMImage(int * data, int w, int h, char filename[]){
+
+
+
+
+char * initPPM(int width, int height){
+    Serial.println("\nIn initPPM");
+    long long int i;
+    //char filename[] = "ir_00000.ppm";
+    // malloc, since we want to return the address (and not a local)
+    char * filename = (char *)malloc(sizeof(char)*(8+1+3));
+    filename = "ir_00000.ppm";
+    // auto increment name if file already exists
+
+      // if name exists, create new filename
+  for (int i=0; i<10000; i++) {
+    filename[4] = (i/1000)%10 + '0';    // thousands place
+    filename[5] = (i/100)%10 + '0';     // hundreds
+    filename[6] = (i/10)%10 + '0';      // tens
+    filename[7] = i%10 + '0';           // ones
+    if (!SD.exists(filename)) {
+      Serial.println("Did the if");
+      break;
+    }
+  }
+    
+    // opening the file, deleting if there's already one
+    File dataFile;
+    if(SD.exists(filename)) SD.remove(filename);
+    dataFile = SD.open(filename, FILE_WRITE);
+    
+    dataFile.print("P6");
+    // specifing a PPM binary RGB file
+
+    //dataFile.write("\n");
+    dataFile.print(" ");
+    dataFile.print(width);
+    dataFile.print(" ");
+    dataFile.print(height);
+    dataFile.print(" ");
+    //dataFile.print(0xFF);
+    dataFile.print(255);
+    dataFile.write(0x0A);
+
+    Serial.println("\nPosition()");
+    Serial.println(dataFile.position());
+    Serial.println("end position()\n");
+    int32_t length = 1; 
+    // since we're printing R, G, and B values in one loop
+    length = length * width;
+    length = length * width;
+    Serial.println(length);
+   
+    
+    for (i=0; i<length; i++){
+        //Serial.write(i);
+        unsigned char colorVal = 115;
+        dataFile.write(colorVal);
+        dataFile.write(colorVal);
+        dataFile.write(colorVal); 
+    }
+    dataFile.close();
+    
+    // return the filename written?
+    return filename;
+}
+
+
+// -----------------------------------------------------------------------------
+// ------------------- below or "writeImage" functions of various complexity ---   
+// -----------------------------------------------------------------------------
+
+void writePPMImage(unsigned char * data, int w, int h, char filename[]){
     // assumes that 0 < data[i] < 255
   
     // the file where we're going to write to
@@ -175,53 +370,7 @@ void writePPMImage(int * data, int w, int h, char filename[]){
   
 }
 
-
-
-
-float readTemp(){
-    // for this specific IR sensor. change if using a different one.
-    int dev = 0x5A << 1;
-    int data_low;
-    int data_high;
-    int pec;
-    
-    // from the comment by Sensorjunkie at http://forum.arduino.cc/index.php/topic,21317.0.html
-    i2c_start_wait(dev + I2C_WRITE);
-    i2c_write(0x07);
-    i2c_rep_start(dev+I2C_READ);
-    data_low = i2c_readAck();
-    data_high = i2c_readAck();
-    pec = i2c_readNak();
-    i2c_stop();
-    
-    double tempFactor = 0.02;
-    float temp=0;
-    
-    // from the datasheet
-    int data = (data_high << 8) + data_low;
-    temp = data * 0.02 - 273.15;
-    return temp;
-}
-
-
-void gotoPixel(int vertical, int horizontal, int vertPin, int horizPin, int height, int width){
-    // hard coded: the width of the image.
-    // right now, it assumes we want a picture (100/255) * 170 degrees wide
-    // 100 is the value that's hard coded in
-    
-    int vertPWM = vertical  * 100 / height;
-    int horizPWM = horizontal * 100 / width;
-    analogWrite(horizPin, horizPWM);
-    analogWrite(vertPin, vertPWM);
-    //delay(80);
-    // delay 40ms
-        
-    return;
-}
-
-
-
-void writeBMPImage(int * input, char fileName[], int w, int h){
+void writeBMPImage(unsigned char * input, char fileName[], int w, int h){
     // Works, but only for small (about 10x10) images. I'm saying "screw it" and
     // encoding the image in the PPM format -- see writePPMImage instead.
     
@@ -249,6 +398,7 @@ void writeBMPImage(int * input, char fileName[], int w, int h){
     // we can't open a file that already exists...
     if(SD.exists(name)) SD.remove(name);
     dataFile = SD.open(name, FILE_WRITE);
+    
     //while(!dataFile);
     Serial.write("dataFile == ");Serial.println(dataFile);
     // set fileSize (used in bmp header)
@@ -328,8 +478,10 @@ void writeBMPImage(int * input, char fileName[], int w, int h){
     for (int i=0; i<h; i++) {                                                        // iterate image array
         dataFile.write(img+(w*(h-i-1)*3), 3*w);
         delay(200);
-        //file.write(img+(w*(h-i-1)*3), 3*w);                                // write px data
-        dataFile.write(bmpPad, (4-(w*3)%4)%4);                                 // and padding as needed
+        //file.write(img+(w*(h-i-1)*3), 3*w);                                
+        // write px data
+        dataFile.write(bmpPad, (4-(w*3)%4)%4);                                 
+        // and padding as needed
         delay(200);
     }
     dataFile.close();                                                                                // close file when done writing

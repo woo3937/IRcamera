@@ -39,7 +39,7 @@
 
 #include <SD.h>
 #include <i2cmaster.h>
-#include <math.h>
+#include <Servo.h>
 //#include <SPI.h>
 //#include <Wire.h>
 //#include <EEPROM.h>
@@ -49,7 +49,8 @@
 
 const int chipSelect = 8;
 // must change from 4 to 8! (8 on sparkfun shield)
-
+Servo horizServo;
+Servo vertServo;
 //SdFat sd;
 //SdFile file;
 const uint8_t cardPin = 8;                    
@@ -81,6 +82,31 @@ unsigned char readPixel(long int i, char * filename){
     return -1;
     // for error...
   
+}
+void writePixel2(long int i, File dataFile, unsigned char x){
+    // assumes file.open() has been called earlier
+    // assumes file.close() will be called later
+        unsigned char R, G, B;  
+    if(x <= 85){
+        R = 0;
+        G = 3*x;
+        B = 255;
+      
+    } else if (x <= 170){
+        R = 3 * (x - 85);
+        G = 255;
+        B = 255 - 3*(x - 85);
+      
+    } else if (x <= 255){
+        R = 255;
+        G = 255 - 3*(x - 170);
+        B = 0;
+    } else Serial.println("writePixel: error!");
+    
+    boolean as = dataFile.seek(11 + 3*i + 4);
+    dataFile.write(R);
+    dataFile.write(G);
+    dataFile.write(B);
 }
 
 void writePixel(long int i, char * filename, unsigned char x){
@@ -137,32 +163,38 @@ void setup(){
     // setting up the IR
     setupIR();
     
-    // width, height < 10 (only 2k memory on the Uno)
-    int width = 100;
-    int height = 100;
+    
+    horizServo.attach(9);
+    vertServo.attach(10);
     
     //unsigned char * x = takePicture(width, height);
     
     // returns a filename, so we can pass it to other functions
     // a filename of a total of 12 characters long (8.3 format)
-    int time = millis();
-    char * name = initPPM(width, height);
-    time = millis() - time;
-    Serial.println(time/1000.0);
+//    int time = millis();
+//    char * name = initPPM(width, height);
+//    time = millis() - time;
+//    Serial.print("Time in initPPM:\n");Serial.println(time/1000.0);
+//    Serial.print("filename == "); Serial.println(name);
+//
+//    //writePixel(2, name, 255);
+//    File dataFile;
+//    dataFile = SD.open(name, FILE_WRITE);
+//
+//    for (int i=0; i<width*height; i++){
+////        time = micros();
+//        float colorVal = 255.0*i / (100.0*100.0);
+//        writePixel2(i, dataFile, (int)colorVal);
+////        time = micros() - time;
+////        Serial.println(time);
+//        if (i%100 == 0) Serial.println(i/width);
+//    }
+//    dataFile.close();
 
-    //writePixel(2, name, 255);
-    
-    
-    for (int i=0; i<width*height; i++){
-//        time = millis();
-        float colorVal = 255.0*i / (100.0*100.0);
-
-
-        writePixel(i, name, (int)colorVal);
-//        time = millis() - time;
-//        Serial.println(time);
-        if (i%100 == 0) Serial.println(i/width);
-    }
+    // width, height < 10 (only 2k memory on the Uno)
+    int width = 100;
+    int height = 100;
+//    takePicture(width, height);
 
     
     // printing the free RAM
@@ -174,8 +206,13 @@ void setup(){
 void loop(){
   float temp = 0;
   temp = readTemp();
-  Serial.print(temp); Serial.println(" degrees Celcius");
-  delay(1000);
+  int HORIZPIN = 9;
+  int VERTPIN = 10;
+  int width = 100;
+  int height = 100;
+//  Serial.print(temp); Serial.println(" degrees Celcius");
+
+    analogWrite(9, 255);
 }
 float readTemp(){
     // for this specific IR sensor. change if using a different one.
@@ -212,7 +249,7 @@ void gotoPixel(int vertical, int horizontal, int vertPin, int horizPin, int heig
     int horizPWM = horizontal * 100 / width;
     analogWrite(horizPin, horizPWM);
     analogWrite(vertPin, vertPWM);
-    //delay(80);
+    delay(1000);
     // delay 40ms
         
     return;
@@ -225,32 +262,35 @@ unsigned char * takePicture(int width, int height){
     
     int HORIZPIN = 9;
     int VERTPIN = 10;
-    unsigned char * x = (unsigned char *)malloc(sizeof(unsigned char) * width * height);
+    char * name = initPPM(width, height);
+    File file = SD.open(name, FILE_WRITE);
+    Serial.print("in takePicture, printing \n");
+    Serial.println(name);
+    Serial.println();
 
-    for (xx=0; xx<width; xx++){
-        Serial.print(width);Serial.print("   xx == ");Serial.println(xx);
-        for (yy=0; yy<height; yy++){
-            Serial.print("    "); Serial.println(yy);
-            gotoPixel(xx, yy, HORIZPIN, VERTPIN, width, height);
-            x[yy*width + xx] = 0;
-            
+    for (yy=0; yy<width; yy++){
+        Serial.print(width);Serial.print("   yy == ");Serial.println(yy);
+        for (xx=0; xx<height; xx++){
+//            Serial.print("    "); Serial.println(yy);
+            if (xx%2 == 0) gotoPixel(xx, yy, HORIZPIN, VERTPIN, width, height);
+            if (xx%2 == 1) gotoPixel(width - xx, yy, HORIZPIN, VERTPIN, width, height);
+
             // returns a floating point value
             float temp = readTemp();
-
             
-            // we're only taking values as low as -70
-            temp = temp + 70; 
-           
-            x[yy*width + xx] = (unsigned char) temp;
-//            Serial.print(temp, HEX); Serial.print("   "); Serial.println((unsigned char)temp, HEX); 
-//            delay(10);
-//            Serial.print("in takePicture(): readTemp== ");
-//            Serial.println(x[yy*width + xx]);
-//            delay(10);
-        }      
+            
+            // we're taking temperature values between -20 and 108
+            temp = temp - 10; // - MIN
+            temp = temp*3;    // * SCALE
+            if (xx%2 == 0) writePixel2(yy*width + xx, file, (unsigned char)temp);
+            if (xx%2 == 1) writePixel2(yy*width + (width-xx), file, (unsigned char)temp);
+        }
+        delay(1000);      
     }
+    file.close();
+    delay(100);
     
-    return x;
+    return 0;
   
 }
 

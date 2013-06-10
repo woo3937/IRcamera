@@ -130,6 +130,7 @@ void setup(){
     
     // if the SD card isn't there, return
     if (!SD.begin(chipSelect)){
+        Serial.println("SD?");
         return;
     }
 
@@ -144,14 +145,23 @@ void setup(){
     
     // returns a filename, so we can pass it to other functions
     // a filename of a total of 12 characters long (8.3 format)
+    int time = millis();
     char * name = initPPM(width, height);
+    time = millis() - time;
+    Serial.println(time/1000.0);
 
     //writePixel(2, name, 255);
     
     
-    for (int i=0; i<255; i++){
-        writePixel(i, name, i);
-        if (!i%100) Serial.println(i);
+    for (int i=0; i<width*height; i++){
+//        time = millis();
+        float colorVal = 255.0*i / (100.0*100.0);
+
+
+        writePixel(i, name, (int)colorVal);
+//        time = millis() - time;
+//        Serial.println(time);
+        if (i%100 == 0) Serial.println(i/width);
     }
 
     

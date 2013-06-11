@@ -263,7 +263,8 @@ void gotoPixel(int x, int y, Servo horizServo, Servo vertServo, int height, int 
     // delay = 0.14 sec / 60 degrees
     float delay2 = 1000 * 1000 * (horizAngle - horizLastAngle)  * 0.14 / 60;
     if (delay2 < 0) delay2 = -1 * delay2;
-    
+    Serial.print("   horizAngle: ");
+    Serial.print(horizAngle);
     delayMicroseconds((int)delay2*1000);
   
 }
@@ -285,11 +286,14 @@ unsigned char * takePicture(int width, int height){
         Serial.print(width);Serial.print("   \t\tyy == ");Serial.println(yy);
         for (xx=0; xx<height; xx++){
               int horizPixel;
+              int PIX = 0;
               if (yy%2 == 0)  horizPixel = xx;
-              if (yy%2 == 1)  horizPixel = width - xx - 1;
+              if (yy%2 == 1)  horizPixel = xx;//width - xx - 1;
               gotoPixel(horizPixel, yy, horizServo, vertServo, width, height);
-              delay(80);
-//              Serial.println(horizPixel);
+              delay(20);
+              Serial.print("   ");
+              Serial.print(horizPixel);
+              Serial.print("   ");
 
               
 
@@ -299,7 +303,7 @@ unsigned char * takePicture(int width, int height){
 
             
             // we're taking temperature values between -20 and 108
-            float a = 3.8e-1;
+            float a = 2.4e-1;
             float e = 2.718281828459045;
             temp = 255 * 1 / (1 + pow(e, -(temp-30) * a));
             
@@ -308,8 +312,12 @@ unsigned char * takePicture(int width, int height){
             //temp += 15;
             Serial.print("\t");
             Serial.print(temp);
+            
+            if (yy%2 == 0) writePixel2(horizPixel + yy*width,       file, (unsigned char)temp);
+            if (yy%2 == 1) writePixel2(horizPixel + yy*width + PIX, file, (unsigned char)temp);
+            Serial.print("   Printing to pixel: ");
+            Serial.print(yy*width + horizPixel);
             Serial.print("\n");
-            writePixel2(horizPixel + yy*width, file, (unsigned char)temp);
         }
         //delay(1000);      
     }

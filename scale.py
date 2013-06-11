@@ -28,7 +28,7 @@ from sympy import *
 
 
 x = var('x')
-a = 3.8e-1
+a = 2.4e-1
 f = 255 / (1 + e**(-(x-30) * a))
 
 figure()

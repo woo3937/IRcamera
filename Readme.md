@@ -35,7 +35,7 @@ Physical Directions
 
    That description is best shown with a picture, even though I'm not all the
    way doing that yet (if it's past June 2013, please tell me to fix it). The
-   pictures are included in the `example-photos-tilt-brackets` folder.
+   pictures are included in the `example-photo-tilt-brackets` folder.
 
 3. Servos operate by reading in a PWM signal, and go to that value. For example,
    if you put out a PWM signal of 50%, the servo would go to the location range

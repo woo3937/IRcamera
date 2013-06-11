@@ -254,18 +254,23 @@ void gotoPixel(int x, int y, Servo horizServo, Servo vertServo, int height, int 
     unsigned char horizAngle = 1.0 * x * angle / width;
     unsigned char vertAngle = 1.0 * y * angle / height;
     
-    float horizLastAngle = horizServo.read();
-    float vertLastAngle = vertServo.read();
+//    float horizLastAngle = horizServo.read();
+//    float vertLastAngle = vertServo.read();
     
     horizServo.write(horizAngle);
     vertServo.write(vertAngle);
     
     // delay = 0.14 sec / 60 degrees
-    float delay2 = 1000 * 1000 * (horizAngle - horizLastAngle)  * 0.14 / 60;
-    if (delay2 < 0) delay2 = -1 * delay2;
-    Serial.print("   horizAngle: ");
-    Serial.print(horizAngle);
-    delayMicroseconds((int)delay2*1000);
+//    float delay2 = 1000 * 1000 * (horizAngle - horizLastAngle)  * 0.14 / 60;
+//    //delay2 = delay2*1000;
+//    //delayMicroseconds((int)delay2);
+//    if (delay2 < 0) delay2 = -1 * delay2;
+//    Serial.print("   horizAngle: ");
+//    Serial.print(horizAngle);
+//    Serial.print("    delayed: ");
+//    Serial.print(delay2);
+    
+    
   
 }
 
@@ -283,23 +288,24 @@ unsigned char * takePicture(int width, int height){
     Serial.println();
 
     for (yy=0; yy<width; yy++){
-        Serial.print(width);Serial.print("   \t\tyy == ");Serial.println(yy);
+//        Serial.print(width);Serial.print("   \t\tyy == ");Serial.println(yy);
         for (xx=0; xx<height; xx++){
               int horizPixel;
               int PIX = 0;
               if (yy%2 == 0)  horizPixel = xx;
               if (yy%2 == 1)  horizPixel = xx;//width - xx - 1;
               gotoPixel(horizPixel, yy, horizServo, vertServo, width, height);
-              delay(20);
-              Serial.print("   ");
-              Serial.print(horizPixel);
-              Serial.print("   ");
+              delay(2*8);
+//              Serial.print("   ");
+//              Serial.print(horizPixel);
+//              Serial.print("   ");
 
               
 
             // returns a floating point value
+//            Serial.print("temp == ");
             float temp = readTemp();
-            Serial.print(temp);
+//            Serial.println(temp);
 
             
             // we're taking temperature values between -20 and 108
@@ -310,16 +316,16 @@ unsigned char * takePicture(int width, int height){
             //temp = 1 / (1 + e**(-(temp-35) * a))
             //temp += b * temp * temp;
             //temp += 15;
-            Serial.print("\t");
-            Serial.print(temp);
+//            Serial.print("\t");
+//            Serial.print(temp);
             
             if (yy%2 == 0) writePixel2(horizPixel + yy*width,       file, (unsigned char)temp);
             if (yy%2 == 1) writePixel2(horizPixel + yy*width + PIX, file, (unsigned char)temp);
-            Serial.print("   Printing to pixel: ");
-            Serial.print(yy*width + horizPixel);
-            Serial.print("\n");
+//            Serial.print("   Printing to pixel: ");
+//            Serial.print(yy*width + horizPixel);
+//            Serial.print("\n");
         }
-        //delay(1000);      
+        delay(100);      
     }
     file.close();
     delay(100);

@@ -164,8 +164,8 @@ void setup(){
     setupIR();
     
     
-    horizServo.attach(9);
-    vertServo.attach(10);
+//    horizServo.attach(9);
+//    vertServo.attach(10);
     
     //unsigned char * x = takePicture(width, height);
     
@@ -194,26 +194,33 @@ void setup(){
     // width, height < 10 (only 2k memory on the Uno)
     int width = 100;
     int height = 100;
-//    takePicture(width, height);
+    
 
     
     // printing the free RAM
     Serial.print("\n\nFree RAM:\n");
     Serial.println(freeRam());
     Serial.println("-----");
+    pinMode(9, OUTPUT);
+    
+    horizServo.attach(10);
+    vertServo.attach(9);
+    horizServo.write(0);
+    vertServo.write(0);
+    takePicture(width, height);
 }
 
 void loop(){
   float temp = 0;
-  temp = readTemp();
+//  temp = readTemp();
   int HORIZPIN = 9;
   int VERTPIN = 10;
   int width = 100;
   int height = 100;
-//  Serial.print(temp); Serial.println(" degrees Celcius");
 
-    analogWrite(9, 255);
 }
+
+
 float readTemp(){
     // for this specific IR sensor. change if using a different one.
     int dev = 0x5A << 1;
@@ -240,19 +247,25 @@ float readTemp(){
 }
 
 
-void gotoPixel(int vertical, int horizontal, int vertPin, int horizPin, int height, int width){
-    // hard coded: the width of the image.
-    // right now, it assumes we want a picture (100/255) * 170 degrees wide
-    // 100 is the value that's hard coded in
+void gotoPixel(int x, int y, Servo horizServo, Servo vertServo, int height, int width){
+    // assumes horizServo and vertServo have called .attach(pin) before
+    // assumes angle of 45 degrees
+    int angle = 45;
+    unsigned char horizAngle = 1.0 * x * angle / width;
+    unsigned char vertAngle = 1.0 * y * angle / height;
     
-    int vertPWM = vertical  * 100 / height;
-    int horizPWM = horizontal * 100 / width;
-    analogWrite(horizPin, horizPWM);
-    analogWrite(vertPin, vertPWM);
-    delay(1000);
-    // delay 40ms
-        
-    return;
+    float horizLastAngle = horizServo.read();
+    float vertLastAngle = vertServo.read();
+    
+    horizServo.write(horizAngle);
+    vertServo.write(vertAngle);
+    
+    // delay = 0.14 sec / 60 degrees
+    float delay2 = 1000 * 1000 * (horizAngle - horizLastAngle)  * 0.14 / 60;
+    if (delay2 < 0) delay2 = -1 * delay2;
+    
+    delayMicroseconds((int)delay2*1000);
+  
 }
 
 unsigned char * takePicture(int width, int height){
@@ -269,28 +282,42 @@ unsigned char * takePicture(int width, int height){
     Serial.println();
 
     for (yy=0; yy<width; yy++){
-        Serial.print(width);Serial.print("   yy == ");Serial.println(yy);
+        Serial.print(width);Serial.print("   \t\tyy == ");Serial.println(yy);
         for (xx=0; xx<height; xx++){
-//            Serial.print("    "); Serial.println(yy);
-            if (xx%2 == 0) gotoPixel(xx, yy, HORIZPIN, VERTPIN, width, height);
-            if (xx%2 == 1) gotoPixel(width - xx, yy, HORIZPIN, VERTPIN, width, height);
+              int horizPixel;
+              if (yy%2 == 0)  horizPixel = xx;
+              if (yy%2 == 1)  horizPixel = width - xx - 1;
+              gotoPixel(horizPixel, yy, horizServo, vertServo, width, height);
+              delay(80);
+//              Serial.println(horizPixel);
+
+              
 
             // returns a floating point value
             float temp = readTemp();
-            
+            Serial.print(temp);
+
             
             // we're taking temperature values between -20 and 108
-            temp = temp - 10; // - MIN
-            temp = temp*3;    // * SCALE
-            if (xx%2 == 0) writePixel2(yy*width + xx, file, (unsigned char)temp);
-            if (xx%2 == 1) writePixel2(yy*width + (width-xx), file, (unsigned char)temp);
+            float a = 3.8e-1;
+            float e = 2.718281828459045;
+            temp = 255 * 1 / (1 + pow(e, -(temp-30) * a));
+            
+            //temp = 1 / (1 + e**(-(temp-35) * a))
+            //temp += b * temp * temp;
+            //temp += 15;
+            Serial.print("\t");
+            Serial.print(temp);
+            Serial.print("\n");
+            writePixel2(horizPixel + yy*width, file, (unsigned char)temp);
         }
-        delay(1000);      
+        //delay(1000);      
     }
     file.close();
     delay(100);
+    Serial.println("Done");
     
-    return 0;
+//    return 0;
   
 }
 

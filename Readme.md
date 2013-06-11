@@ -45,7 +45,9 @@ Physical Directions
 4. Following [this thread][thread] on the forums (and the comment by
    SensorJunkie a ways down), I connected 3.3V and ground to the corresponding
    pins (datasheet time!) on the IR sensor, analog pin 4 to SDA and analog pin 5
-   to SCK.
+   to SCK. SCL is the pin closest to the tab, on the right side (bottom view!),
+   and goes to pin 5. SDA is the pin on the bottom right side (bottom view!),
+   and is connected to pin 4.
 
 5. I downloaded `i2cmaster.h` from [this website][i2cmaster], and renamed
    `twimaster.c` to `twimaster.cpp`. Yes, I know it sounds weird -- I think it's

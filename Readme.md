@@ -7,6 +7,10 @@ This project is based off the instructions at [cheap-thermocam.tk][1]. These
 instructions aren't very good, and many of the links are dead. Since I find that
 frustrating, some better instructions are below. 
 
+This Arduino writes images to the SD card in the simplest RGB format available
+(PPM). To do that, you'll need a good PPM viewer. For the Mac, look at
+[Xee][xee] (I downloaded it from [here][free-xee], and I didn't get a license).
+
 
 Parts List
 =========
@@ -70,3 +74,7 @@ Physical Directions
 [picture]:https://raw.github.com/scottsievert/IRcamera/master/pan-tilt-brackets.jpg
 [i2cmaster]:homepage.hispeed.ch/peterfleury/avr-software.html
 [thread]:http://forum.arduino.cc/index.php/topic,21317.0.html
+
+
+[xee]:http://xee.c3.cx
+[free-xee]:https://www.macupdate.com/app/mac/19978/xee

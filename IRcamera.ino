@@ -1,67 +1,136 @@
-/* This code fails currently on the Arduino Uno. The Uno only has 2k of RAM
- * -2013-06-07 
+/* 
+ * All dates in this workbook are in the format yyyy-mm-dd, following  the
+ * ISO 8601 standard.
  * 
- * Then, we must use the SD card (~2GB) as our RAM. Slow, but nothing compared to
+ * We must use the SD card (~2GB) as our RAM. Slow, but nothing compared to
  * servos.
  * -2013-06-10
- */
-/* TO WRITE TO THE SD CARD:
- *         - first, connect the SD card shield so ALL the pins connect
- *         - #include <SD.h>, const int chipSelect = 4
- *         - FILE dataFile = SD.open("datalog.txt", FILE_WRITE)
- *         - if(dataFile){
- *                      dataFile.println(dataString);
- *                      dataFile.close()
- *
- *  
- */
-/*
-    SD card datalogger
- 
- This example shows how to log data from three analog sensors 
- to an SD card using the SD library.
- 	
- The circuit:
- * analog sensors on analog ins 0, 1, and 2
- * SD card attached to SPI bus as follows:
- ** MOSI - pin 11
- ** MISO - pin 12
- ** CLK - pin 13
- ** CS - pin 4
- 
- created    24 Nov 2010
- modified 9 Apr 2012
- by Tom Igoe
- 
- This example code is in the public domain.
- 	 
+ * 
+ * Currently, we have to wait about 32ms for the servo to move 1 pixel. Could be
+ * better with stepper motors (see stepper motors.txt, in ~/Dropbox/nvNotes
+ * -2013-06-12
+ * 
  */
 
 #include <SD.h>
 #include <i2cmaster.h>
 #include <Servo.h>
-//#include <SPI.h>
-//#include <Wire.h>
-//#include <EEPROM.h>
-//#include <I2C.h>
-//#include <SDFat.h>
-//#include <SDFatUtil.h>
 
-const int chipSelect = 8;
+// Change the below values if you want to change anything (well, simple things).
+// the width of the image (in vertical and horizontal directions)
+#define ANGLE 45
+
+// defining width and height.
+#define WIDTH  10
+#define HEIGHT 10
+
+// the number of digits in height and width (depends on above. I could calulate it)
+#define NUMBER_OF_DIGITS 2
+
+// the constants that determines the width of blue-red
+#define A 2.4e-1f
+#define K 1 // since B taken in RGB
+
+// e
+#define E 2.718281828459045f
+
 // must change from 4 to 8! (8 on sparkfun shield)
+const int chipSelect = 8;
+
+// pin that the SD is connected to (8 for SparkFun MicroSD shield, 4 for others )
+const uint8_t cardPin = 8;                    
+
+// our servos
 Servo horizServo;
 Servo vertServo;
-//SdFat sd;
-//SdFile file;
-const uint8_t cardPin = 8;                    
-// pin that the SD is connected to (8 for SparkFun MicroSD shield, 4 for others )
 
-// TODO: write readPixel()
-// seek is my friend
-// seek to a new position
-// print all 0's
+
+unsigned char * takePicture(int width, int height){
+    // assumes width, height of 11, 11
+    // 
+    int xx, yy;
+    
+    int HORIZPIN = 9;
+    int VERTPIN = 10;
+    char * name = initPPM(width, height);
+    File file = SD.open(name, FILE_WRITE);
+    Serial.print("in takePicture, printing \n");
+    Serial.println(name);
+    Serial.println();
+
+    for (yy=0; yy<width; yy++){
+        delay(100);
+        Serial.println(yy);  
+        for (xx=0; xx<height; xx++){
+              int horizPixel;
+              
+              if (yy%2 == 0)  horizPixel = xx;
+              if (yy%2 == 1)  horizPixel = xx;//width - xx - 1;
+              
+              gotoPixel(horizPixel, yy, horizServo, vertServo, width, height);
+              
+              delay(4);
+
+              float temp = readTemp();
+
+              // we're taking temperature values between -20 and 108
+              temp = 255 * 1 / (1 + K*pow(E, -(temp-30) * A));
+            
+            
+            writePixel2(horizPixel + yy*width, file, (unsigned char)temp);
+        }
+    }
+    file.close();
+    delay(100);
+    horizServo.write(ANGLE/2);
+    vertServo.write(ANGLE/2);
+    Serial.println("Done");
+}
+
+
+
+
+void setup(){
+    // setting up the serial port
+    Serial.begin(9600);
+    while(!Serial);
+    Serial.println("Start...");
+
+    // setting up the output pins
+    pinMode(10, OUTPUT); 
+    pinMode(9, OUTPUT);
+    
+    // if the SD card isn't there, return (don't do the rest of the function)
+    if (!SD.begin(chipSelect)){
+        Serial.println("SD?");
+        return;
+    }
+
+    // setting up the IR
+    setupIR();
+
+
+    int width = WIDTH;
+    int height = HEIGHT;
+    
+    // printing the free RAM
+    Serial.print("\n\nFree RAM:\n");
+    Serial.println(freeRam());
+    Serial.println("-----");
+     
+    
+    horizServo.attach(10);
+    vertServo.attach(9);
+    horizServo.write(ANGLE/2);
+    vertServo.write(ANGLE/2);
+    takePicture(width, height);
+}
+
+void loop(){}
 
 unsigned char readPixel(long int i, char * filename){
+    // TODO: change to work with NUMBER_OF_DIGITS
+    // TODO: get rid of SD.open()
     File dataFile = SD.open(filename);
     dataFile.seek(11 + 3*i);
     
@@ -76,9 +145,7 @@ unsigned char readPixel(long int i, char * filename){
     } else if (R == 255){
         return 255 - G/3;
     }
-    
-    // TODO: look at the gradient we want, and does G play a role?
-    // return G, since that it unused (?) in the scheme we want
+
     return -1;
     // for error...
   
@@ -103,121 +170,10 @@ void writePixel2(long int i, File dataFile, unsigned char x){
         B = 0;
     } else Serial.println("writePixel: error!");
     
-    boolean as = dataFile.seek(11 + 3*i + 4);
+    boolean as = dataFile.seek(9 + 3*i + 2*NUMBER_OF_DIGITS);;
     dataFile.write(R);
     dataFile.write(G);
     dataFile.write(B);
-}
-
-void writePixel(long int i, char * filename, unsigned char x){
-    // takes in an index, like arrays (0 based)
-    File dataFile;
-    dataFile = SD.open(filename, FILE_WRITE);
-//    Serial.print("dataFile == ");
-//    Serial.println(dataFile);
-//    Serial.println(filename);
-
-    
-
-    unsigned char R, G, B;  
-    if(x <= 85){
-        R = 0;
-        G = 3*x;
-        B = 255;
-      
-    } else if (x <= 170){
-        R = 3 * (x - 85);
-        G = 255;
-        B = 255 - 3*(x - 85);
-      
-    } else if (x <= 255){
-        R = 255;
-        G = 255 - 3*(x - 170);
-        B = 0;
-    } else Serial.println("writePixel: error!");
-    
-    boolean as = dataFile.seek(11 + 3*i + 4);
-    dataFile.write(R);
-    dataFile.write(G);
-    dataFile.write(B);
-    dataFile.close();
-}
-
-void setup(){
-    // setting up the serial port
-    Serial.begin(9600);
-    while(!Serial);
-    
-    Serial.println("Start...");
-    
-
-    // setting up the output pins
-    pinMode(10, OUTPUT); pinMode(9, OUTPUT);
-    
-    // if the SD card isn't there, return
-    if (!SD.begin(chipSelect)){
-        Serial.println("SD?");
-        return;
-    }
-
-    // setting up the IR
-    setupIR();
-    
-    
-//    horizServo.attach(9);
-//    vertServo.attach(10);
-    
-    //unsigned char * x = takePicture(width, height);
-    
-    // returns a filename, so we can pass it to other functions
-    // a filename of a total of 12 characters long (8.3 format)
-//    int time = millis();
-//    char * name = initPPM(width, height);
-//    time = millis() - time;
-//    Serial.print("Time in initPPM:\n");Serial.println(time/1000.0);
-//    Serial.print("filename == "); Serial.println(name);
-//
-//    //writePixel(2, name, 255);
-//    File dataFile;
-//    dataFile = SD.open(name, FILE_WRITE);
-//
-//    for (int i=0; i<width*height; i++){
-////        time = micros();
-//        float colorVal = 255.0*i / (100.0*100.0);
-//        writePixel2(i, dataFile, (int)colorVal);
-////        time = micros() - time;
-////        Serial.println(time);
-//        if (i%100 == 0) Serial.println(i/width);
-//    }
-//    dataFile.close();
-
-    // width, height < 10 (only 2k memory on the Uno)
-    int width = 100;
-    int height = 100;
-    
-
-    
-    // printing the free RAM
-    Serial.print("\n\nFree RAM:\n");
-    Serial.println(freeRam());
-    Serial.println("-----");
-    pinMode(9, OUTPUT);
-    
-    horizServo.attach(10);
-    vertServo.attach(9);
-    horizServo.write(0);
-    vertServo.write(0);
-    takePicture(width, height);
-}
-
-void loop(){
-  float temp = 0;
-//  temp = readTemp();
-  int HORIZPIN = 9;
-  int VERTPIN = 10;
-  int width = 100;
-  int height = 100;
-
 }
 
 
@@ -253,87 +209,13 @@ void gotoPixel(int x, int y, Servo horizServo, Servo vertServo, int height, int 
     int angle = 45;
     unsigned char horizAngle = 1.0 * x * angle / width;
     unsigned char vertAngle = 1.0 * y * angle / height;
-    
-//    float horizLastAngle = horizServo.read();
-//    float vertLastAngle = vertServo.read();
-    
+   
+    // assumes that the library handles the wait (or, don't handle it in this function)
     horizServo.write(horizAngle);
     vertServo.write(vertAngle);
-    
-    // delay = 0.14 sec / 60 degrees
-//    float delay2 = 1000 * 1000 * (horizAngle - horizLastAngle)  * 0.14 / 60;
-//    //delay2 = delay2*1000;
-//    //delayMicroseconds((int)delay2);
-//    if (delay2 < 0) delay2 = -1 * delay2;
-//    Serial.print("   horizAngle: ");
-//    Serial.print(horizAngle);
-//    Serial.print("    delayed: ");
-//    Serial.print(delay2);
-    
-    
-  
+
 }
 
-unsigned char * takePicture(int width, int height){
-    // assumes width, height of 11, 11
-    // 
-    int xx, yy;
-    
-    int HORIZPIN = 9;
-    int VERTPIN = 10;
-    char * name = initPPM(width, height);
-    File file = SD.open(name, FILE_WRITE);
-    Serial.print("in takePicture, printing \n");
-    Serial.println(name);
-    Serial.println();
-
-    for (yy=0; yy<width; yy++){
-//        Serial.print(width);Serial.print("   \t\tyy == ");Serial.println(yy);
-        for (xx=0; xx<height; xx++){
-              int horizPixel;
-              int PIX = 0;
-              if (yy%2 == 0)  horizPixel = xx;
-              if (yy%2 == 1)  horizPixel = xx;//width - xx - 1;
-              gotoPixel(horizPixel, yy, horizServo, vertServo, width, height);
-              delay(2*8);
-//              Serial.print("   ");
-//              Serial.print(horizPixel);
-//              Serial.print("   ");
-
-              
-
-            // returns a floating point value
-//            Serial.print("temp == ");
-            float temp = readTemp();
-//            Serial.println(temp);
-
-            
-            // we're taking temperature values between -20 and 108
-            float a = 2.4e-1;
-            float e = 2.718281828459045;
-            temp = 255 * 1 / (1 + pow(e, -(temp-30) * a));
-            
-            //temp = 1 / (1 + e**(-(temp-35) * a))
-            //temp += b * temp * temp;
-            //temp += 15;
-//            Serial.print("\t");
-//            Serial.print(temp);
-            
-            if (yy%2 == 0) writePixel2(horizPixel + yy*width,       file, (unsigned char)temp);
-            if (yy%2 == 1) writePixel2(horizPixel + yy*width + PIX, file, (unsigned char)temp);
-//            Serial.print("   Printing to pixel: ");
-//            Serial.print(yy*width + horizPixel);
-//            Serial.print("\n");
-        }
-        delay(100);      
-    }
-    file.close();
-    delay(100);
-    Serial.println("Done");
-    
-//    return 0;
-  
-}
 
 void setupIR(){
     i2c_init();
@@ -341,10 +223,6 @@ void setupIR(){
     // enabling pullups
     PORTC = (1 << PORTC4) | (1 << PORTC5); 
 }
-
-
-
-
 
 char * initPPM(int width, int height){
     Serial.println("\nIn initPPM");
@@ -407,6 +285,28 @@ char * initPPM(int width, int height){
     // return the filename written?
     return filename;
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 // -----------------------------------------------------------------------------

@@ -18,21 +18,33 @@
 
 // Change the below values if you want to change anything (well, simple things).
 // the width of the image (in vertical and horizontal directions)
+// can not be greater than 170, the servo motion range.
 #define ANGLE 45
 
 // defining width and height.
-#define WIDTH  10
-#define HEIGHT 10
+#define WIDTH  50
+#define HEIGHT 50
 
-// the number of digits in height and width (depends on above. I could calulate it)
-#define NUMBER_OF_DIGITS 2
+#define DEV 0x00
+//(0x5A << 1)
+
 
 // the constants that determines the width of blue-red
 #define A 2.4e-1f
-#define K 1 // since B taken in RGB
+#define CENTER 30.0f
+#define K 1.0f // since B taken in RGB
 
+// * how many milliseconds to wait after each pixel
+// * be warned the Serial.print takes a significant 
+//     amount of time (on the order of milliseconds)
+// * depends on settling time of the IR sensor (60ms is the fastest time)
+#define WAIT_MS 60
+
+#define DEBUG_PRINT 0
 // e
 #define E 2.718281828459045f
+
+
 
 // must change from 4 to 8! (8 on sparkfun shield)
 const int chipSelect = 8;
@@ -44,50 +56,8 @@ const uint8_t cardPin = 8;
 Servo horizServo;
 Servo vertServo;
 
-
-unsigned char * takePicture(int width, int height){
-    // assumes width, height of 11, 11
-    // 
-    int xx, yy;
-    
-    int HORIZPIN = 9;
-    int VERTPIN = 10;
-    char * name = initPPM(width, height);
-    File file = SD.open(name, FILE_WRITE);
-    Serial.print("in takePicture, printing \n");
-    Serial.println(name);
-    Serial.println();
-
-    for (yy=0; yy<width; yy++){
-        delay(100);
-        Serial.println(yy);  
-        for (xx=0; xx<height; xx++){
-              int horizPixel;
-              
-              if (yy%2 == 0)  horizPixel = xx;
-              if (yy%2 == 1)  horizPixel = xx;//width - xx - 1;
-              
-              gotoPixel(horizPixel, yy, horizServo, vertServo, width, height);
-              
-              delay(4);
-
-              float temp = readTemp();
-
-              // we're taking temperature values between -20 and 108
-              temp = 255 * 1 / (1 + K*pow(E, -(temp-30) * A));
-            
-            
-            writePixel2(horizPixel + yy*width, file, (unsigned char)temp);
-        }
-    }
-    file.close();
-    delay(100);
-    horizServo.write(ANGLE/2);
-    vertServo.write(ANGLE/2);
-    Serial.println("Done");
-}
-
-
+// the number of digits in height and width
+int NUMBER_OF_DIGITS  = log10(WIDTH) + 1;
 
 
 void setup(){
@@ -113,11 +83,23 @@ void setup(){
     int width = WIDTH;
     int height = HEIGHT;
     
+//    // writing the shortest possible delay time...
+//    I2CWrite(0x25, 0x74, 0xB4, 0x70);
+//    // according to cheap-thermocam, that must be working
+//    // now, let's read it
+    unsigned int data = I2CRead(0x25);
+    Serial.print("data, in setup: 0x");
+    Serial.println(data & 0xFFFF, HEX);
+//    
+//    fromOnline();
+    
+    
     // printing the free RAM
     Serial.print("\n\nFree RAM:\n");
     Serial.println(freeRam());
     Serial.println("-----");
      
+    Serial.println(NUMBER_OF_DIGITS);
     
     horizServo.attach(10);
     vertServo.attach(9);
@@ -127,6 +109,8 @@ void setup(){
 }
 
 void loop(){}
+
+
 
 unsigned char readPixel(long int i, char * filename){
     // TODO: change to work with NUMBER_OF_DIGITS
@@ -197,10 +181,126 @@ float readTemp(){
     float temp=0;
     
     // from the datasheet
-    int data = (data_high << 8) + data_low;
+    unsigned int data = (data_high << 8) + data_low;
+    data = data & 0xFFFF;
+    
+    //data = 0x3AF7;
+    if (DEBUG_PRINT){
+      Serial.print("  data == ");
+      Serial.print(data, HEX);
+    }
     temp = data * 0.02 - 273.15;
     return temp;
 }
+void readConfig(){
+    // for shortest settling time... (60ms?)
+    //     IIR = 0x100
+    //     FIR = 0x100
+    int data;
+    data = I2CRead(0x25); // includes the command here!
+    
+    Serial.print("\n!!\ndata: 0x"); 
+    Serial.println(data & 0xFFFF, HEX); 
+}
+void writeConfig(){
+    // IIR = (want) 100
+    // FIR = (want) 100
+    // then, keeping the default settings, we want 
+    // MSB -- 0b1011 0100 0111 0100 -- LSBM
+    //      = 0xB474
+    // (to have the shortest possible delay)
+    
+    I2CWrite(0x25, 0x74, 0xB4, 0x70);
+    // see http://depa.usst.edu.cn/chenjq/www2/SDesign/JavaScript/CRCcalculation.htm
+    // for PEC calculation (the last byte)
+}
+void I2CWrite(int adress, unsigned int LSB, unsigned int MSB, int PEC){
+  
+  i2c_start_wait(DEV+I2C_WRITE);
+  i2c_write(adress);
+  i2c_write(LSB); 
+  i2c_write(MSB);
+  i2c_write(PEC);
+  i2c_stop();  
+  delay(100);
+}
+
+// A method to read values from a EEPROM adress
+unsigned int I2CRead(int adress){
+  
+  i2c_start_wait(DEV+I2C_WRITE);
+  i2c_write(adress);
+  i2c_rep_start(DEV+I2C_READ);
+  unsigned int LSB = i2c_readAck();
+  unsigned int MSB = i2c_readAck();
+  unsigned int pec = i2c_readNak();
+  
+  Serial.print("in I2CRead -- PEC: 0x");
+  Serial.println(pec, HEX);
+  i2c_stop();
+  
+  unsigned int regValue = (((MSB) << 8) + LSB);
+  
+  Serial.println();
+  Serial.print(MSB, HEX); Serial.println(LSB, HEX);
+  Serial.println(regValue, HEX);
+  return regValue;
+  delay(100);
+  
+}
+unsigned char * takePicture(int width, int height){
+    // assumes width, height of 11, 11
+    // 
+    int xx, yy;
+    
+    int HORIZPIN = 9;
+    int VERTPIN = 10;
+    char * name = initPPM(width, height);
+    File file = SD.open(name, FILE_WRITE);
+    Serial.print("in takePicture, printing \n");
+    Serial.println(name);
+    Serial.println();
+
+    for (yy=0; yy<width; yy++){
+        
+        Serial.println(yy);  
+        for (xx=0; xx<height; xx++){
+              int horizPixel;
+              
+              if (yy%2 == 0)  horizPixel = xx;
+              if (yy%2 == 1)  horizPixel = xx;//width - xx - 1;
+
+              
+              gotoPixel(horizPixel, yy, horizServo, vertServo, width, height);
+              if (xx == 0) delay(500);
+              
+              delay(WAIT_MS);
+
+              float temp = readTemp();
+              
+              if (DEBUG_PRINT){
+                  Serial.print("  row: ");
+                  Serial.print(yy);
+                  Serial.print("  temp: ");
+                  Serial.print(temp);
+                  Serial.print("\n");
+              }
+
+              // we're taking temperature values between -20 and 108
+              temp = 255 * 1 / (1 + K*pow(E, -(temp-CENTER) * A));
+            
+
+            writePixel2(horizPixel + yy*width, file, (unsigned char)temp);
+        }
+        
+    }
+    file.close();
+    delay(1000);
+    horizServo.write(ANGLE/2);
+    vertServo.write(ANGLE/2);
+    Serial.println("Done");
+}
+
 
 
 void gotoPixel(int x, int y, Servo horizServo, Servo vertServo, int height, int width){
@@ -213,6 +313,10 @@ void gotoPixel(int x, int y, Servo horizServo, Servo vertServo, int height, int 
     // assumes that the library handles the wait (or, don't handle it in this function)
     horizServo.write(horizAngle);
     vertServo.write(vertAngle);
+    if(DEBUG_PRINT){
+      Serial.print("   horizAngle: ");
+      Serial.print(horizAngle);
+    }
 
 }
 
@@ -240,7 +344,7 @@ char * initPPM(int width, int height){
     filename[6] = (i/10)%10 + '0';      // tens
     filename[7] = i%10 + '0';           // ones
     if (!SD.exists(filename)) {
-      Serial.println("Did the if");
+      if (DEBUG_PRINT) Serial.println("Did the if");
       break;
     }
   }
@@ -263,9 +367,11 @@ char * initPPM(int width, int height){
     dataFile.print(255);
     dataFile.write(0x0A);
 
-    Serial.println("\nPosition()");
-    Serial.println(dataFile.position());
-    Serial.println("end position()\n");
+    if(DEBUG_PRINT){
+        Serial.println("\nPosition()");
+        Serial.println(dataFile.position());
+        Serial.println("end position()\n");
+    }
     int32_t length = 1; 
     // since we're printing R, G, and B values in one loop
     length = length * width;
@@ -282,9 +388,13 @@ char * initPPM(int width, int height){
     }
     dataFile.close();
     
+    Serial.println("initPPM, done");
     // return the filename written?
     return filename;
 }
+
+
+
 
 
 

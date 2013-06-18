@@ -22,8 +22,8 @@
 #define ANGLE 45
 
 // defining width and height.
-#define WIDTH  50
-#define HEIGHT 50
+#define WIDTH  25
+#define HEIGHT 25
 
 #define DEV 0x00
 //(0x5A << 1)
@@ -38,9 +38,9 @@
 // * be warned the Serial.print takes a significant 
 //     amount of time (on the order of milliseconds)
 // * depends on settling time of the IR sensor (60ms is the fastest time)
-#define WAIT_MS 60
+#define WAIT_MS 37
 
-#define DEBUG_PRINT 0
+#define DEBUG_PRINT 1
 // e
 #define E 2.718281828459045f
 
@@ -59,7 +59,39 @@ Servo vertServo;
 // the number of digits in height and width
 int NUMBER_OF_DIGITS  = log10(WIDTH) + 1;
 
+void I2CWrite(int adress, unsigned int LSB, unsigned int MSB, int PEC){
+  i2c_start_wait(DEV+I2C_WRITE);
+  i2c_write(adress);
+  i2c_write(LSB); 
+  i2c_write(MSB);
+  i2c_write(PEC);
+  i2c_stop();  
+  delay(100);
+}
 
+// A method to read values from a EEPROM adress
+unsigned int I2CRead(int adress){
+  
+  i2c_start_wait(DEV+I2C_WRITE);
+  i2c_write(adress);
+  i2c_rep_start(DEV+I2C_READ);
+  unsigned int LSB = i2c_readAck();
+  unsigned int MSB = i2c_readAck();
+  unsigned int pec = i2c_readNak();
+  
+  //  Serial.print("in I2CRead -- PEC: 0x");
+  //  Serial.println(pec, HEX);
+  i2c_stop();
+  
+  unsigned int regValue = (((MSB) << 8) + LSB);
+  
+  //  Serial.println();
+  //  Serial.print(MSB, HEX); Serial.println(LSB, HEX);
+  //  Serial.println(regValue, HEX);
+  return regValue;
+  delay(100);
+  
+}
 void setup(){
     // setting up the serial port
     Serial.begin(9600);
@@ -83,12 +115,19 @@ void setup(){
     int width = WIDTH;
     int height = HEIGHT;
     
-//    // writing the shortest possible delay time...
-//    I2CWrite(0x25, 0x74, 0xB4, 0x70);
-//    // according to cheap-thermocam, that must be working
-//    // now, let's read it
+    // writing the shortest possible delay time (at least, in the datasheet!)...
+    I2CWrite(0x25, 0x00, 0x00, 0x83);
+    delay(1000);
     unsigned int data = I2CRead(0x25);
-    Serial.print("data, in setup: 0x");
+    Serial.print("data (all zeros?), in setup: 0x");
+    Serial.println(data & 0xFFFF, HEX);
+    
+    I2CWrite(0x25, 0x74, 0xB3, 0x65);
+    delay(1000);
+    // according to cheap-thermocam, that must be working
+    // now, let's read it
+    data = I2CRead(0x25);
+    Serial.print("data (0xb474?), in setup: 0x");
     Serial.println(data & 0xFFFF, HEX);
 //    
 //    fromOnline();
@@ -109,6 +148,7 @@ void setup(){
 }
 
 void loop(){}
+
 
 
 
@@ -192,66 +232,12 @@ float readTemp(){
     temp = data * 0.02 - 273.15;
     return temp;
 }
-void readConfig(){
-    // for shortest settling time... (60ms?)
-    //     IIR = 0x100
-    //     FIR = 0x100
-    int data;
-    data = I2CRead(0x25); // includes the command here!
-    
-    Serial.print("\n!!\ndata: 0x"); 
-    Serial.println(data & 0xFFFF, HEX); 
-}
-void writeConfig(){
-    // IIR = (want) 100
-    // FIR = (want) 100
-    // then, keeping the default settings, we want 
-    // MSB -- 0b1011 0100 0111 0100 -- LSBM
-    //      = 0xB474
-    // (to have the shortest possible delay)
-    
-    I2CWrite(0x25, 0x74, 0xB4, 0x70);
-    // see http://depa.usst.edu.cn/chenjq/www2/SDesign/JavaScript/CRCcalculation.htm
-    // for PEC calculation (the last byte)
-}
-void I2CWrite(int adress, unsigned int LSB, unsigned int MSB, int PEC){
-  
-  i2c_start_wait(DEV+I2C_WRITE);
-  i2c_write(adress);
-  i2c_write(LSB); 
-  i2c_write(MSB);
-  i2c_write(PEC);
-  i2c_stop();  
-  delay(100);
-}
 
-// A method to read values from a EEPROM adress
-unsigned int I2CRead(int adress){
-  
-  i2c_start_wait(DEV+I2C_WRITE);
-  i2c_write(adress);
-  i2c_rep_start(DEV+I2C_READ);
-  unsigned int LSB = i2c_readAck();
-  unsigned int MSB = i2c_readAck();
-  unsigned int pec = i2c_readNak();
-  
-  Serial.print("in I2CRead -- PEC: 0x");
-  Serial.println(pec, HEX);
-  i2c_stop();
-  
-  unsigned int regValue = (((MSB) << 8) + LSB);
-  
-  Serial.println();
-  Serial.print(MSB, HEX); Serial.println(LSB, HEX);
-  Serial.println(regValue, HEX);
-  return regValue;
-  delay(100);
-  
-}
 unsigned char * takePicture(int width, int height){
     // assumes width, height of 11, 11
     // 
     int xx, yy;
+    int i;
     
     int HORIZPIN = 9;
     int VERTPIN = 10;
@@ -260,6 +246,13 @@ unsigned char * takePicture(int width, int height){
     Serial.print("in takePicture, printing \n");
     Serial.println(name);
     Serial.println();
+    
+    gotoPixel(0, 0, horizServo, vertServo, width, height);
+    for (i=0; i<100; i++){
+        readTemp();
+        if(DEBUG_PRINT) Serial.println();
+        delay(60);
+    }
 
     for (yy=0; yy<width; yy++){
         
@@ -283,13 +276,16 @@ unsigned char * takePicture(int width, int height){
                   Serial.print(yy);
                   Serial.print("  temp: ");
                   Serial.print(temp);
-                  Serial.print("\n");
+                  Serial.print("  ");
               }
 
               // we're taking temperature values between -20 and 108
               temp = 255 * 1 / (1 + K*pow(E, -(temp-CENTER) * A));
-            
-
+            if(DEBUG_PRINT){
+                Serial.print("color: ");
+                Serial.print((unsigned char)temp);
+                Serial.print("\n");
+            }
             writePixel2(horizPixel + yy*width, file, (unsigned char)temp);
         }
         

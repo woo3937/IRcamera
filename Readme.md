@@ -64,6 +64,13 @@ Physical Directions
    `#ifndef F_CPU` `#define F_CPU 16000000UL` `#endif` `/* I2C clock in Hz */`
    `#define SCL_CLOCK 50000L`
 
+
+### Bugs
+I'm writing down so I don't have to go through the whole process of figuring it
+out again.
+
+* **RPi and Internet** Add `nameserver 8.8.8.8` to `/etc/resolv.conf`. 
+
 [1]:http://www.cheap-thermocam.net/old-version/
 [servos]:https://www.sparkfun.com/products/9065
 [pan]:https://www.sparkfun.com/products/10335

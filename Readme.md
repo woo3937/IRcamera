@@ -65,17 +65,13 @@ Physical Directions
    `#define SCL_CLOCK 50000L`
 
 
-### Bugs
-
-* **RPi and Internet** 
-
 Bugs
-=========
+===================================
 
-I'm writing down so I don't have to go through the whole process of figuring it
-out again.
+I'm writing down all the bugs I find so I don't have to go through the whole
+process of figuring it out again.
 
-##### RPi and Internet
+#### RPi and Internet
 Add `nameserver 8.8.8.8` to `/etc/resolv.conf`. So simple. I went through a long
 process where it would connect just fine at my apartment, where there were no
 restrictions. At the University, where there are restrictions, it didn't work.

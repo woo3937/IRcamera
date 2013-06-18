@@ -66,14 +66,16 @@ Physical Directions
 
 
 ### Bugs
-I'm writing down so I don't have to go through the whole process of figuring it
-out again.
 
 * **RPi and Internet** Add `nameserver 8.8.8.8` to `/etc/resolv.conf`. 
 
 Bugs
 =========
-##### RPi and Internet
+
+I'm writing down so I don't have to go through the whole process of figuring it
+out again.
+
+# RPi and Internet
 More text
 
 [1]:http://www.cheap-thermocam.net/old-version/

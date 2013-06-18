@@ -67,7 +67,7 @@ Physical Directions
 
 ### Bugs
 
-* **RPi and Internet** Add `nameserver 8.8.8.8` to `/etc/resolv.conf`. 
+* **RPi and Internet** 
 
 Bugs
 =========
@@ -76,7 +76,15 @@ I'm writing down so I don't have to go through the whole process of figuring it
 out again.
 
 ##### RPi and Internet
-More text
+Add `nameserver 8.8.8.8` to `/etc/resolv.conf`. So simple. I went through a long
+process where it would connect just fine at my apartment, where there were no
+restrictions. At the University, where there are restrictions, it didn't work.
+
+
+
+
+
+
 
 [1]:http://www.cheap-thermocam.net/old-version/
 [servos]:https://www.sparkfun.com/products/9065

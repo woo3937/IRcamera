@@ -71,6 +71,11 @@ out again.
 
 * **RPi and Internet** Add `nameserver 8.8.8.8` to `/etc/resolv.conf`. 
 
+Bugs
+=========
+##### RPi and Internet
+More text
+
 [1]:http://www.cheap-thermocam.net/old-version/
 [servos]:https://www.sparkfun.com/products/9065
 [pan]:https://www.sparkfun.com/products/10335

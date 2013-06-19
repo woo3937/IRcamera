@@ -68,8 +68,8 @@ Physical Directions
 Bugs
 ===================================
 
-I'm writing down all the bugs I find so I don't have to go through the whole
-process of figuring it out again.
+I'm writing down all the painfully hard to resolve bugs I find so I don't have
+to go through the whole process of figuring it out again.
 
 #### RPi and Internet
 Add `nameserver 8.8.8.8` to `/etc/resolv.conf`. So simple. I went through a long

@@ -69,6 +69,8 @@ void I2CWrite(int adress, unsigned int LSB, unsigned int MSB, int PEC){
   delay(100);
 }
 
+
+
 // A method to read values from a EEPROM adress
 unsigned int I2CRead(int adress){
   
@@ -115,19 +117,35 @@ void setup(){
     int width = WIDTH;
     int height = HEIGHT;
     
+    // maximum temp settings
+    I2CWrite(0x20, 0x00, 0x00, 0x43); delay(100);
+    I2CWrite(0x20, 0x23, 0xFF, 0x21);
+    delay(1000);
+    unsigned int data = I2CRead(0x20);
+    Serial.print("data (0xFF23?), in setup: 0x");
+    Serial.println(data & 0xFFFF, HEX);
+    // min temp settings
+    I2CWrite(0x21, 0x00, 0x00, 0x28); delay(100);
+    I2CWrite(0x21, 0x5B, 0x4F, 0x59);
+    delay(1000);
+    data = I2CRead(0x21);
+    Serial.print("data (0x4F5B?), in setup: 0x");
+    Serial.println(data & 0xFFFF, HEX);
+    
     // writing the shortest possible delay time (at least, in the datasheet!)...
     I2CWrite(0x25, 0x00, 0x00, 0x83);
     delay(1000);
-    unsigned int data = I2CRead(0x25);
+    data = I2CRead(0x25);
     Serial.print("data (all zeros?), in setup: 0x");
     Serial.println(data & 0xFFFF, HEX);
     
-    I2CWrite(0x25, 0x74, 0xB3, 0x65);
+    I2CWrite(0x25, 0x74, 0xB4, 0x70);
     delay(1000);
     // according to cheap-thermocam, that must be working
     // now, let's read it
     data = I2CRead(0x25);
-    Serial.print("data (0xb474?), in setup: 0x");
+    delay(500);
+    Serial.print("data (0xbx7x?), in setup: 0x");
     Serial.println(data & 0xFFFF, HEX);
 //    
 //    fromOnline();
@@ -201,7 +219,7 @@ void writePixel2(long int i, File dataFile, unsigned char x){
 }
 
 
-float readTemp(){
+float readTemp(int address, int O_PRINT){
     // for this specific IR sensor. change if using a different one.
     int dev = 0x5A << 1;
     int data_low;
@@ -210,7 +228,7 @@ float readTemp(){
     
     // from the comment by Sensorjunkie at http://forum.arduino.cc/index.php/topic,21317.0.html
     i2c_start_wait(dev + I2C_WRITE);
-    i2c_write(0x07);
+    i2c_write(address);
     i2c_rep_start(dev+I2C_READ);
     data_low = i2c_readAck();
     data_high = i2c_readAck();
@@ -225,7 +243,7 @@ float readTemp(){
     data = data & 0xFFFF;
     
     //data = 0x3AF7;
-    if (DEBUG_PRINT){
+    if (DEBUG_PRINT && O_PRINT == 1){
       Serial.print("  data == ");
       Serial.print(data, HEX);
     }
@@ -238,6 +256,8 @@ unsigned char * takePicture(int width, int height){
     // 
     int xx, yy;
     int i;
+    float ta, t1, t2;
+    int raw1, raw2;
     
     int HORIZPIN = 9;
     int VERTPIN = 10;
@@ -249,8 +269,26 @@ unsigned char * takePicture(int width, int height){
     
     gotoPixel(0, 0, horizServo, vertServo, width, height);
     for (i=0; i<100; i++){
-        readTemp();
-        if(DEBUG_PRINT) Serial.println();
+        raw1 = readTemp(0x05, 0);
+        raw2 = readTemp(0x06, 0);
+        ta = readTemp(0x06, 0);
+        t1 = readTemp(0x07, 0);
+        t2 = readTemp(0x08, 0);
+ 
+        if(DEBUG_PRINT){ 
+            Serial.print("  ta: ");
+            Serial.print(ta);
+            Serial.print("  tobj1: ");
+            Serial.print(t1);
+            Serial.print("  tobj2: ");
+            Serial.print(t2);
+            Serial.print("  raw1: 0x");
+            Serial.print(raw1 & 0xFFFF, HEX);            
+            Serial.print("  raw2: 0x");
+            Serial.print(raw2 & 0xFFFF, HEX);
+            Serial.println();
+        }
+            
         delay(60);
     }
 
@@ -269,7 +307,7 @@ unsigned char * takePicture(int width, int height){
               
               delay(WAIT_MS);
 
-              float temp = readTemp();
+              float temp = readTemp(0x07, 1);
               
               if (DEBUG_PRINT){
                   Serial.print("  row: ");

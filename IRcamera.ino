@@ -265,7 +265,7 @@ unsigned char * takePicture(int width, int height){
     File file = SD.open(name, FILE_WRITE);
     Serial.print("in takePicture, printing \n");
     Serial.println(name);
-    Serial.println();
+    Serial.println(); 
     
     gotoPixel(0, 0, horizServo, vertServo, width, height);
     for (i=0; i<100; i++){

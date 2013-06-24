@@ -1,2 +1,0 @@
-
-gcc i2c.c -o i2c -l bcm2835 -std=c99

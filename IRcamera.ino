@@ -576,7 +576,6 @@ void writeBMPImage(unsigned char * input, char fileName[], int w, int h){
     //unsigned char bmpPad[rowSize - 3*w];
     unsigned char * bmpPad = (unsigned char *)malloc(sizeof(unsigned char) * (rowSize - 3*w));
     for (int i=0; i<rowSize-3*w; i++) {                 
-        // fill with 0s
         bmpPad[i] = 0;
     }
 

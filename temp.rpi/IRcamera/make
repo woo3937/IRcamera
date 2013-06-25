@@ -1,2 +1,2 @@
 
-gcc IRcamera.c -o IRcamera -l bcm2835 -std=c99
+gcc IRcamera.c -o IRcamera.o -l bcm2835 -std=c99

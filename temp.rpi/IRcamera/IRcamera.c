@@ -1,18 +1,62 @@
+/* 
+ * All of this code can be found on GitHub, at https://github.com/scottsievert/IRcamera
+ *
+ * At first, this project used an Arduino and two servos to take a picture. The
+ * Arduino only has 2k of RAM and the servos tend me be imprecise, meaning, at
+ * maximum, could only get about a 13x10 image out. So, we switched to the
+ * Raspberry Pi (512Mb of RAM!) and some stepper motors, which are much more
+ * accurate. For development, this choice was also better. I got off the silly
+ * Arduino IDE and into Vim, and am closer to bash. Code completion, beautiful
+ * syntax highlighting, nice shortcuts... but I could go on all day about Vim.
+ *
+ * Normal IR cameras, ones that aren't made out of a single sensor, normally
+ * cost between 4,000 and 40,000 dollars -- insane expensive.
+ *
+ * The parts needed are:
+ * | Part           | Number | Total Price |
+ * |----------------|--------|-------------|
+ * | RPi            | 1      | 35          |
+ * | IR sensor      | 1      | 35          |
+ * | Driver boards  | 2      | 200         |
+ * | Stepper motors | 2      | 70          |
+ * | Total          |        | 340         |
+ *      
+ *      - Stepper motors (also in steppers.c):
+ *          url: http://www.phidgets.com/products.php?category=23&product_id=3317_1
+ *      - Driver boards (also in steppers.c):
+ *          url: http://www.phidgets.com/products.php?product_id=1067
+ *      - IR sensor: MLX90614 DCI
+ *          url: http://www.futureelectronics.com/en/technologies/semiconductors/analog/sensors/temperature/Pages/3003055-MLX90614ESF-DCI-000-TU.aspx?IM=0
+ *      - Raspberry Pi:
+ *          I'm sure a simple Google search will get you what you want. It's a popular device.
+ *
+ *  I'm writing good docs because I hate it when there are poor docs.
+ *  Absolutely, positively, resoundingly hate it. Probably too much, but oh
+ *  well.
+ *
+ *  --Scott Sievert (sieve121@umn.edu), 2013-06-26
+ */
+
+
+
 #include <stdio.h>
 #include <bcm2835.h>
-/*#include <wiringPi.h>*/
 #include <stdlib.h>
-#include <unistd.h>
 #include <math.h>
 #include <time.h>
 #include <fcntl.h>
 #include <errno.h>
+#include <phidget21.h>
+#include "steppers.h"
+#include <unistd.h>
 
-#define BAUD_RATE 50e3
+#define WIDTH 100
+#define HEIGHT 100
+
+#define BAUD_RATE 100e3
 #define DEBUG_PRINT 1
 
-
-#define WAIT_MS 24.0f
+#define WAIT_MS 80 // note that the motors (as of 2013-06-27) wait until they're in position
 #define SAME_IMAGE_FILE 1
 
 // the constants that determines the width of blue-red
@@ -25,9 +69,150 @@ void initIR();
 float readTemp();
 void writeBMP(float * in, int w, int h);
 void writePPM();
-void sleepS2(float mills);
-float readConfig();
+int readConfig();
 void writeConfig();
+void waitMillis(int millis);
+
+void main(int argc, char **argv){
+    int data;
+    int i;
+    initIR();
+    data = readConfig();
+    printf("data, before: %x\n", data);
+    while(1){
+        i++;
+        writeConfig();
+        data = readConfig();
+        printf("    data in iteration %d: 0x%x\n", i, data);
+        printf("\n");
+        if (i>10) break;
+    }
+
+
+    bcm2835_i2c_end();
+
+        /*printf("Error = %d out of 100\n", error);*/
+        /*fromSampleCode();*/
+        /*CPhidgetStepperHandle stepper = 0;*/
+        /*CPhidgetStepper_create(&stepper);*/
+
+        /*initStepper(stepper);*/
+        /*printf("Done with init...\n");*/
+        /*fflush(stdout);*/
+        /*getchar();*/
+
+        /*gotoPixel2D(stepper, stepper, 0, WIDTH, 0, HEIGHT);*/
+        /*gotoPixel2D(stepper, stepper, WIDTH, WIDTH, HEIGHT, HEIGHT);*/
+        /*gotoPixel2D(stepper, stepper, 0, WIDTH, 0, HEIGHT);*/
+        /*gotoPixel2D(stepper, stepper, WIDTH, WIDTH, HEIGHT, HEIGHT);*/
+        /*gotoPixel2D(stepper, stepper, 0, WIDTH, 0, HEIGHT);*/
+        /*gotoPixel2D(stepper, stepper, WIDTH, WIDTH, HEIGHT, HEIGHT);*/
+
+
+        /*haltStepper(stepper);*/
+
+        /*float temp, test;*/
+
+        /*initIR();*/
+        /*temp = readTemp();*/
+
+        /*printf("temp: %f \n", temp);*/
+        /*int width = 50;*/
+        /*int height = 50;*/
+        /*float * in = (float *)malloc(sizeof(float) * width * height);*/
+
+
+        /*printf("Start timer!\n");*/
+        /*for(int i=0; i<width*height; i++){*/
+            /*float temp = readTemp();*/
+            /*float color = 255 * 1 / (1 + K*exp(-(temp-CENTER) * A));*/
+            /*in[i] = color;*/
+            /*sleepS2(WAIT_MS);*/
+            /*if (i % width == 0){*/
+                /*printf("%d\n", i/width);*/
+                /*fflush(stdout);*/
+            /*}*/
+        /*}*/
+        /*printf("End timer!\n");*/
+
+        /*writeBMP(in, width, height);*/
+        /*writeConfig();*/
+        /*readConfig();*/
+}
+
+float readTemp(){
+    // adapted from  http://www.raspberrypi.org/phpBB3/viewtopic.php?t=17738&p=362569
+    unsigned char i,reg;
+    reg = 0x07; // it reads from RAM 0x07
+    unsigned char buf[6];
+    double temp=0;
+
+    bcm2835_i2c_begin();
+    bcm2835_i2c_write(&reg, 1);
+    bcm2835_i2c_read_register_rs(&reg, &buf[0], 3);
+
+    temp = (double) (((buf[1]) << 8) + buf[0]);
+    temp = (temp * 0.02)-0.00;
+    temp = temp - 273.15;
+    return (float)temp;
+}
+void waitMillis(int millis){
+    // millis can not be greater than 1000
+    usleep(1000 * millis);
+}
+void initIR(){
+    bcm2835_init();
+    bcm2835_i2c_begin();
+    bcm2835_i2c_set_baudrate((int)BAUD_RATE);
+    bcm2835_i2c_setSlaveAddress(0x5a);
+}
+
+int readConfig(){
+    // adapted from  http://www.raspberrypi.org/phpBB3/viewtopic.php?t=17738&p=362569
+    unsigned char reg = 0x25; // the command to send
+    unsigned char buf[6] = {0,0,0,0,0,0};
+    int data=-1;
+
+    /*bcm2835_i2c_begin();*/
+    int w = bcm2835_i2c_write(&reg, 1);
+    int r = bcm2835_i2c_read_register_rs(&reg, &buf[0], 3);
+    printf("in read: %d, %d\n", w, r);
+    /*bcm2835_i2c_end();*/
+
+    data = buf[0] + (buf[1]<<8);
+    return data;
+}
+
+void writeConfig(){
+    // see http://depa.usst.edu.cn/chenjq/www2/SDesign/JavaScript/CRCcalculation.htm
+    // for pec calculation
+    unsigned char * write = (unsigned char *)malloc(sizeof(unsigned char) * 9); 
+    unsigned char * clear = (unsigned char *)malloc(sizeof(unsigned char) * 9);
+
+    // command, LSB, MSB, PEC
+    write[0] = 0x25; write[1] = 0x74; write[2] = 0xb4; write[3] = 0x70;
+    clear[0] = 0x25; clear[1] = 0x00; clear[2] = 0x00; clear[3] = 0x83;
+
+    int c = -1;
+    int w = -1;
+
+    c = bcm2835_i2c_write(clear+0, 4);
+    waitMillis(100);
+
+    /*w = bcm2835_i2c_write(write, 4);*/
+    /*waitMillis(100);*/
+
+    /*int data = readConfig();*/
+    /*waitMillis(100);*/
+    waitMillis(5);
+
+    /*printf("clear: %d, write: %d, data: 0x%x", c, w, data);*/
+    /*printf("\n");*/
+
+    free(clear);
+    free(write);
+
+}
 
 void writeBMP(float * in, int w, int h){
     if (DEBUG_PRINT) printf("In writeBMP\n");
@@ -179,96 +364,3 @@ void writePPM(){
     fflush(ofp);
     fclose(ofp);
 }
-
-void main(int argc, char **argv){
-    float temp, test;
-
-    initIR();
-    temp = readTemp();
-
-    printf("temp: %f \n", temp);
-    int width = 50;
-    int height = 50;
-    float * in = (float *)malloc(sizeof(float) * width * height);
-
-    printf("Start timer!\n");
-    for(int i=0; i<width*height; i++){
-        float temp = readTemp();
-        float color = 255 * 1 / (1 + K*exp(-(temp-CENTER) * A));
-        in[i] = color;
-        sleepS2(WAIT_MS);
-        if (i % width == 0){
-            printf("%d\n", i/width);
-            fflush(stdout);
-        }
-    }
-    printf("End timer!\n");
-
-    writeBMP(in, width, height);
-    writeConfig();
-    readConfig();
-
-        printf("Starting wait...\n");
-        for (int i=0; i<1000; i++){
-            sleepS2(WAIT_MS);
-        }
-        printf("Ending wait\n");
-
-
-}
-
-float readTemp(){
-    // adapted from  http://www.raspberrypi.org/phpBB3/viewtopic.php?t=17738&p=362569
-    unsigned char i,reg;
-    reg = 0x07; // it reads from RAM 0x07
-    unsigned char buf[6];
-    double temp=0;
-
-    bcm2835_i2c_begin();
-    bcm2835_i2c_write(&reg, 1);
-    bcm2835_i2c_read_register_rs(&reg, &buf[0], 3);
-
-    temp = (double) (((buf[1]) << 8) + buf[0]);
-    temp = (temp * 0.02)-0.00;
-    temp = temp - 273.15;
-    return (float)temp;
-}
-void initIR(){
-    bcm2835_init();
-    bcm2835_i2c_begin();
-    bcm2835_i2c_set_baudrate((int)BAUD_RATE);
-    bcm2835_i2c_setSlaveAddress(0x5a);
-}
-
-void sleepS2(float mills){
-    // a shitty wait function. might be influenced by some stuff in the linux
-    // kernel. accurate within ~3%
-    mills = 17.4e3 * mills;
-    while (mills > 0) mills = mills-1;
-
-}
-float readConfig(){
-    // adapted from  http://www.raspberrypi.org/phpBB3/viewtopic.php?t=17738&p=362569
-    unsigned char reg = 0x25; // the command to send
-    unsigned char buf[6] = {0,0,0,0,0,0};
-    int data=-1;
-
-    bcm2835_i2c_begin();
-    bcm2835_i2c_write(&reg, 1);
-    bcm2835_i2c_read_register_rs(&reg, &buf[0], 3);
-
-    data = buf[0] + (buf[1]<<8);
-    if(DEBUG_PRINT) printf("data: 0x%x\n", data);
-    return (float)1;
-}
-
-void writeConfig(){
-    unsigned char com[] = {0x25, 0x74, 0xb1, 0x6b};
-    unsigned char clear[] = {0x25, 0x00, 0x00, 0x83};
-
-    bcm2835_i2c_begin();
-    bcm2835_i2c_write(&clear[0], 4);
-    bcm2835_i2c_begin();
-    bcm2835_i2c_write(&com[0], 4);
-}
-

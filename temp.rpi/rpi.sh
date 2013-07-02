@@ -58,15 +58,14 @@ git clone https://github.com/quick2wire/quick2wire-python-api
 #sudo apt-get -y install ipython3
 
 # making a cron job so no data is lost
-echo "* * * * * scp -r ~/temp.rpi/ scott@192.168.2.1:~/Developer/IRcamera/" >> mycron
-sudo crontab mycron
-rm mycron
+#echo "* * * * * scp -r ~/temp.rpi/ scott@192.168.2.1:~/Developer/IRcamera/" >> mycron
+#sudo crontab mycron
+#rm mycron
 
 
+# sudo apt-get install libusb-1.0-0-dev
+# in the bcm2825 library (maybe) and phigets (for sure) library, run 
+#./configure
+#make
+#make install
 
-# notes on the application:
-# run i2cdetect -y 0 and i2cdetect -y 1 to tell which port sensor is on
-# import smbus; bus = smbus.SMBus(1)
-# bus.read_byte_data(adr, 0x07) gives 255 all the time
-
-# when I run "bus.read_block_data(adr, 0x07), I get a PANIC

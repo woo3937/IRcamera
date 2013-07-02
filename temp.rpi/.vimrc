@@ -21,9 +21,11 @@ set smartindent
     :syntax on
 ":colorscheme darkblue
 
+" added to make the RPi easier
 nmap <Leader>m :w<CR>:!sh make<CR>
 nmap <Leader>b :!sh ~/temp.rpi/backup.sh<CR>
 nmap <Leader>e :!sudo ./IRcamera<CR>
+nmap <Leader>d <Leader>m<Leader>e
 
 " map Ctrl+W+movement keys to Ctrl+movement
 map <c-j> <c-w>j

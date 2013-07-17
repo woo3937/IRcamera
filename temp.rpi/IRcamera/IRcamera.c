@@ -78,6 +78,8 @@ void writePPM();
 int readConfig();
 void writeConfig();
 void waitMillis(int millis);
+void writeConfigAndWait(unsigned char command, unsigned char lsb, 
+                        unsigned char msb, unsigned char pec);
 
 void main(int argc, char **argv){
     int data;
@@ -87,6 +89,13 @@ void main(int argc, char **argv){
     FILE * file = fopen("noise.txt", "w");
     initIR();
     printf("WAIT_MS: %d\n", WAIT_MS);
+
+    data = readConfig();
+    printf("Before: 0x%x\n", data);
+    // we get crazy temps after we change the config. -80 or 250ish.
+    writeConfigAndWait(0x25, 0x74, 0xb1, 0x6b);
+    data = readConfig();
+    printf("after: 0x%x\n", data);
 
 
     while(i < 10){
@@ -186,11 +195,51 @@ int readConfig(){
     bcm2835_i2c_begin();
     int w = bcm2835_i2c_write(&reg, 1);
     int r = bcm2835_i2c_read_register_rs(&reg, &buf[0], 3);
-    printf("in read: %d, %d\n", w, r);
+    /*printf("in read: %d, %d\n", w, r);*/
     /*bcm2835_i2c_end();*/
 
     data = buf[0] + (buf[1]<<8);
     return data;
+}
+void writeConfigAndWait(unsigned char command , unsigned char lsb   ,
+                        unsigned char msb     , unsigned char pec){
+    // see http://depa.usst.edu.cn/chenjq/www2/SDesign/JavaScript/CRCcalculation.htm
+    // for pec calculation
+    unsigned char * write = (unsigned char *)malloc(sizeof(unsigned char) * 4); 
+    unsigned char * clear = (unsigned char *)malloc(sizeof(unsigned char) * 4);
+
+    // command, LSB, MSB, PEC
+    write[0] = command ; write[1] = lsb  ; write[2] = msb  ; write[3] = pec  ;
+    clear[0] = command ; clear[1] = 0x00 ; clear[2] = 0x00 ; clear[3] = 0x83 ;
+
+    int c = -1;
+    int w = -1;
+
+    // writing the config register
+    c = bcm2835_i2c_write(&clear[0], 4);
+    waitMillis(100);
+    c = bcm2835_i2c_write(&write[0], 4);
+    waitMillis(100);
+
+    /*printf("\n");*/
+    unsigned char * sleep = (unsigned char *)malloc(sizeof(unsigned char)*3);
+    sleep[0] = 0xff;
+    sleep[1] = 0x3b;
+    c = bcm2835_i2c_write(sleep, 2);
+    printf("In writeAndWait: c = %d\n", c);
+
+    bcm2835_i2c_end();
+    waitMillis(50);
+    bcm2835_gpio_write(2, LOW);
+    bcm2835_gpio_write(3, HIGH);
+
+    waitMillis(40);
+    initIR();
+
+
+
+    free(clear);
+    free(write);
 }
 
 void writeConfig(){

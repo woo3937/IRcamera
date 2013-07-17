@@ -56,7 +56,7 @@
 #define BAUD_RATE 100e3
 #define DEBUG_PRINT 1
 
-#define WAIT_MS 80 // note that the motors (as of 2013-06-27) wait until they're in position
+#define WAIT_MS 300 // note that the motors (as of 2013-06-27) wait until they're in position
 #define SAME_IMAGE_FILE 1
 
 // the constants that determines the width of blue-red
@@ -64,6 +64,12 @@
 #define CENTER 30.0f
 #define K 1.0f // since B taken in RGB
 #define E 2.718281828459045f
+
+#define ADDRESS 0x00
+#define COMMAND 0x25
+#define MSB 0xb1
+#define LSB 0x74
+#define PEC 0x6b
 
 void initIR();
 float readTemp();
@@ -75,18 +81,22 @@ void waitMillis(int millis);
 
 void main(int argc, char **argv){
     int data;
-    int i;
+    float temp, temp1;
+    int i=0;
+    int repeat=0;
+    FILE * file = fopen("noise.txt", "w");
     initIR();
-    data = readConfig();
-    printf("data, before: %x\n", data);
-    while(1){
+    printf("WAIT_MS: %d\n", WAIT_MS);
+
+
+    while(i < 10){
         i++;
-        writeConfig();
-        data = readConfig();
-        printf("    data in iteration %d: 0x%x\n", i, data);
-        printf("\n");
-        if (i>10) break;
+        temp = readTemp();
+        waitMillis(WAIT_MS);
+        printf( "%f\n", temp);
     }
+    
+    printf("repeats: %d\n", repeat);
 
 
     bcm2835_i2c_end();
@@ -164,7 +174,7 @@ void initIR(){
     bcm2835_init();
     bcm2835_i2c_begin();
     bcm2835_i2c_set_baudrate((int)BAUD_RATE);
-    bcm2835_i2c_setSlaveAddress(0x5a);
+    bcm2835_i2c_setSlaveAddress(ADDRESS);
 }
 
 int readConfig(){
@@ -173,7 +183,7 @@ int readConfig(){
     unsigned char buf[6] = {0,0,0,0,0,0};
     int data=-1;
 
-    /*bcm2835_i2c_begin();*/
+    bcm2835_i2c_begin();
     int w = bcm2835_i2c_write(&reg, 1);
     int r = bcm2835_i2c_read_register_rs(&reg, &buf[0], 3);
     printf("in read: %d, %d\n", w, r);
@@ -186,32 +196,28 @@ int readConfig(){
 void writeConfig(){
     // see http://depa.usst.edu.cn/chenjq/www2/SDesign/JavaScript/CRCcalculation.htm
     // for pec calculation
-    unsigned char * write = (unsigned char *)malloc(sizeof(unsigned char) * 9); 
-    unsigned char * clear = (unsigned char *)malloc(sizeof(unsigned char) * 9);
+    unsigned char * write = (unsigned char *)malloc(sizeof(unsigned char) * 4); 
+    unsigned char * clear = (unsigned char *)malloc(sizeof(unsigned char) * 4);
 
     // command, LSB, MSB, PEC
-    write[0] = 0x25; write[1] = 0x74; write[2] = 0xb4; write[3] = 0x70;
-    clear[0] = 0x25; clear[1] = 0x00; clear[2] = 0x00; clear[3] = 0x83;
+    write[0] = COMMAND; write[1] = LSB; write[2] = MSB; write[3] = PEC;
+    clear[0] = COMMAND; clear[1] = 0x00; clear[2] = 0x00; clear[3] = 0x83;
 
     int c = -1;
     int w = -1;
 
-    c = bcm2835_i2c_write(clear+0, 4);
+    // writing the config register
+    c = bcm2835_i2c_write(&clear[0], 4);
+    printf("c1 = %d  ", c);
+    waitMillis(100);
+    c = bcm2835_i2c_write(&write[0], 4);
+    printf("c2 = %d", c);
     waitMillis(100);
 
-    /*w = bcm2835_i2c_write(write, 4);*/
-    /*waitMillis(100);*/
-
-    /*int data = readConfig();*/
-    /*waitMillis(100);*/
-    waitMillis(5);
-
-    /*printf("clear: %d, write: %d, data: 0x%x", c, w, data);*/
-    /*printf("\n");*/
+    printf("\n");
 
     free(clear);
     free(write);
-
 }
 
 void writeBMP(float * in, int w, int h){

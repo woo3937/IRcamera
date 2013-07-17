@@ -1,18 +1,25 @@
 from __future__ import division
 from pylab import *
 
-file = './temp.rpi/IRcamera/noise.txt'
-file = open(file)
 
-same = []
-for line in file.readlines():
-    same += [float(line)]
+def gr(filename, repeat=1):
+    file = open(filename)
+    same = []
 
-same = asarray(same)
-m = mean(same)
-same = same - m
-m = mean(same)
-s = std(same)
+    for line in file.readlines():
+        same += repeat * [float(line)]
+
+    same = asarray(same)
+    m = mean(same)
+    same = same - m
+    m = mean(same)
+    s = std(same)
+    return m, s, same
+
+mf1i4, sf1i4, f1i4 = gr('./temp.rpi/IRcamera/FIR1_IIR4_noise.txt')
+mf3i4, sf3i4, f3i4 = gr('./temp.rpi/IRcamera/FIR3_IIR4_noise.txt')
+mf4i4, sf4i4, f4i4 = gr('./temp.rpi/IRcamera/FIR4_IIR4_noise.txt')
+mf7i4, sf7i4, f7i4 = gr('./temp.rpi/IRcamera/FIR7_IIR4_noise.txt', repeat=10)
 
 
 
@@ -20,27 +27,16 @@ figure()
 
 
 subplot(111)
-hist(same, bins=25)
-
-xmin, xmax = xlim()
-ymin, ymax = ylim()
-x1 = array([m-s, m-s])
-y1 = array([0  , ymax])
-x2 = array([m, m ])
-y2 = array([0, ymax])
-x3 = array([m+s, m+s])
-y3 = array([0  , ymax])
-plot(x1, y1, 'r-.')
-plot(x2, y2, 'r-')
-plot(x3, y3, 'r-.')
-xtext = 0.82 * (xmax - xmin) + xmin
-ytext = 0.1 * ymax
-#text(xtext, ytext, '\\textrm{mean = %0.2f}' % m + '\n \\textrm{std = %0.2f}'% s)
-#text(xtext, ytext, '\\textrm{std = %0.2f}'% s)
+hist(f1i4, bins=50, label='\\textrm{FIR=1, IIR=4}', histtype='step')
+hist(f3i4, bins=50, label='\\textrm{FIR=3, IIR=4}', histtype='step')
+hist(f4i4, bins=25, label='\\textrm{FIR=4, IIR=4}', histtype='step')
+hist(f7i4, bins=12, alpha=0.5, label='\\textrm{FIR=7, IIR=4}', histtype='step')
+legend(loc='best')
 
 
-xlabel('\\textrm{Temperature}')
+
+xlabel('\\textrm{Temperature Noise}')
 ylabel('\\textrm{Frequency}')
-title('\\textrm{Temperature over %dk measurements (FIR=1, IIR=4)}' % (len(same)/1000))
+title('\\textrm{Temperature over %dk measurements}' % (len(f1i4)/1000))
 savefig('noise.png', dpi=300)
 show()

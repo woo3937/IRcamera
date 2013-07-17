@@ -93,6 +93,7 @@ void main(int argc, char **argv){
     data = readConfig();
     printf("Before: 0x%x\n", data);
     // we get crazy temps after we change the config. -80 or 250ish.
+    /*writeConfigAndWait(0x25, 0x74, 0xb4, 0x70);*/
     writeConfigAndWait(0x25, 0x74, 0xb1, 0x6b);
     data = readConfig();
     printf("after: 0x%x\n", data);
@@ -211,6 +212,7 @@ void writeConfigAndWait(unsigned char command , unsigned char lsb   ,
     // command, LSB, MSB, PEC
     write[0] = command ; write[1] = lsb  ; write[2] = msb  ; write[3] = pec  ;
     clear[0] = command ; clear[1] = 0x00 ; clear[2] = 0x00 ; clear[3] = 0x83 ;
+    // assumes command is 0x25 (PEC of 0x83)
 
     int c = -1;
     int w = -1;
@@ -225,18 +227,22 @@ void writeConfigAndWait(unsigned char command , unsigned char lsb   ,
     unsigned char * sleep = (unsigned char *)malloc(sizeof(unsigned char)*3);
     sleep[0] = 0xff;
     sleep[1] = 0x3b;
-    c = bcm2835_i2c_write(sleep, 2);
+    c = bcm2835_i2c_write(&sleep[0], 2);
     printf("In writeAndWait: c = %d\n", c);
 
     bcm2835_i2c_end();
-    waitMillis(50);
+    waitMillis(500);
     bcm2835_gpio_write(2, LOW);
     bcm2835_gpio_write(3, HIGH);
+    waitMillis(400);
 
-    waitMillis(40);
     initIR();
 
-
+    /*writeConfig();*/
+    bcm2835_i2c_write(&clear[0], 4);
+    waitMillis(100);
+    bcm2835_i2c_write(&write[0], 4);
+    waitMillis(100);
 
     free(clear);
     free(write);

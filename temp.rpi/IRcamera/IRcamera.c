@@ -90,20 +90,28 @@ void main(int argc, char **argv){
     initIR();
     printf("WAIT_MS: %d\n", WAIT_MS);
 
-    data = readConfig();
-    printf("Before: 0x%x\n", data);
-    // we get crazy temps after we change the config. -80 or 250ish.
-    /*writeConfigAndWait(0x25, 0x74, 0xb4, 0x70);*/
-    writeConfigAndWait(0x25, 0x74, 0xb1, 0x6b);
-    data = readConfig();
-    printf("after: 0x%x\n", data);
+    /*data = readConfig();*/
+    /*printf("Before: 0x%x\n", data);*/
+    /*// we get crazy temps after we change the config. -80 or 250ish.*/
+    /*[>writeConfigAndWait(0x25, 0x74, 0xb4, 0x70);<]*/
+    /*[>writeConfigAndWait(0x25, 0x74, 0xb1, 0x6b);<]*/
+    /*[>data = readConfig();<]*/
+    /*printf("after: 0x%x\n", data);*/
 
 
     while(i < 10){
-        i++;
+        /*i++;*/
+        /*writeConfigAndWait(0x25, 0x74, 0xb1, 0x6b);*/
         temp = readTemp();
         waitMillis(WAIT_MS);
-        printf( "%f\n", temp);
+        printf("1: %f\n", temp);
+        /*waitMillis(999);*/
+
+        /*writeConfigAndWait(0x25, 0x74, 0xb4, 0x70);*/
+        temp = readTemp();
+        waitMillis(WAIT_MS);
+        printf("2: %f\n", temp);
+        /*waitMillis(999);*/
     }
     
     printf("repeats: %d\n", repeat);
@@ -210,8 +218,8 @@ void writeConfigAndWait(unsigned char command , unsigned char lsb   ,
     unsigned char * clear = (unsigned char *)malloc(sizeof(unsigned char) * 4);
 
     // command, LSB, MSB, PEC
-    write[0] = command ; write[1] = lsb  ; write[2] = msb  ; write[3] = pec  ;
-    clear[0] = command ; clear[1] = 0x00 ; clear[2] = 0x00 ; clear[3] = 0x83 ;
+    write[0] = command; write[1] = lsb ; write[2] = msb ; write[3] = pec ;
+    clear[0] = command; clear[1] = 0x00; clear[2] = 0x00; clear[3] = 0x83;
     // assumes command is 0x25 (PEC of 0x83)
 
     int c = -1;
@@ -223,26 +231,36 @@ void writeConfigAndWait(unsigned char command , unsigned char lsb   ,
     c = bcm2835_i2c_write(&write[0], 4);
     waitMillis(100);
 
-    /*printf("\n");*/
+    // writing the sleep command
     unsigned char * sleep = (unsigned char *)malloc(sizeof(unsigned char)*3);
     sleep[0] = 0xff;
     sleep[1] = 0x3b;
     c = bcm2835_i2c_write(&sleep[0], 2);
-    printf("In writeAndWait: c = %d\n", c);
 
+    // sleep. required time: 33ms (more for normal temps)
+    // select an output, write high/low, wait 40ms, write low/high, wait 60,
+    // write normal values
     bcm2835_i2c_end();
-    waitMillis(500);
+    bcm2835_gpio_fsel(2, BCM2835_GPIO_FSEL_OUTP);
+    bcm2835_gpio_fsel(3, BCM2835_GPIO_FSEL_OUTP);
+    bcm2835_gpio_write(2, HIGH);
+    bcm2835_gpio_write(3, LOW);
+    waitMillis(100);
     bcm2835_gpio_write(2, LOW);
     bcm2835_gpio_write(3, HIGH);
-    waitMillis(400);
+    waitMillis(100);
+    bcm2835_gpio_write(2, HIGH);
+    bcm2835_gpio_write(3, HIGH);
+    waitMillis(100);
 
+    // re-init the IR camera, writing the settings again
     initIR();
 
     /*writeConfig();*/
     bcm2835_i2c_write(&clear[0], 4);
-    waitMillis(100);
+    /*waitMillis(20);*/
     bcm2835_i2c_write(&write[0], 4);
-    waitMillis(100);
+    waitMillis(20);
 
     free(clear);
     free(write);

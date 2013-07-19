@@ -83,6 +83,8 @@ void writeConfigAndWait(unsigned char command, unsigned char lsb,
 void readFlag();
 void writeConfigWaitForEEPROM(unsigned char command, unsigned char lsb, 
                               unsigned char msb, unsigned char pec);
+void writeConfigParams( unsigned char command, unsigned char lsb,
+                        unsigned char msb,     unsigned char pec);
 
 
 void main(int argc, char **argv){
@@ -93,30 +95,19 @@ void main(int argc, char **argv){
     FILE * file = fopen("noise.txt", "w");
     initIR();
     printf("WAIT_MS: %d\n", WAIT_MS);
-
-    /*data = readConfig();*/
-    /*printf("Before: 0x%x\n", data);*/
-    /*// we get crazy temps after we change the config. -80 or 250ish.*/
-    /*writeConfigAndWait(0x25, 0x74, 0xb4, 0x70);*/
-    /*writeConfigAndWait(0x25, 0x74, 0xb1, 0x6b);*/
-    /*data = readConfig();*/
-    /*printf("before: 0x%x\n", data);*/
-    /*[>writeConfigWaitForEEPROM(0x25, 0x74, 0xb4, 0x70);<]*/
-    /*[>writeConfigAndWait(0x25, 0x74, 0xb1, 0x6b);<]*/
-    /*writeConfig();*/
-    /*data = readConfig();*/
-    /*printf("after : 0x%x\n", data);*/
-    printf("Start...\n");
-    for (i=0; i<8000; i++){
-        delay(1);
-    }
-    printf("End...\n");
+    bcm2835_gpio_fsel(4, BCM2835_GPIO_FSEL_OUTP);
 
 
-    while(i < 4){
+
+    while(1 < 4){
+        writeConfigParams(0x25, 0x74, 0xb4, 0x70);
         temp = readTemp();
-        delay(WAIT_MS);
         printf("%f\n", temp);
+
+        writeConfigParams(0x25, 0x74, 0xb1, 0x6b);
+        temp = readTemp();
+        printf("%f\n", temp);
+
         i++;
             /*i++;*/
             /*writeConfigAndWait(0x25, 0x74, 0xb1, 0x6b);*/
@@ -322,6 +313,40 @@ void writeConfigAndWait(unsigned char command , unsigned char lsb   ,
     /*[>waitMillis(20);<]*/
     /*bcm2835_i2c_write(&write[0], 4);*/
     /*waitMillis(20);*/
+
+    free(clear);
+    free(write);
+}
+void writeConfigParams( unsigned char command, unsigned char lsb,
+                        unsigned char msb,     unsigned char pec){
+    // see http://depa.usst.edu.cn/chenjq/www2/SDesign/JavaScript/CRCcalculation.htm
+    // for pec calculation
+    unsigned char * write = (unsigned char *)malloc(sizeof(unsigned char) * 4); 
+    unsigned char * clear = (unsigned char *)malloc(sizeof(unsigned char) * 4);
+
+    // command, LSB, MSB, PEC
+    write[0] = command; write[1] = lsb; write[2] = msb; write[3] = pec;
+    clear[0] = command; clear[1] = 0x00; clear[2] = 0x00; clear[3] = 0x83;
+
+    int c = -1;
+    int w = -1;
+
+    // writing the config register
+    c = bcm2835_i2c_write(&clear[0], 4);
+    /*printf("c1 = %d  ", c);*/
+    waitMillis(100);
+    c = bcm2835_i2c_write(&write[0], 4);
+    /*printf("c2 = %d", c);*/
+    // wait for EEPROM to settle
+    waitMillis(100);
+    bcm2835_gpio_write(4, LOW);
+    // wait to turn off all the way
+    waitMillis(100);
+    bcm2835_gpio_write(4, HIGH);
+    // wait for startup routine
+    waitMillis(100);
+
+    /*printf("\n");*/
 
     free(clear);
     free(write);

@@ -1,3 +1,25 @@
+/*
+ *  My wires are hooked up to the following GPIO pins:
+ *  
+ * | Pin | GPIO pin |
+ * | SDA | 2        |
+ * | SCL | 3        |
+ * | PWR | 4        |
+ * | GND | 17       |
+ *
+ * On the MLX6014xxx, Vss(GND), Vdd(PWR), SDA and SCL are here:
+ *      (note that the || means the pin on the device)
+ *
+ *            ||                           
+ *    |-------||--------|                    
+ *    |                 |          
+ *    |  Vss      SCL   |          
+ *    |                 |           
+ *    |                 |           
+ *    |  Vdd      SDA   |           
+ *    |                 |           
+ *    |-----------------|           
+ */
 /* 
  * All of this code can be found on GitHub, at https://github.com/scottsievert/IRcamera
  *

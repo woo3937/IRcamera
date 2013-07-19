@@ -96,8 +96,6 @@
 
 void initIR();
 float readTemp();
-void writeBMP(float * in, int w, int h);
-void writePPM();
 int readConfig();
 void writeConfig();
 void waitMillis(int millis);
@@ -146,9 +144,9 @@ void main(int argc, char **argv){
     int height = 10;
     float * x = (float *)malloc(sizeof(float)*width*height);
     for (i=0; i<width*height; i++){
-        x[i] = i;
+        x[i] = width*height - i;
     }
-    writeImageWithFilename("test.png", x, width, height);
+    writeImageWithFilename("BAM.png", x, width, height);
 
 
     bcm2835_i2c_end();
@@ -298,161 +296,10 @@ void writeImageWithFilename(char filename[40], float * data, int width, int heig
     }
     fclose(file);
     
-    char  command[50] = "python writeImage.py ";
+    char command[50] = "python writeImage.py ";
     strcat(command, filename);
     printf("%s\n", command);
     system(command);
     system("rm image.csv");
 }
 
-// writeBMP and writePPM are functions to write an image
-void writeBMP(float * in, int w, int h){
-    if (DEBUG_PRINT) printf("In writeBMP\n");
-    /*int w = 3;*/
-    /*int h = 4;*/
-    unsigned char * img = (unsigned char *)malloc(3*w*h);
-
-
-    char filename[] = "photos/ir_00000.bmp";
-    char * mode = "w";
-    FILE *ofp = fopen(filename, mode);
-    int x, y;
-
-    int rowSize = 4 * ((3*w + 3)/4);
-    // how many bytes in the row (used to create padding)
-    int fileSize = 54 + h*rowSize;
-    // headers (54 bytes) + pixel data
-    // if name exists, create new filename
-    if (!SAME_IMAGE_FILE){
-        for (int i=0; i<10000; i++) {
-            filename[11] = (i/1000)%10 + '0';    // thousands place
-            filename[12] = (i/100)%10 + '0';     // hundreds
-            filename[13] = (i/10)%10 + '0';      // tens
-            filename[14] = i%10 + '0';           // ones
-            if ((ofp = fopen(filename, "r")) == NULL){
-                if (DEBUG_PRINT) printf("printing to %s\n", filename);
-                break;
-            }
-        }
-    }
-    ofp = fopen(filename, mode);
-
-    for (x=0; x<w; x++){
-        for (y=0; y<h; y++){
-            int R, G, B;
-            int val = (unsigned char)in[(y*w + x)];
-            if(in[(y*w + x)] < 85){
-                R = 0; G = 3*val; B = 255;
-            } else if (in[(y*w + x)] < 170){
-                R = 3 * (val - 85); G = 255; B = 255 - 3*(val - 85);
-            } else if (in[(y*x + x)] < 255){
-                R = 255; G = 255 - 3*(val - 170); B = 0;
-            }
-            if (0) printf("i: %f, R: %d, G: %d, B: %d\n", in[y*w+x], R, G, B);
-
-
-            img[(y*w + x)*3+0] = B;
-            img[(y*w + x)*3+1] = G;
-            img[(y*w + x)*3+2] = R;
-        }
-    }
-    if (DEBUG_PRINT) printf("After the for-loop\n");
-
-    unsigned char * bmpPad = (unsigned char *)malloc(sizeof(unsigned char) * (rowSize - 3*w));
-    for (int i=0; i<rowSize-3*w; i++) {                 
-        bmpPad[i] = 0;
-    }
-
-    unsigned char bmpFileHeader[14] = {
-        // file header (always starts with BM!)
-        'B','M', 0,0,0,0, 0,0, 0,0, 54,0,0,0     };
-    unsigned char bmpInfoHeader[40] = {
-        // info about the file (size, etc)
-        40,0,0,0, 0,0,0,0, 0,0,0,0, 1,0, 24,0     };
-
-    bmpFileHeader[ 2] = (unsigned char)(fileSize);
-    bmpFileHeader[ 3] = (unsigned char)(fileSize >>  8);
-    bmpFileHeader[ 4] = (unsigned char)(fileSize >> 16);
-    bmpFileHeader[ 5] = (unsigned char)(fileSize >> 24);
-
-    bmpInfoHeader[ 4] = (unsigned char)(w);
-    bmpInfoHeader[ 5] = (unsigned char)(w >>  8);
-    bmpInfoHeader[ 6] = (unsigned char)(w >> 16);
-    bmpInfoHeader[ 7] = (unsigned char)(w >> 24);
-    bmpInfoHeader[ 8] = (unsigned char)(h);
-    bmpInfoHeader[ 9] = (unsigned char)(h >> 8);
-    bmpInfoHeader[10] = (unsigned char)(h >> 16);
-    bmpInfoHeader[11] = (unsigned char)(h >> 24);
-
-    /*fwrite("%.s", 3, "abcdef"); // example*/
-    // want dataFile.write(bmpFileHeader, sizeof(bmpFileHeader));
-    //  fwrite(&colorVal, sizeof(unsigned char), 1, ofp);
-    fwrite(&bmpFileHeader, sizeof(unsigned char), 14, ofp);
-    fwrite(&bmpInfoHeader, sizeof(unsigned char), 40, ofp);
-
-    for (int i=0; i<h; i++){
-        //  dataFile.write(img+(w*(h-i-1)*3), 3*w);
-        //  dataFile.write(bmpPad, (4-(w*3)%4)%4);  
-        fwrite(img+(w*(h-i-1)*3), sizeof(unsigned char), 3*w, ofp);
-        /*fwrite(img + 3*w*i, sizeof(unsigned char), 3*w, ofp);*/
-        fwrite(&bmpPad, sizeof(unsigned char), (4-(3*w)%4)%4, ofp);
-    }
-
-
-
-
-    fflush(ofp);
-    
-    fclose(ofp);
-}
-
-void writePPM(){
-    int width = 100;
-    int height = 100;
-    if (DEBUG_PRINT) printf("In writePPM...");
-
-
-
-    long long int i;
-    /*char filename[] = "ir_00000.ppm";*/
-    // malloc, since we want to return the address (and not a local)
-    char * filename = (char *)malloc(sizeof(char)*(8+1+3));
-    filename = "ir_00000.ppm";
-    char mode[] = "w";
-    // auto increment name if file already exists
-
-    // if name exists, create new filename
-    /*for (int i=0; i<10000; i++) {*/
-        /*filename[4] = (i/1000)%10 + '0';    // thousands place*/
-        /*filename[5] = (i/100)%10 + '0';     // hundreds*/
-        /*filename[6] = (i/10)%10 + '0';      // tens*/
-        /*filename[7] = i%10 + '0';           // ones*/
-        /*[>if (!SD.exists(filename)){<]*/
-            /*break;*/
-        /*[>}<]*/
-    /*}*/
-
-    FILE * ofp = fopen(filename, mode);
-
-
-    fprintf(ofp, "P6");
-    fprintf(ofp, "\n");
-    fprintf(ofp, "%d ", width);
-    fprintf(ofp, "%d ", height);
-    fprintf(ofp, " %d ", 255);
-    fflush(ofp);
-
-    int32_t length = 1;
-    length = length * width;
-    length = length * height;
-             
-
-    for (i=0; i<length; i++){
-        unsigned char colorVal =  115;
-        fwrite(&colorVal, sizeof(unsigned char), 1, ofp);
-        fwrite(&colorVal, sizeof(unsigned char), 1, ofp);
-        fwrite(&colorVal, sizeof(unsigned char), 1, ofp);
-    }
-    fflush(ofp);
-    fclose(ofp);
-}

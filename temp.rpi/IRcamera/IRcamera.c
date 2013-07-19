@@ -62,6 +62,7 @@
 
 
 #include <stdio.h>
+#include <string.h>
 #include <bcm2835.h>
 #include <stdlib.h>
 #include <math.h>
@@ -102,6 +103,7 @@ void writeConfig();
 void waitMillis(int millis);
 void writeConfigParams( unsigned char command, unsigned char lsb,
                         unsigned char msb,     unsigned char pec);
+void writeImageWithFilename(char filename[50], float * data, int width, int height);
 
 
 void main(int argc, char **argv){
@@ -114,33 +116,39 @@ void main(int argc, char **argv){
     printf("WAIT_MS: %d\n", WAIT_MS);
     bcm2835_gpio_fsel(4, BCM2835_GPIO_FSEL_OUTP);
 
+    /*while(1 < 4){*/
+        /*writeConfigParams(0x25, 0x74, 0xb4, 0x70);*/
+        /*temp = readTemp();*/
+        /*printf("%f\n", temp);*/
 
+        /*writeConfigParams(0x25, 0x74, 0xb1, 0x6b);*/
+        /*temp = readTemp();*/
+        /*printf("%f\n", temp);*/
 
-    while(1 < 4){
-        writeConfigParams(0x25, 0x74, 0xb4, 0x70);
-        temp = readTemp();
-        printf("%f\n", temp);
+        /*i++;*/
+            /*[>i++;<]*/
+            /*[>writeConfigAndWait(0x25, 0x74, 0xb1, 0x6b);<]*/
+            /*[>temp = readTemp();<]*/
+            /*[>waitMillis(WAIT_MS);<]*/
+            /*[>printf("1: %f\n", temp);<]*/
+            /*[>waitMillis(999);<]*/
 
-        writeConfigParams(0x25, 0x74, 0xb1, 0x6b);
-        temp = readTemp();
-        printf("%f\n", temp);
-
-        i++;
-            /*i++;*/
-            /*writeConfigAndWait(0x25, 0x74, 0xb1, 0x6b);*/
-            /*temp = readTemp();*/
-            /*waitMillis(WAIT_MS);*/
-            /*printf("1: %f\n", temp);*/
-            /*waitMillis(999);*/
-
-            /*writeConfigAndWait(0x25, 0x74, 0xb4, 0x70);*/
-            /*temp = readTemp();*/
-            /*waitMillis(WAIT_MS);*/
-            /*printf("2: %f\n", temp);*/
-            /*waitMillis(999);*/
-    }
+            /*[>writeConfigAndWait(0x25, 0x74, 0xb4, 0x70);<]*/
+            /*[>temp = readTemp();<]*/
+            /*[>waitMillis(WAIT_MS);<]*/
+            /*[>printf("2: %f\n", temp);<]*/
+            /*[>waitMillis(999);<]*/
+    /*}*/
     
     printf("repeats: %d\n", repeat);
+
+    int width = 10;
+    int height = 10;
+    float * x = (float *)malloc(sizeof(float)*width*height);
+    for (i=0; i<width*height; i++){
+        x[i] = i;
+    }
+    writeImageWithFilename("test.png", x, width, height);
 
 
     bcm2835_i2c_end();
@@ -273,7 +281,31 @@ void writeConfigParams( unsigned char command, unsigned char lsb,
     free(write);
 }
 
+// writeImageWithFilename writes a csv file than has python write the image
+// the filename must be less that 40 characters (shouldn't be a problem)
+void writeImageWithFilename(char filename[40], float * data, int width, int height){
+    FILE * file = fopen("image.csv", "w");
+    int x=0;
+    int y=0;
 
+    // print to a file (a csv)
+    for (y=0; y<height; y++){
+        for (x=0; x<width; x++){
+            fprintf(file, "%.2f", data[y*width + x]);
+            if(x<width-1) fprintf(file, ",");
+        }
+        fprintf(file, "\n");
+    }
+    fclose(file);
+    
+    char  command[50] = "python writeImage.py ";
+    strcat(command, filename);
+    printf("%s\n", command);
+    system(command);
+    system("rm image.csv");
+}
+
+// writeBMP and writePPM are functions to write an image
 void writeBMP(float * in, int w, int h){
     if (DEBUG_PRINT) printf("In writeBMP\n");
     /*int w = 3;*/

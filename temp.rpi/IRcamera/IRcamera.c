@@ -78,11 +78,6 @@ void writePPM();
 int readConfig();
 void writeConfig();
 void waitMillis(int millis);
-void writeConfigAndWait(unsigned char command, unsigned char lsb, 
-                        unsigned char msb, unsigned char pec);
-void readFlag();
-void writeConfigWaitForEEPROM(unsigned char command, unsigned char lsb, 
-                              unsigned char msb, unsigned char pec);
 void writeConfigParams( unsigned char command, unsigned char lsb,
                         unsigned char msb,     unsigned char pec);
 
@@ -177,48 +172,6 @@ void main(int argc, char **argv){
         /*readConfig();*/
 }
 
-void writeConfigWaitForEEPROM(unsigned char command, unsigned char lsb, 
-                              unsigned char msb, unsigned char pec){
-    // see http://depa.usst.edu.cn/chenjq/www2/SDesign/JavaScript/CRCcalculation.htm
-    // for pec calculation
-    unsigned char * write = (unsigned char *)malloc(sizeof(unsigned char) * 4); 
-    unsigned char * clear = (unsigned char *)malloc(sizeof(unsigned char) * 4);
-
-    // command, LSB, MSB, PEC
-    write[0] = command; write[1] = lsb ; write[2] = msb ; write[3] = pec ;
-    clear[0] = command; clear[1] = 0x00; clear[2] = 0x00; clear[3] = 0x83;
-    // assumes command is 0x25 (PEC of 0x83)
-
-    int c = -1;
-    int w = -1;
-
-    // writing the config register
-    c = bcm2835_i2c_write(&clear[0], 4);
-    waitMillis(500);
-    c = bcm2835_i2c_write(&write[0], 4);
-    waitMillis(500);
-
-}
-void readFlag(){
-    // reads EEPROM_DONE flag
-    // behaves like a read command
-    unsigned char i, command;
-    command = 0xF0;
-    unsigned char buf[17];
-    for (int i=0; i<17; i++){
-        buf[i] = 0;
-    }
-
-    bcm2835_i2c_begin();
-    bcm2835_i2c_write(&command, 1);
-    /*bcm2835_i2c_read_register_rs(&command, &buf[0], 17);*/
-    bcm2835_i2c_read(&buf[0], 3);
-
-    for (int i=0; i<3; i++){
-        printf("%.2x ", buf[i]);
-    }
-    printf("\n");
-}
 
 float readTemp(){
     // adapted from  http://www.raspberrypi.org/phpBB3/viewtopic.php?t=17738&p=362569
@@ -262,61 +215,6 @@ int readConfig(){
     data = buf[0] + (buf[1]<<8);
     return data;
 }
-void writeConfigAndWait(unsigned char command , unsigned char lsb   ,
-                        unsigned char msb     , unsigned char pec){
-    // see http://depa.usst.edu.cn/chenjq/www2/SDesign/JavaScript/CRCcalculation.htm
-    // for pec calculation
-    unsigned char * write = (unsigned char *)malloc(sizeof(unsigned char) * 4); 
-    unsigned char * clear = (unsigned char *)malloc(sizeof(unsigned char) * 4);
-
-    // command, LSB, MSB, PEC
-    write[0] = command; write[1] = lsb ; write[2] = msb ; write[3] = pec ;
-    clear[0] = command; clear[1] = 0x00; clear[2] = 0x00; clear[3] = 0x83;
-    // assumes command is 0x25 (PEC of 0x83)
-
-    int c = -1;
-    int w = -1;
-
-    // writing the config register
-    c = bcm2835_i2c_write(&clear[0], 4);
-    waitMillis(100);
-    c = bcm2835_i2c_write(&write[0], 4);
-    waitMillis(100);
-
-    // writing the sleep command
-    /*unsigned char * sleep = (unsigned char *)malloc(sizeof(unsigned char)*3);*/
-    /*sleep[0] = 0xff;*/
-    /*sleep[1] = 0x3b;*/
-    /*c = bcm2835_i2c_write(&sleep[0], 2);*/
-
-    /*// sleep. required time: 33ms (more for normal temps)*/
-    /*// select an output, write high/low, wait 40ms, write low/high, wait 60,*/
-    /*// write normal values*/
-    /*bcm2835_i2c_end();*/
-    /*bcm2835_gpio_fsel(2, BCM2835_GPIO_FSEL_OUTP);*/
-    /*bcm2835_gpio_fsel(3, BCM2835_GPIO_FSEL_OUTP);*/
-    /*bcm2835_gpio_write(2, HIGH);*/
-    /*bcm2835_gpio_write(3, LOW);*/
-    /*waitMillis(100);*/
-    /*bcm2835_gpio_write(2, LOW);*/
-    /*bcm2835_gpio_write(3, HIGH);*/
-    /*waitMillis(100);*/
-    /*bcm2835_gpio_write(2, HIGH);*/
-    /*bcm2835_gpio_write(3, HIGH);*/
-    /*waitMillis(100);*/
-
-    /*// re-init the IR camera, writing the settings again*/
-    /*initIR();*/
-
-    /*[>writeConfig();<]*/
-    /*bcm2835_i2c_write(&clear[0], 4);*/
-    /*[>waitMillis(20);<]*/
-    /*bcm2835_i2c_write(&write[0], 4);*/
-    /*waitMillis(20);*/
-
-    free(clear);
-    free(write);
-}
 void writeConfigParams( unsigned char command, unsigned char lsb,
                         unsigned char msb,     unsigned char pec){
     // see http://depa.usst.edu.cn/chenjq/www2/SDesign/JavaScript/CRCcalculation.htm
@@ -331,53 +229,28 @@ void writeConfigParams( unsigned char command, unsigned char lsb,
     int c = -1;
     int w = -1;
 
-    // writing the config register
+    // first, clear and wait for EEPROM to settle
     c = bcm2835_i2c_write(&clear[0], 4);
-    /*printf("c1 = %d  ", c);*/
     waitMillis(100);
+
+    // then write, waiting for EEPROM to settle
     c = bcm2835_i2c_write(&write[0], 4);
-    /*printf("c2 = %d", c);*/
-    // wait for EEPROM to settle
     waitMillis(100);
+
+    // requires bcm2835_gpio_fsel(4, BCM2835_GPIO_FSEL_OUTP); to be called.
+    // turn it off, and wait for it to turn off
     bcm2835_gpio_write(4, LOW);
-    // wait to turn off all the way
     waitMillis(100);
+
+    // turn it on, and wait for it to turn on all the way
     bcm2835_gpio_write(4, HIGH);
-    // wait for startup routine
     waitMillis(100);
 
-    /*printf("\n");*/
 
     free(clear);
     free(write);
 }
 
-void writeConfig(){
-    // see http://depa.usst.edu.cn/chenjq/www2/SDesign/JavaScript/CRCcalculation.htm
-    // for pec calculation
-    unsigned char * write = (unsigned char *)malloc(sizeof(unsigned char) * 4); 
-    unsigned char * clear = (unsigned char *)malloc(sizeof(unsigned char) * 4);
-
-    // command, LSB, MSB, PEC
-    write[0] = COMMAND; write[1] = LSB; write[2] = MSB; write[3] = PEC;
-    clear[0] = COMMAND; clear[1] = 0x00; clear[2] = 0x00; clear[3] = 0x83;
-
-    int c = -1;
-    int w = -1;
-
-    // writing the config register
-    c = bcm2835_i2c_write(&clear[0], 4);
-    printf("c1 = %d  ", c);
-    waitMillis(100);
-    c = bcm2835_i2c_write(&write[0], 4);
-    printf("c2 = %d", c);
-    waitMillis(100);
-
-    printf("\n");
-
-    free(clear);
-    free(write);
-}
 
 void writeBMP(float * in, int w, int h){
     if (DEBUG_PRINT) printf("In writeBMP\n");

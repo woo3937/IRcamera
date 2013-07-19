@@ -1,65 +1,65 @@
-/*
- *  My wires are hooked up to the following GPIO pins:
- *  
- * | Pin | GPIO pin |
- * | SDA | 2        |
- * | SCL | 3        |
- * | PWR | 4        |
- * | GND | 17       |
- *
- * On the MLX6014xxx, Vss(GND), Vdd(PWR), SDA and SCL are here:
- *      (note that the || means the pin on the device)
- *
- *            ||                           
- *    |-------||--------|                    
- *    |                 |          
- *    |  Vss      SCL   |          
- *    |                 |           
- *    |                 |           
- *    |  Vdd      SDA   |           
- *    |                 |           
- *    |-----------------|           
- */
-/* 
- * All of this code can be found on GitHub, at https://github.com/scottsievert/IRcamera
- *
- * At first, this project used an Arduino and two servos to take a picture. The
- * Arduino only has 2k of RAM and the servos tend me be imprecise, meaning, at
- * maximum, could only get about a 13x10 image out. So, we switched to the
- * Raspberry Pi (512Mb of RAM!) and some stepper motors, which are much more
- * accurate. For development, this choice was also better. I got off the silly
- * Arduino IDE and into Vim, and am closer to bash. Code completion, beautiful
- * syntax highlighting, nice shortcuts... but I could go on all day about Vim.
- *
- * Normal IR cameras, ones that aren't made out of a single sensor, normally
- * cost between 4,000 and 40,000 dollars -- insane expensive.
- *
- * The parts needed are:
- * | Part           | Number | Total Price |
- * |----------------|--------|-------------|
- * | RPi            | 1      | 35          |
- * | IR sensor      | 1      | 35          |
- * | Driver boards  | 2      | 200         |
- * | Stepper motors | 2      | 70          |
- * | Total          |        | 340         |
- *      
- *      - Stepper motors (also in steppers.c):
- *          url: http://www.phidgets.com/products.php?category=23&product_id=3317_1
- *      - Driver boards (also in steppers.c):
- *          url: http://www.phidgets.com/products.php?product_id=1067
- *      - IR sensor: MLX90614 DCI
- *          url: http://www.futureelectronics.com/en/technologies/semiconductors/analog/sensors/temperature/Pages/3003055-MLX90614ESF-DCI-000-TU.aspx?IM=0
- *      - Raspberry Pi:
- *          I'm sure a simple Google search will get you what you want. It's a popular device.
- *
- *  I'm writing good docs because I hate it when there are poor docs.
- *  Absolutely, positively, resoundingly hate it. Probably too much, but oh
- *  well.
- *
- *  --Scott Sievert (sieve121@umn.edu), 2013-06-26
- */
-
-
+    /*
+     *  My wires are hooked up to the following GPIO pins:
+     *  
+     * | Pin | GPIO pin |
+     * | SDA | 2        |
+     * | SCL | 3        |
+     * | PWR | 4        |
+     * | GND | 17       |
+     *
+     * On the MLX6014xxx, Vss(GND), Vdd(PWR), SDA and SCL are here:
+     *      (note that the || means the pin on the device)
+     *           .__.        
+     *           |  |                          
+     *    .______|  |_______.                    
+     *    |                 |          
+     *    |  Vss      SCL   |          
+     *    |                 |           
+     *    |                 |           
+     *    |  Vdd      SDA   |           
+     *    |                 |           
+     *    |_________________|           
+     *
+     *    --Scott Sievert, 2013-07-19, sieve121@umn.edu
+     */
+    /* 
+     * All of this code can be found on GitHub, at https://github.com/scottsievert/IRcamera
+     *
+     * At first, this project used an Arduino and two servos to take a picture. The
+     * Arduino only has 2k of RAM and the servos tend me be imprecise, meaning, at
+     * maximum, could only get about a 13x10 image out. So, we switched to the
+     * Raspberry Pi (512Mb of RAM!) and some stepper motors, which are much more
+     * accurate. For development, this choice was also better. I got off the silly
+     * Arduino IDE and into Vim, and am closer to bash. Code completion, beautiful
+     * syntax highlighting, nice shortcuts... but I could go on all day about Vim.
+     *
+     * Normal IR cameras, ones that aren't made out of a single sensor, normally
+     * cost between 4,000 and 40,000 dollars -- insane expensive.
+     *
+     * The parts needed are:
+     * | Part           | Number | Total Price |
+     * |----------------|--------|-------------|
+     * | RPi            | 1      | 35          |
+     * | IR sensor      | 1      | 35          |
+     * | Driver boards  | 2      | 200         |
+     * | Stepper motors | 2      | 70          |
+     * | Total          |        | 340         |
+     *      
+     *      - Stepper motors (also in steppers.c):
+     *          url: http://www.phidgets.com/products.php?category=23&product_id=3317_1
+     *      - Driver boards (also in steppers.c):
+     *          url: http://www.phidgets.com/products.php?product_id=1067
+     *      - IR sensor: MLX90614 DCI
+     *          url: http://www.futureelectronics.com/en/technologies/semiconductors/analog/sensors/temperature/Pages/3003055-MLX90614ESF-DCI-000-TU.aspx?IM=0
+     *      - Raspberry Pi:
+     *          I'm sure a simple Google search will get you what you want. It's a popular device.
+     *
+     *  I'm writing good docs because I hate it when there are poor docs.
+     *  Absolutely, positively, resoundingly hate it. Probably too much, but oh
+     *  well.
+     *
+     *  --Scott Sievert (sieve121@umn.edu), 2013-06-26
+     */
 
 #include <stdio.h>
 #include <string.h>
@@ -101,7 +101,7 @@ void writeConfig();
 void waitMillis(int millis);
 void writeConfigParams( unsigned char command, unsigned char lsb,
                         unsigned char msb,     unsigned char pec);
-void writeImageWithFilename(char filename[50], float * data, int width, int height);
+void writeImage(char filename[50], float * data, int width, int height);
 
 
 void main(int argc, char **argv){
@@ -112,43 +112,15 @@ void main(int argc, char **argv){
     FILE * file = fopen("noise.txt", "w");
     initIR();
     printf("WAIT_MS: %d\n", WAIT_MS);
-    bcm2835_gpio_fsel(4, BCM2835_GPIO_FSEL_OUTP);
 
-    /*while(1 < 4){*/
-        /*writeConfigParams(0x25, 0x74, 0xb4, 0x70);*/
-        /*temp = readTemp();*/
-        /*printf("%f\n", temp);*/
-
-        /*writeConfigParams(0x25, 0x74, 0xb1, 0x6b);*/
-        /*temp = readTemp();*/
-        /*printf("%f\n", temp);*/
-
-        /*i++;*/
-            /*[>i++;<]*/
-            /*[>writeConfigAndWait(0x25, 0x74, 0xb1, 0x6b);<]*/
-            /*[>temp = readTemp();<]*/
-            /*[>waitMillis(WAIT_MS);<]*/
-            /*[>printf("1: %f\n", temp);<]*/
-            /*[>waitMillis(999);<]*/
-
-            /*[>writeConfigAndWait(0x25, 0x74, 0xb4, 0x70);<]*/
-            /*[>temp = readTemp();<]*/
-            /*[>waitMillis(WAIT_MS);<]*/
-            /*[>printf("2: %f\n", temp);<]*/
-            /*[>waitMillis(999);<]*/
-    /*}*/
-    
-    printf("repeats: %d\n", repeat);
-
-    int width = 10;
-    int height = 10;
-    float * x = (float *)malloc(sizeof(float)*width*height);
-    for (i=0; i<width*height; i++){
-        x[i] = width*height - i;
+    while(i < 4){
+        temp = readTemp();
+        printf("%f\n", temp);
+        i++;
+        waitMillis(WAIT_MS);
     }
-    writeImageWithFilename("BAM.png", x, width, height);
 
-
+    // ending I2C operations
     bcm2835_i2c_end();
 
         /*printf("Error = %d out of 100\n", error);*/
@@ -199,8 +171,6 @@ void main(int argc, char **argv){
         /*writeConfig();*/
         /*readConfig();*/
 }
-
-
 float readTemp(){
     // adapted from  http://www.raspberrypi.org/phpBB3/viewtopic.php?t=17738&p=362569
     unsigned char i,reg;
@@ -226,8 +196,12 @@ void initIR(){
     bcm2835_i2c_begin();
     bcm2835_i2c_set_baudrate((int)BAUD_RATE);
     bcm2835_i2c_setSlaveAddress(ADDRESS);
-}
 
+    // setting up the PWR pin and turning it on
+    bcm2835_gpio_fsel(4, BCM2835_GPIO_FSEL_OUTP);
+    bcm2835_gpio_write(4, HIGH);
+    waitMillis(100);
+}
 int readConfig(){
     // adapted from  http://www.raspberrypi.org/phpBB3/viewtopic.php?t=17738&p=362569
     unsigned char reg = 0x25; // the command to send
@@ -237,8 +211,6 @@ int readConfig(){
     bcm2835_i2c_begin();
     int w = bcm2835_i2c_write(&reg, 1);
     int r = bcm2835_i2c_read_register_rs(&reg, &buf[0], 3);
-    /*printf("in read: %d, %d\n", w, r);*/
-    /*bcm2835_i2c_end();*/
 
     data = buf[0] + (buf[1]<<8);
     return data;
@@ -274,14 +246,13 @@ void writeConfigParams( unsigned char command, unsigned char lsb,
     bcm2835_gpio_write(4, HIGH);
     waitMillis(100);
 
-
     free(clear);
     free(write);
 }
 
 // writeImageWithFilename writes a csv file than has python write the image
 // the filename must be less that 40 characters (shouldn't be a problem)
-void writeImageWithFilename(char filename[40], float * data, int width, int height){
+void writeImage(char filename[40], float * data, int width, int height){
     FILE * file = fopen("image.csv", "w");
     int x=0;
     int y=0;
@@ -302,4 +273,3 @@ void writeImageWithFilename(char filename[40], float * data, int width, int heig
     system(command);
     system("rm image.csv");
 }
-

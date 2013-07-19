@@ -80,6 +80,10 @@ void writeConfig();
 void waitMillis(int millis);
 void writeConfigAndWait(unsigned char command, unsigned char lsb, 
                         unsigned char msb, unsigned char pec);
+void readFlag();
+void writeConfigWaitForEEPROM(unsigned char command, unsigned char lsb, 
+                              unsigned char msb, unsigned char pec);
+
 
 void main(int argc, char **argv){
     int data;
@@ -93,25 +97,39 @@ void main(int argc, char **argv){
     /*data = readConfig();*/
     /*printf("Before: 0x%x\n", data);*/
     /*// we get crazy temps after we change the config. -80 or 250ish.*/
-    /*[>writeConfigAndWait(0x25, 0x74, 0xb4, 0x70);<]*/
+    /*writeConfigAndWait(0x25, 0x74, 0xb4, 0x70);*/
+    /*writeConfigAndWait(0x25, 0x74, 0xb1, 0x6b);*/
+    /*data = readConfig();*/
+    /*printf("before: 0x%x\n", data);*/
+    /*[>writeConfigWaitForEEPROM(0x25, 0x74, 0xb4, 0x70);<]*/
     /*[>writeConfigAndWait(0x25, 0x74, 0xb1, 0x6b);<]*/
-    /*[>data = readConfig();<]*/
-    /*printf("after: 0x%x\n", data);*/
+    /*writeConfig();*/
+    /*data = readConfig();*/
+    /*printf("after : 0x%x\n", data);*/
+    printf("Start...\n");
+    for (i=0; i<8000; i++){
+        delay(1);
+    }
+    printf("End...\n");
 
 
-    while(i < 10){
-        /*i++;*/
-        /*writeConfigAndWait(0x25, 0x74, 0xb1, 0x6b);*/
+    while(i < 4){
         temp = readTemp();
-        waitMillis(WAIT_MS);
-        printf("1: %f\n", temp);
-        /*waitMillis(999);*/
+        delay(WAIT_MS);
+        printf("%f\n", temp);
+        i++;
+            /*i++;*/
+            /*writeConfigAndWait(0x25, 0x74, 0xb1, 0x6b);*/
+            /*temp = readTemp();*/
+            /*waitMillis(WAIT_MS);*/
+            /*printf("1: %f\n", temp);*/
+            /*waitMillis(999);*/
 
-        /*writeConfigAndWait(0x25, 0x74, 0xb4, 0x70);*/
-        temp = readTemp();
-        waitMillis(WAIT_MS);
-        printf("2: %f\n", temp);
-        /*waitMillis(999);*/
+            /*writeConfigAndWait(0x25, 0x74, 0xb4, 0x70);*/
+            /*temp = readTemp();*/
+            /*waitMillis(WAIT_MS);*/
+            /*printf("2: %f\n", temp);*/
+            /*waitMillis(999);*/
     }
     
     printf("repeats: %d\n", repeat);
@@ -166,6 +184,49 @@ void main(int argc, char **argv){
         /*writeBMP(in, width, height);*/
         /*writeConfig();*/
         /*readConfig();*/
+}
+
+void writeConfigWaitForEEPROM(unsigned char command, unsigned char lsb, 
+                              unsigned char msb, unsigned char pec){
+    // see http://depa.usst.edu.cn/chenjq/www2/SDesign/JavaScript/CRCcalculation.htm
+    // for pec calculation
+    unsigned char * write = (unsigned char *)malloc(sizeof(unsigned char) * 4); 
+    unsigned char * clear = (unsigned char *)malloc(sizeof(unsigned char) * 4);
+
+    // command, LSB, MSB, PEC
+    write[0] = command; write[1] = lsb ; write[2] = msb ; write[3] = pec ;
+    clear[0] = command; clear[1] = 0x00; clear[2] = 0x00; clear[3] = 0x83;
+    // assumes command is 0x25 (PEC of 0x83)
+
+    int c = -1;
+    int w = -1;
+
+    // writing the config register
+    c = bcm2835_i2c_write(&clear[0], 4);
+    waitMillis(500);
+    c = bcm2835_i2c_write(&write[0], 4);
+    waitMillis(500);
+
+}
+void readFlag(){
+    // reads EEPROM_DONE flag
+    // behaves like a read command
+    unsigned char i, command;
+    command = 0xF0;
+    unsigned char buf[17];
+    for (int i=0; i<17; i++){
+        buf[i] = 0;
+    }
+
+    bcm2835_i2c_begin();
+    bcm2835_i2c_write(&command, 1);
+    /*bcm2835_i2c_read_register_rs(&command, &buf[0], 17);*/
+    bcm2835_i2c_read(&buf[0], 3);
+
+    for (int i=0; i<3; i++){
+        printf("%.2x ", buf[i]);
+    }
+    printf("\n");
 }
 
 float readTemp(){
@@ -232,35 +293,35 @@ void writeConfigAndWait(unsigned char command , unsigned char lsb   ,
     waitMillis(100);
 
     // writing the sleep command
-    unsigned char * sleep = (unsigned char *)malloc(sizeof(unsigned char)*3);
-    sleep[0] = 0xff;
-    sleep[1] = 0x3b;
-    c = bcm2835_i2c_write(&sleep[0], 2);
+    /*unsigned char * sleep = (unsigned char *)malloc(sizeof(unsigned char)*3);*/
+    /*sleep[0] = 0xff;*/
+    /*sleep[1] = 0x3b;*/
+    /*c = bcm2835_i2c_write(&sleep[0], 2);*/
 
-    // sleep. required time: 33ms (more for normal temps)
-    // select an output, write high/low, wait 40ms, write low/high, wait 60,
-    // write normal values
-    bcm2835_i2c_end();
-    bcm2835_gpio_fsel(2, BCM2835_GPIO_FSEL_OUTP);
-    bcm2835_gpio_fsel(3, BCM2835_GPIO_FSEL_OUTP);
-    bcm2835_gpio_write(2, HIGH);
-    bcm2835_gpio_write(3, LOW);
-    waitMillis(100);
-    bcm2835_gpio_write(2, LOW);
-    bcm2835_gpio_write(3, HIGH);
-    waitMillis(100);
-    bcm2835_gpio_write(2, HIGH);
-    bcm2835_gpio_write(3, HIGH);
-    waitMillis(100);
+    /*// sleep. required time: 33ms (more for normal temps)*/
+    /*// select an output, write high/low, wait 40ms, write low/high, wait 60,*/
+    /*// write normal values*/
+    /*bcm2835_i2c_end();*/
+    /*bcm2835_gpio_fsel(2, BCM2835_GPIO_FSEL_OUTP);*/
+    /*bcm2835_gpio_fsel(3, BCM2835_GPIO_FSEL_OUTP);*/
+    /*bcm2835_gpio_write(2, HIGH);*/
+    /*bcm2835_gpio_write(3, LOW);*/
+    /*waitMillis(100);*/
+    /*bcm2835_gpio_write(2, LOW);*/
+    /*bcm2835_gpio_write(3, HIGH);*/
+    /*waitMillis(100);*/
+    /*bcm2835_gpio_write(2, HIGH);*/
+    /*bcm2835_gpio_write(3, HIGH);*/
+    /*waitMillis(100);*/
 
-    // re-init the IR camera, writing the settings again
-    initIR();
+    /*// re-init the IR camera, writing the settings again*/
+    /*initIR();*/
 
-    /*writeConfig();*/
-    bcm2835_i2c_write(&clear[0], 4);
+    /*[>writeConfig();<]*/
+    /*bcm2835_i2c_write(&clear[0], 4);*/
+    /*[>waitMillis(20);<]*/
+    /*bcm2835_i2c_write(&write[0], 4);*/
     /*waitMillis(20);*/
-    bcm2835_i2c_write(&write[0], 4);
-    waitMillis(20);
 
     free(clear);
     free(write);

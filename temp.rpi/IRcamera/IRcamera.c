@@ -110,6 +110,7 @@ void waitMillis(int millis);
 void writeConfigParams( unsigned char command, unsigned char lsb,
                         unsigned char msb,     unsigned char pec);
 void writeImage(char filename[50], float * data, int width, int height);
+unsigned char findPec(unsigned char comm, unsigned char lsb, unsigned char msb);
 
 
 void main(int argc, char **argv){
@@ -118,29 +119,29 @@ void main(int argc, char **argv){
     int i=0;
     int repeat=0;
     FILE * file = fopen("noise.txt", "w");
+    unsigned char pec;
+    unsigned char comm = 0x25;
+    unsigned char lsb = 0x74;
+    unsigned char msb = 0xb4;
     initIR();
     printf("WAIT_MS: %d\n", WAIT_MS);
 
     writeConfigParams(0x25, 0x74, 0xb4, 0x70);
-    /*writeConfig();*/
-    delay(2 * 1000);
     data = readConfig();
-    delay(2 * 1000);
     printf("%x\n", data);
 
     while(i < 4){
         i++;
-        writeConfigParams(0x25, 0x74, 0xb4, 0x70);
-        temp = readTemp();
-        printf("%f\n", temp);
-        waitMillis(WAIT_MS);
-        delay(1000);
 
-        writeConfigParams(0x25, 0x74, 0xb1, 0x6b);
+        if (i%2==0) msb = 0xb4;
+        if (i%2==1) msb = 0xb4;
+        pec = findPec(comm, lsb, msb);
+        writeConfigParams(comm, lsb, msb, pec);
+
         temp = readTemp();
         printf("%f\n", temp);
         waitMillis(WAIT_MS);
-        delay(1000);
+
     }
 
     // ending I2C operations
@@ -264,14 +265,27 @@ void writeConfigParams( unsigned char command, unsigned char lsb,
     // requires bcm2835_gpio_fsel(4, BCM2835_GPIO_FSEL_OUTP); to be called.
     // turn it off, and wait for it to turn off
     bcm2835_gpio_write(PWR_PIN, LOW);
-    waitMillis(999);
+    waitMillis(100);
 
     // turn it on, and wait for it to turn on all the way
     bcm2835_gpio_write(PWR_PIN, HIGH);
-    waitMillis(999);
+    waitMillis(100);
 
     free(clear);
     free(write);
+}
+
+unsigned char findPec(unsigned char comm, unsigned char lsb, unsigned char msb){
+    if(comm==0x25){
+        if(lsb==0x74){
+            if(msb==0xb4) return 0x70;
+            if(msb==0xb3) return 0x65;
+            if(msb==0xb2) return 0x62;
+            if(msb==0xb1) return 0x6b;
+        }
+    }
+    return -1;
+
 }
 
 // writeImageWithFilename writes a csv file than has python write the image

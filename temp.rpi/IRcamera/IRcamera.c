@@ -1,3 +1,9 @@
+/*
+ * We need to...
+ *      - move the sensor where ever we want to
+ *      - write an image out
+ *      - implement the haar transform
+ */
     /*
      *  My wires are hooked up to the following GPIO pins:
      *  
@@ -76,6 +82,8 @@
 #define WIDTH 100
 #define HEIGHT 100
 
+#define PWR_PIN 4
+
 #define BAUD_RATE 100e3
 #define DEBUG_PRINT 1
 
@@ -113,11 +121,26 @@ void main(int argc, char **argv){
     initIR();
     printf("WAIT_MS: %d\n", WAIT_MS);
 
+    writeConfigParams(0x25, 0x74, 0xb4, 0x70);
+    /*writeConfig();*/
+    delay(2 * 1000);
+    data = readConfig();
+    delay(2 * 1000);
+    printf("%x\n", data);
+
     while(i < 4){
+        i++;
+        writeConfigParams(0x25, 0x74, 0xb4, 0x70);
         temp = readTemp();
         printf("%f\n", temp);
-        i++;
         waitMillis(WAIT_MS);
+        delay(1000);
+
+        writeConfigParams(0x25, 0x74, 0xb1, 0x6b);
+        temp = readTemp();
+        printf("%f\n", temp);
+        waitMillis(WAIT_MS);
+        delay(1000);
     }
 
     // ending I2C operations
@@ -198,9 +221,9 @@ void initIR(){
     bcm2835_i2c_setSlaveAddress(ADDRESS);
 
     // setting up the PWR pin and turning it on
-    bcm2835_gpio_fsel(4, BCM2835_GPIO_FSEL_OUTP);
-    bcm2835_gpio_write(4, HIGH);
-    waitMillis(100);
+    bcm2835_gpio_fsel( PWR_PIN, BCM2835_GPIO_FSEL_OUTP);
+    bcm2835_gpio_write(PWR_PIN, HIGH);
+    waitMillis(999);
 }
 int readConfig(){
     // adapted from  http://www.raspberrypi.org/phpBB3/viewtopic.php?t=17738&p=362569
@@ -225,6 +248,7 @@ void writeConfigParams( unsigned char command, unsigned char lsb,
     // command, LSB, MSB, PEC
     write[0] = command; write[1] = lsb; write[2] = msb; write[3] = pec;
     clear[0] = command; clear[1] = 0x00; clear[2] = 0x00; clear[3] = 0x83;
+    // assumes command = 0x25 (for PEC value)
 
     int c = -1;
     int w = -1;
@@ -239,12 +263,12 @@ void writeConfigParams( unsigned char command, unsigned char lsb,
 
     // requires bcm2835_gpio_fsel(4, BCM2835_GPIO_FSEL_OUTP); to be called.
     // turn it off, and wait for it to turn off
-    bcm2835_gpio_write(4, LOW);
-    waitMillis(100);
+    bcm2835_gpio_write(PWR_PIN, LOW);
+    waitMillis(999);
 
     // turn it on, and wait for it to turn on all the way
-    bcm2835_gpio_write(4, HIGH);
-    waitMillis(100);
+    bcm2835_gpio_write(PWR_PIN, HIGH);
+    waitMillis(999);
 
     free(clear);
     free(write);

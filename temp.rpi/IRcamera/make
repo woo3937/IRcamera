@@ -12,6 +12,7 @@
 #   link to the phidget library, for controlling the stepper motors
 # -lrt
 #   I just got rid of this
-gcc steppers.c IRcamera.c -o IRcamera -l bcm2835 -std=c99 -lm  -lphidget21
+all:
+    gcc steppers.c IRcamera.c -o IRcamera -l bcm2835 -std=c99 -lm  -lphidget21
 
 

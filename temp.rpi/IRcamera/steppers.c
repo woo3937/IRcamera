@@ -148,7 +148,7 @@ int gotoPixel2D(CPhidgetStepperHandle horizStepper, CPhidgetStepperHandle vertSt
     vertLoc = vertLoc * (1200 * 16) / 360;
 
     CPhidgetStepper_setTargetPosition(horizStepper, 0, horizLoc);
-    /*CPhidgetStepper_setTargetPosition(vertStepper, 1, vertLoc);*/
+    CPhidgetStepper_setTargetPosition(vertStepper, 1, vertLoc);
     __int64 sendHorizLoc = (int)horizLoc;
     __int64 desired;
     __int64 current;

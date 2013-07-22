@@ -1,10 +1,11 @@
 /*
  * We need to...
+ *  (- is kinda, x done, o is open)
  *      - move the sensor where ever we want to
  *      x write an image out
  *      x implement the haar transform
  *      - implement a basic algorithm (FISTA)
- *      - implement the complex waveform
+ *      o implement the complex waveform
  *
  *      -- Scott Sievert, 2013-7-22, sieve121 (at) umn (dot) edu
  */
@@ -124,83 +125,35 @@ void main(int argc, char **argv){
     int i=0;
     int repeat=0;
     FILE * file = fopen("noise.txt", "w");
+    int width = 100;
+    int pixel = width;
     unsigned char pec;
     unsigned char comm = 0x25;
     unsigned char lsb = 0x74;
     unsigned char msb = 0xb4;
-    main2();
-    /*initIR();*/
+    initIR();
     /*printf("WAIT_MS: %d\n", WAIT_MS);*/
 
-    /*writeConfigParams(0x25, 0x74, 0xb4, 0x70);*/
-    /*data = readConfig();*/
-    /*printf("%x\n", data);*/
+    CPhidgetStepperHandle horizStepper = 0;
+    CPhidgetStepper_create(&horizStepper);
+    initStepper(horizStepper);
 
-    /*while(i < 4){*/
-        /*i++;*/
+    CPhidgetStepperHandle vertStepper = 1;
+    CPhidgetStepper_create(&vertStepper);
+    initStepper(vertStepper);
 
-        /*if (i%2==0) msb = 0xb4;*/
-        /*if (i%2==1) msb = 0xb1;*/
-        /*pec = findPec(comm, lsb, msb);*/
-        /*writeConfigParams(comm, lsb, msb, pec);*/
-        /*temp = readTemp();*/
-        /*printf("%f\n", temp);*/
-        /*data = readConfig();*/
-        /*printf("%x\n", data);*/
-        /*printf("\n");*/
 
-    /*}*/
+    /*gotoPixel(vertStepper, pixel, width);*/
+    gotoPixel(horizStepper, 0, width);
+    gotoPixel(horizStepper, pixel, width);
+
+    gotoPixel(vertStepper, 0, width);
+    gotoPixel(vertStepper, pixel, width);
+
 
     // ending I2C operations
     bcm2835_i2c_end();
 
-        /*printf("Error = %d out of 100\n", error);*/
-        /*fromSampleCode();*/
-        /*CPhidgetStepperHandle stepper = 0;*/
-        /*CPhidgetStepper_create(&stepper);*/
-
-        /*initStepper(stepper);*/
-        /*printf("Done with init...\n");*/
-        /*fflush(stdout);*/
-        /*getchar();*/
-
-        /*gotoPixel2D(stepper, stepper, 0, WIDTH, 0, HEIGHT);*/
-        /*gotoPixel2D(stepper, stepper, WIDTH, WIDTH, HEIGHT, HEIGHT);*/
-        /*gotoPixel2D(stepper, stepper, 0, WIDTH, 0, HEIGHT);*/
-        /*gotoPixel2D(stepper, stepper, WIDTH, WIDTH, HEIGHT, HEIGHT);*/
-        /*gotoPixel2D(stepper, stepper, 0, WIDTH, 0, HEIGHT);*/
-        /*gotoPixel2D(stepper, stepper, WIDTH, WIDTH, HEIGHT, HEIGHT);*/
-
-
-        /*haltStepper(stepper);*/
-
-        /*float temp, test;*/
-
-        /*initIR();*/
-        /*temp = readTemp();*/
-
-        /*printf("temp: %f \n", temp);*/
-        /*int width = 50;*/
-        /*int height = 50;*/
-        /*float * in = (float *)malloc(sizeof(float) * width * height);*/
-
-
-        /*printf("Start timer!\n");*/
-        /*for(int i=0; i<width*height; i++){*/
-            /*float temp = readTemp();*/
-            /*float color = 255 * 1 / (1 + K*exp(-(temp-CENTER) * A));*/
-            /*in[i] = color;*/
-            /*sleepS2(WAIT_MS);*/
-            /*if (i % width == 0){*/
-                /*printf("%d\n", i/width);*/
-                /*fflush(stdout);*/
-            /*}*/
-        /*}*/
-        /*printf("End timer!\n");*/
-
-        /*writeBMP(in, width, height);*/
-        /*writeConfig();*/
-        /*readConfig();*/
 }
 float readTemp(){
     // adapted from  http://www.raspberrypi.org/phpBB3/viewtopic.php?t=17738&p=362569

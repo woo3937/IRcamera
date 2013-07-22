@@ -22,7 +22,7 @@ set smartindent
 ":colorscheme darkblue
 
 " added to make the RPi easier
-nmap <Leader>m :w<CR>:!make<CR>
+nmap <Leader>m :w<CR>:!make<CR><CR>
 nmap <Leader>b :!sh ~/temp.rpi/backup.sh<CR>
 nmap <Leader>e :!sudo ./IRcamera<CR>
 nmap <Leader>d <Leader>m<Leader>e

@@ -1,8 +1,12 @@
 /*
  * We need to...
  *      - move the sensor where ever we want to
- *      - write an image out
- *      - implement the haar transform
+ *      x write an image out
+ *      x implement the haar transform
+ *      - implement a basic algorithm (FISTA)
+ *      - implement the complex waveform
+ *
+ *      -- Scott Sievert, 2013-7-22, sieve121 (at) umn (dot) edu
  */
     /*
      *  My wires are hooked up to the following GPIO pins:
@@ -26,7 +30,7 @@
      *    |                 |           
      *    |_________________|           
      *
-     *    --Scott Sievert, 2013-07-19, sieve121@umn.edu
+     *    --Scott Sievert, 2013-07-19, sieve121 (at) umn (dot) edu
      */
     /* 
      * All of this code can be found on GitHub, at https://github.com/scottsievert/IRcamera
@@ -64,7 +68,7 @@
      *  Absolutely, positively, resoundingly hate it. Probably too much, but oh
      *  well.
      *
-     *  --Scott Sievert (sieve121@umn.edu), 2013-06-26
+     *  --Scott Sievert (sieve121 (at) umn (dot) edu), 2013-06-26
      */
 
 #include <stdio.h>
@@ -77,6 +81,7 @@
 #include <errno.h>
 #include <phidget21.h>
 #include "steppers.h"
+#include "brain.h"
 #include <unistd.h>
 
 #define WIDTH 100
@@ -123,26 +128,28 @@ void main(int argc, char **argv){
     unsigned char comm = 0x25;
     unsigned char lsb = 0x74;
     unsigned char msb = 0xb4;
-    initIR();
-    printf("WAIT_MS: %d\n", WAIT_MS);
+    main2();
+    /*initIR();*/
+    /*printf("WAIT_MS: %d\n", WAIT_MS);*/
 
-    writeConfigParams(0x25, 0x74, 0xb4, 0x70);
-    data = readConfig();
-    printf("%x\n", data);
+    /*writeConfigParams(0x25, 0x74, 0xb4, 0x70);*/
+    /*data = readConfig();*/
+    /*printf("%x\n", data);*/
 
-    while(i < 4){
-        i++;
+    /*while(i < 4){*/
+        /*i++;*/
 
-        if (i%2==0) msb = 0xb4;
-        if (i%2==1) msb = 0xb4;
-        pec = findPec(comm, lsb, msb);
-        writeConfigParams(comm, lsb, msb, pec);
+        /*if (i%2==0) msb = 0xb4;*/
+        /*if (i%2==1) msb = 0xb1;*/
+        /*pec = findPec(comm, lsb, msb);*/
+        /*writeConfigParams(comm, lsb, msb, pec);*/
+        /*temp = readTemp();*/
+        /*printf("%f\n", temp);*/
+        /*data = readConfig();*/
+        /*printf("%x\n", data);*/
+        /*printf("\n");*/
 
-        temp = readTemp();
-        printf("%f\n", temp);
-        waitMillis(WAIT_MS);
-
-    }
+    /*}*/
 
     // ending I2C operations
     bcm2835_i2c_end();

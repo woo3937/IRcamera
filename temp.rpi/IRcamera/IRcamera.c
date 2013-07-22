@@ -125,8 +125,6 @@ void main(int argc, char **argv){
     int i=0;
     int repeat=0;
     FILE * file = fopen("noise.txt", "w");
-    int width = 100;
-    int pixel = width;
     unsigned char pec;
     unsigned char comm = 0x25;
     unsigned char lsb = 0x74;
@@ -134,21 +132,30 @@ void main(int argc, char **argv){
     initIR();
     /*printf("WAIT_MS: %d\n", WAIT_MS);*/
 
-    CPhidgetStepperHandle horizStepper = 0;
+    int width = 100;
+    int pixel = width/2;
+    // init'ing our steppers
+    int stepH = 0;
+    int indH  = 322212;
+    printf("indH: %d", indH);
+    CPhidgetStepperHandle horizStepper = stepH;
     CPhidgetStepper_create(&horizStepper);
-    initStepper(horizStepper);
+    initStepper(horizStepper, stepH, indH);
 
-    CPhidgetStepperHandle vertStepper = 1;
+    int stepV = 1;
+    int indV = -1;
+    CPhidgetStepperHandle vertStepper = stepV;
     CPhidgetStepper_create(&vertStepper);
-    initStepper(vertStepper);
+    initStepper(vertStepper, stepV, indV);
 
+    // making our steppers go places
+    gotoPixel(horizStepper, stepH, 0, width);
+    gotoPixel(horizStepper, stepH, pixel, width);
+    gotoPixel(horizStepper, stepH, 0, width);
 
-    /*gotoPixel(vertStepper, pixel, width);*/
-    gotoPixel(horizStepper, 0, width);
-    gotoPixel(horizStepper, pixel, width);
-
-    gotoPixel(vertStepper, 0, width);
-    gotoPixel(vertStepper, pixel, width);
+    gotoPixel(vertStepper, stepV, 0, width);
+    gotoPixel(vertStepper, stepV, pixel, width);
+    gotoPixel(vertStepper, stepV, 0, width);
 
 
     // ending I2C operations

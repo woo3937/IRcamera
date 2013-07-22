@@ -55,7 +55,7 @@ int CCONV PositionChangeHandler(CPhidgetStepperHandle stepper, void *usrptr, int
     return 0;
 }
 
-int initStepper(CPhidgetStepperHandle stepper){
+int initStepper(CPhidgetStepperHandle stepper, int index, int serialNumber){
     int result;
     __int64 curr_pos;
     const char *err;
@@ -76,7 +76,10 @@ int initStepper(CPhidgetStepperHandle stepper){
     CPhidgetStepper_set_OnPositionChange_Handler(stepper, PositionChangeHandler, NULL);
 
     //open the device for connections
-    CPhidget_open((CPhidgetHandle)stepper, -1);
+    int serial = -1;
+    serial = CPhidget_open((CPhidgetHandle)stepper, serialNumber);
+    printf("serial: %d\n", serial);
+    fflush(stdout);
 
     //get the program to wait for an stepper device to be attached
     printf("Waiting for Phidget to be attached....\n");
@@ -94,8 +97,8 @@ int initStepper(CPhidgetStepperHandle stepper){
     // minAccel defaults to minAccel: 46696
     // maxAccel defailts to maxVel: 46712
 
-    CPhidgetStepper_getAccelerationMin(stepper, 0, &minAccel);
-    CPhidgetStepper_getVelocityMax(stepper, 0, &maxVel);
+    CPhidgetStepper_getAccelerationMin(stepper, index, &minAccel);
+    CPhidgetStepper_getVelocityMax(stepper, index, &maxVel);
 
     /*printf("maxVel: %d, minAccel: %d\n", maxVel, minAccel);*/
     /*int mul = 1000;*/
@@ -105,40 +108,40 @@ int initStepper(CPhidgetStepperHandle stepper){
 
     /*CPhidgetStepper_setAcceleration(stepper, 0, minAccel*2);*/
     /*CPhidgetStepper_setVelocityLimit(stepper, 0, maxVel/2);*/
-    CPhidgetStepper_setAcceleration(stepper, 0, MIN_ACCEL*2);
-    CPhidgetStepper_setVelocityLimit(stepper, 0, MAX_VEL/2);
+    CPhidgetStepper_setAcceleration(stepper, index, MIN_ACCEL*2);
+    CPhidgetStepper_setVelocityLimit(stepper, index, MAX_VEL/2);
     /*CPhidgetStepper_getAccelerationMin(stepper, 0, &minAccel);*/
     /*CPhidgetStepper_getVelocityMax(stepper, 0, &maxVel);*/
     /*printf("minAccel: %d \n", minAccel); */
     /*printf("maxVel: %d\n", maxVel);*/
 
     //display current motor position if available
-    if(CPhidgetStepper_getCurrentPosition(stepper, 0, &curr_pos) == EPHIDGET_OK)
+    if(CPhidgetStepper_getCurrentPosition(stepper, index, &curr_pos) == EPHIDGET_OK)
         printf("Motor: 0 > Current Position: %lld\n", curr_pos);
 
-    CPhidgetStepper_setCurrentPosition(stepper, 0, 0);
-    CPhidgetStepper_setEngaged(stepper, 0, 1);
+    CPhidgetStepper_setCurrentPosition(stepper, index, 0);
+    CPhidgetStepper_setEngaged(stepper, index, 1);
     printf("Done with init.\n");
 }
-int gotoLocation(CPhidgetStepperHandle stepper, int loc){
+int gotoLocation(CPhidgetStepperHandle stepper, int index, int loc){
     // TODO: speed optimizations can occur here. we need to get rid of the
     // while-loop and have the sensor be settling while we're going to a
     // location.
     __int64 finalPosition = loc;
-    CPhidgetStepper_setTargetPosition(stepper, 0, loc);
+    CPhidgetStepper_setTargetPosition(stepper, index, loc);
     while(1){
         // now, location changes (which makes no sense)
-        CPhidgetStepper_getCurrentPosition(stepper, 0, &finalPosition);
+        CPhidgetStepper_getCurrentPosition(stepper, index, &finalPosition);
         if(finalPosition == loc) break;
         /*printf("pos: %d, loc: %d, is it waiting?\n", finalPosition, loc);*/
         /*printf("%d\n", position);*/
         /*if (position == loc) break;*/
     }
 }
-int gotoPixel(CPhidgetStepperHandle stepper, int pixel, int width){
+int gotoPixel(CPhidgetStepperHandle stepper, int index, int pixel, int width){
     float loc = ANGLE * pixel / width; // in degrees
     loc = loc * (1200 * 16) / 360;   // deg * steps/deg
-    gotoLocation(stepper, (int)loc);
+    gotoLocation(stepper, index, (int)loc);
 }
 int gotoPixel2D(CPhidgetStepperHandle horizStepper, CPhidgetStepperHandle vertStepper, 
     int horizPixel, int width, int vertPixel, int height){

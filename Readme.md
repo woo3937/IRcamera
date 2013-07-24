@@ -23,6 +23,12 @@ The parts list for this project:
 | [Stepper motors][stepper] | 2        | 70            |
 | Total                     |          | 340           |
 
+#### Pysical Directions
+1. Look at the comments at the top of `IRcamera.c` to determine where to wire
+   SDA/SCK/Vdd/GND, and where those pins are on the IR sensor.
+2. Make a motor controller that allows the motor to rotate in two dimensions.
+   <!--![a shot of the motor setup][-->
+
 
 Ardino Project
 ================
@@ -115,6 +121,7 @@ restrictions. At the University, where there are restrictions, it didn't work.
 
 [driver]:http://www.phidgets.com/products.php?product\_id=1067
 [ir]:http://www.futureelectronics.com/en/technologies/semiconductors/analog/sensors/temperature/Pages/3003055-MLX90614ESF-DCI-000-TU.aspx?IM=0
+[rpi]:http://www.raspberrypi.org
 
 
 [xee]:http://xee.c3.cx

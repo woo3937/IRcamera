@@ -22,7 +22,7 @@
 #include <phidget21.h>
 
 #define ANGLE 45
-#define MAX_VEL 240
+#define MAX_VEL 480
 #define MIN_ACCEL 20323
 #define WAIT_MS 28
 
@@ -51,7 +51,7 @@ int CCONV ErrorHandler(CPhidgetHandle stepper, void *userptr, int ErrorCode, con
     return 0;
 }
 int CCONV PositionChangeHandler(CPhidgetStepperHandle stepper, void *usrptr, int Index, __int64 Value){
-    printf("Motor: %d > Current Position: %lld\n", Index, Value);
+   /*printf("Motor: %d > Current Position: %lld\n", Index, Value);*/
     return 0;
 }
 
@@ -77,7 +77,7 @@ int initStepper(CPhidgetStepperHandle stepper, int index, int serialNumber){
 
     //open the device for connections
     int serial = -1;
-    serial = CPhidget_open((CPhidgetHandle)stepper, serialNumber);
+    serial = CPhidget_open((CPhidgetHandle)stepper, -1);
     printf("serial: %d\n", serial);
     fflush(stdout);
 
@@ -116,8 +116,9 @@ int initStepper(CPhidgetStepperHandle stepper, int index, int serialNumber){
     /*printf("maxVel: %d\n", maxVel);*/
 
     //display current motor position if available
-    if(CPhidgetStepper_getCurrentPosition(stepper, index, &curr_pos) == EPHIDGET_OK)
+    if(CPhidgetStepper_getCurrentPosition(stepper, index, &curr_pos) == EPHIDGET_OK){
         printf("Motor: 0 > Current Position: %lld\n", curr_pos);
+    }
 
     CPhidgetStepper_setCurrentPosition(stepper, index, 0);
     CPhidgetStepper_setEngaged(stepper, index, 1);
@@ -139,8 +140,13 @@ int gotoLocation(CPhidgetStepperHandle stepper, int index, int loc){
     }
 }
 int gotoPixel(CPhidgetStepperHandle stepper, int index, int pixel, int width){
-    float loc = ANGLE * pixel / width; // in degrees
-    loc = loc * (1200 * 16) / 360;   // deg * steps/deg
+    // what angle do we want to go to?
+    float loc = ANGLE * (float)(pixel) / (float)(width); // in degrees
+    /*printf("what deg? %f\n", loc);*/
+    // what location gives that angle?
+    loc = loc * (1200 * 16) / 360.0f;   // deg * steps/deg
+    /*printf("current loc: %.0f\n", loc);*/
+    /*printf("loc: %f\n", loc);*/
     gotoLocation(stepper, index, (int)loc);
 }
 int gotoPixel2D(CPhidgetStepperHandle horizStepper, CPhidgetStepperHandle vertStepper, 
@@ -164,7 +170,15 @@ int gotoPixel2D(CPhidgetStepperHandle horizStepper, CPhidgetStepperHandle vertSt
         if (off * 1000 < MAX_VEL *  WAIT_MS) break; 
         // breaks in enough time for WAIT_MS
     }
+}
 
+float readLocInDegrees(CPhidgetStepperHandle stepper, int width){
+    __int64 curr_pos = -1;
+    CPhidgetStepper_getCurrentPosition(stepper, 0, &curr_pos);
+    /*printf("curr_pos: %lld\n", curr_pos);*/
+    float degrees = curr_pos * (float)360 / (float)(1200 * 16 * 1);
+    /*printf("in readLocInDegrees: %f\n", degrees);*/
+    return degrees;
 }
 
 int haltStepper(CPhidgetStepperHandle stepper){

@@ -137,30 +137,54 @@ void main(int argc, char **argv){
     // init'ing our steppers
     int stepH = 0;
     int indH  = 322212;
-    printf("indH: %d", indH);
+    indH = -1;
     CPhidgetStepperHandle horizStepper = stepH;
     CPhidgetStepper_create(&horizStepper);
     initStepper(horizStepper, stepH, indH);
 
     int stepV = 1;
     int indV = -1;
-    CPhidgetStepperHandle vertStepper = stepV;
-    CPhidgetStepper_create(&vertStepper);
-    initStepper(vertStepper, stepV, indV);
+    printf("sizeof: %d\n", sizeof(float));
+    /*CPhidgetStepperHandle vertStepper = stepV;*/
+    /*CPhidgetStepper_create(&vertStepper);*/
+    /*initStepper(vertStepper, stepV, indV);*/
+
+    CPhidgetStepper_setCurrentPosition(horizStepper, 0, 0);
+    delay(1000);
+    __int64 pos = -1;
+    CPhidgetStepper_getCurrentPosition(horizStepper, 0, &pos);
+    printf("pos: %d \n", pos);
 
     // making our steppers go places
+    float deg;
     gotoPixel(horizStepper, stepH, 0, width);
-    gotoPixel(horizStepper, stepH, pixel, width);
-    gotoPixel(horizStepper, stepH, 0, width);
+    width = 300;
+    float * tempArray = (float *)malloc(sizeof(float) * width);
+    printf("%d\n", width);
+    delay(1000);
+    for (i=0; i<width; i++){
+        gotoPixel(horizStepper, stepH, i, width);
+        delay(40);
+        deg = readLocInDegrees(horizStepper, width);
+        tempArray[i] = readTemp();
 
-    gotoPixel(vertStepper, stepV, 0, width);
-    gotoPixel(vertStepper, stepV, pixel, width);
-    gotoPixel(vertStepper, stepV, 0, width);
+        printf("temp: %f\n", tempArray[i]);
+        printf("deg : %f \n", deg);
+        /*printf("i  : %d \n", i);*/
+        printf("\n");
+    }
+    gotoPixel(horizStepper, 0, 0, width);
+    for (i=0; i<width; i++){
+        /*printf("%f\n", tempArray[i]);*/
+    }
+    /*readLocInDegrees(horizStepper);*/
+
+    /*gotoPixel(vertStepper, stepV, 0, width);*/
+    /*gotoPixel(vertStepper, stepV, pixel, width);*/
 
 
     // ending I2C operations
     bcm2835_i2c_end();
-
 }
 float readTemp(){
     // adapted from  http://www.raspberrypi.org/phpBB3/viewtopic.php?t=17738&p=362569
@@ -180,7 +204,8 @@ float readTemp(){
 }
 void waitMillis(int millis){
     // millis can not be greater than 1000
-    usleep(1000 * millis);
+    /*usleep(1000 * millis);*/
+    delay(millis);
 }
 void initIR(){
     bcm2835_init();

@@ -51,47 +51,7 @@ This Arduino writes images to the SD card in the simplest RGB format available
 
 
 #### Physical Directions
-1. These directions are long -- I'm adding them to `temp.rpi/IRcamera/IRcamera.ino`.
-1. To wire the Arduino and SD card together, and to make the SD card available
-   to the Arduino, simply connect all of the output pins (the pins on the side
-   with the names) to the Arduino output pins using a [header][header]
-   connector.
-
-2. To arrange the servos and tilt brackets, place the tilt brackets oppisite
-   each other, so the two holes on the two tabs align. Then, screw in one servo
-   on the "top" (oppisite the directions the tabs are facing). For the other
-   servo, first connect it with the connector that came with the pan tilt
-   brackets. After that, screw in the other servo so it rotates in a
-   perpendicular direction from the other servo. You're going to mount the IR
-   sensor on top of this, so it can rotate in both the horizontal and vertical
-   directions.
-
-   That description is best shown with a picture, even though I'm not all the
-   way doing that yet (if it's past June 2013, please tell me to fix it). The
-   pictures are included in the `example-photo-tilt-brackets` folder.
-
-3. Servos operate by reading in a PWM signal, and go to that value. For example,
-   if you put out a PWM signal of 50%, the servo would go to the location range
-   of motion * 0.50. In my case, the servos can read values between 0 and 255,
-   so 170 * X / 255, where X is the duty cycle you set with analogWrite (see
-   gotoPixel for more info) or 127 for the above example.
-
-4. Following [this thread][thread] on the forums (and the comment by
-   SensorJunkie a ways down), I connected 3.3V and ground to the corresponding
-   pins (datasheet time!) on the IR sensor, analog pin 4 to SDA and analog pin 5
-   to SCK. SCL is the pin closest to the tab, on the right side (bottom view!),
-   and goes to pin 5. SDA is the pin on the bottom right side (bottom view!),
-   and is connected to pin 4.
-
-5. I downloaded `i2cmaster.h` from [this website][i2cmaster], and renamed
-   `twimaster.c` to `twimaster.cpp`. Yes, I know it sounds weird - I think it's
-   something to do with how the Arduino IDE defines functions. If I didn't do
-   it, I got errors about having duplicate functions defined.
-   
-6. If you're using an Arduino with a different clock frequency, you have to
-   include the lines (untested!)
-   `#ifndef F_CPU` `#define F_CPU 16000000UL` `#endif` `/* I2C clock in Hz */`
-   `#define SCL_CLOCK 50000L`
+1. These directions are long -- I've added them to `IRcamera.ino`.
 
 
 Bugs

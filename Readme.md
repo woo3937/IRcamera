@@ -51,7 +51,7 @@ This Arduino writes images to the SD card in the simplest RGB format available
 
 
 #### Physical Directions
-1. These directions are long -- I've added them to `IRcamera.ino`.
+1. Look in the comments of `IRcamera.ino` for the directions.
 
 
 Bugs

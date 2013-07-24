@@ -24,16 +24,17 @@ The parts list for this project:
 | Total                     |          | 340           |
 
 Also, the comments in the project on the RPi (`temp.rpi/IRcamera`) are
-wonderfully accurate and complete.
+wonderfully accurate and complete. I hate bad documentation, and am trying to
+write good docs.
 
 #### Pysical Directions
 1. Look at the comments at the top of `IRcamera.c` (in `temp.rpi/IRcamera` as
-   of 2013-7-24) to determine where to wire
-   SDA/SCK/Vdd/GND, and where those pins are on the IR sensor.
+   of 2013-7-24) to determine where to wire SDA/SCK/Vdd/GND, and where those pins
+   are on the IR sensor.
 2. Make a motor controller that allows the motor to rotate in two dimensions. I
    had our department's machine shop make ours. On the final camera, the sensor
    will go on the disk on the upper motor.
-   ![a shot of the motor setup][motors]
+   ![a shot of the motor setup][motors.jpg]
 
 
 Ardino Project

@@ -23,6 +23,9 @@ The parts list for this project:
 | [Stepper motors][stepper] | 2        | 70            |
 | Total                     |          | 340           |
 
+Also, the comments in the project on the RPi (`temp.rpi/IRcamera`) are
+wonderfully accurate and complete.
+
 #### Pysical Directions
 1. Look at the comments at the top of `IRcamera.c` (in `temp.rpi/IRcamera` as
    of 2013-7-24) to determine where to wire

@@ -34,7 +34,7 @@ write good docs.
 2. Make a motor controller that allows the motor to rotate in two dimensions. I
    had our department's machine shop make ours. On the final camera, the sensor
    will go on the disk on the upper motor.
-   ![a shot of the motor setup][motors.jpg]
+   ![a shot of the motor setup][motors.jpg?raw=true]
 
 
 Ardino Project

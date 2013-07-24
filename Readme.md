@@ -84,7 +84,7 @@ This Arduino writes images to the SD card in the simplest RGB format available
    <!--and is connected to pin 4.-->
 
 <!--5. I downloaded `i2cmaster.h` from [this website][i2cmaster], and renamed-->
-   <!--`twimaster.c` to `twimaster.cpp`. Yes, I know it sounds weird -- I think it's-->
+   <!--`twimaster.c` to `twimaster.cpp`. Yes, I know it sounds weird - I think it's-->
    <!--something to do with how the Arduino IDE defines functions. If I didn't do-->
    <!--it, I got errors about having duplicate functions defined. -->
    

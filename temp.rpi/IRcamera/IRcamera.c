@@ -128,7 +128,7 @@ void main(int argc, char **argv){
     unsigned char pec;
     unsigned char comm = 0x25;
     unsigned char lsb = 0x74;
-    unsigned char msb = 0xb1;
+    unsigned char msb = 0xb4;
     initIR();
     writeConfigParams(comm, lsb, msb, pec);
     data = readConfig();
@@ -171,6 +171,7 @@ void main(int argc, char **argv){
         delay(40);
         deg = readLocInDegrees(horizStepper, width);
         tempArray[i] = readTemp();
+        delay(WAIT_MS);
 
         fprintf(file, "%f,", tempArray[i]);
         fprintf(file, "%f \n", deg);

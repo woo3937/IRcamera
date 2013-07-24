@@ -22,26 +22,6 @@ The parts list for this project:
 | [Driver boards][driver]   | 2        | 200           |
 | [Stepper motors][stepper] | 2        | 70            |
 | Total                     |          | 340           |
-*      
-*      - Stepper motors (also in
-steppers.c):
-*          url:
-http://www.phidgets.com/products.php?category=23&product_id=3317_1
-*      -
-Driver
-boards
-(also
-in
-steppers.c):
-*          url:
-http://www.phidgets.com/products.php?product_id=1067
-*      -
-IR
-sensor:
-MLX90614
-DCI
-*          url:
-http://www.futureelectronics.com/en/technologies/semiconductors/analog/sensors/temperature/Pages/3003055-MLX90614ESF-DCI-000-TU.aspx?IM=0
 
 
 Ardino Project
@@ -131,6 +111,10 @@ restrictions. At the University, where there are restrictions, it didn't work.
 [picture]:https://raw.github.com/scottsievert/IRcamera/master/pan-tilt-brackets.jpg
 [i2cmaster]:homepage.hispeed.ch/peterfleury/avr-software.html
 [thread]:http://forum.arduino.cc/index.php/topic,21317.0.html
+[stepper]:http://www.phidgets.com/products.php?category=23&product_id=3317_1
+
+[driver]:http://www.phidgets.com/products.php?product\_id=1067
+[ir]:http://www.futureelectronics.com/en/technologies/semiconductors/analog/sensors/temperature/Pages/3003055-MLX90614ESF-DCI-000-TU.aspx?IM=0
 
 
 [xee]:http://xee.c3.cx

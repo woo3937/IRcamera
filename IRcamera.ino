@@ -12,6 +12,9 @@
  * 
  */
  /*
+ 
+ ### Physical Directions
+ 
  1. To wire the Arduino and SD card together, and to make the SD card available
    to the Arduino, simply connect all of the output pins (the pins on the side
    with the names) to the Arduino output pins using a [header][header]

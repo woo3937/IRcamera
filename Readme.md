@@ -24,9 +24,11 @@ The parts list for this project:
 | Total                     |          | 340           |
 
 #### Pysical Directions
-1. Look at the comments at the top of `IRcamera.c` to determine where to wire
+1. Look at the comments at the top of `IRcamera.c` (in `temp.rpi/IRcamera` as
+   of 2013-7-24) to determine where to wire
    SDA/SCK/Vdd/GND, and where those pins are on the IR sensor.
-2. Make a motor controller that allows the motor to rotate in two dimensions.
+2. Make a motor controller that allows the motor to rotate in two dimensions. I
+   had our department's machine shop make ours.
    ![a shot of the motor setup][motors]
 
 

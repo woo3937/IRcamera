@@ -28,7 +28,8 @@ The parts list for this project:
    of 2013-7-24) to determine where to wire
    SDA/SCK/Vdd/GND, and where those pins are on the IR sensor.
 2. Make a motor controller that allows the motor to rotate in two dimensions. I
-   had our department's machine shop make ours.
+   had our department's machine shop make ours. On the final camera, the sensor
+   will go on the disk on the upper motor.
    ![a shot of the motor setup][motors]
 
 
@@ -99,9 +100,8 @@ I'm writing down all the painfully hard to resolve bugs I find so I don't have
 to go through the whole process of figuring it out again.
 
 #### RPi and Internet
-Add `nameserver 8.8.8.8` to `/etc/resolv.conf`. So simple. I went through a long
-process where it would connect just fine at my apartment, where there were no
-restrictions. At the University, where there are restrictions, it didn't work.
+I could SSH into the RPi simply by joining the University's network (the
+unprotected one) and sharing my internet via a USB-ethernet cable I bought.
 
 
 

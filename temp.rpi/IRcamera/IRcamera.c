@@ -124,13 +124,17 @@ void main(int argc, char **argv){
     float temp, temp1;
     int i=0;
     int repeat=0;
-    FILE * file = fopen("noise.txt", "w");
+    FILE * file = fopen("FOV.txt", "w");
     unsigned char pec;
     unsigned char comm = 0x25;
     unsigned char lsb = 0x74;
-    unsigned char msb = 0xb4;
+    unsigned char msb = 0xb1;
     initIR();
-    /*printf("WAIT_MS: %d\n", WAIT_MS);*/
+    writeConfigParams(comm, lsb, msb, pec);
+    data = readConfig();
+    printf("CONFIG: %x\n", data);
+    printf("WAIT_MS: %d\n", WAIT_MS);
+    printf("\n\n");
 
     int width = 100;
     int pixel = width/2;
@@ -168,10 +172,8 @@ void main(int argc, char **argv){
         deg = readLocInDegrees(horizStepper, width);
         tempArray[i] = readTemp();
 
-        printf("temp: %f\n", tempArray[i]);
-        printf("deg : %f \n", deg);
-        /*printf("i  : %d \n", i);*/
-        printf("\n");
+        fprintf(file, "%f,", tempArray[i]);
+        fprintf(file, "%f \n", deg);
     }
     gotoPixel(horizStepper, 0, 0, width);
     for (i=0; i<width; i++){
@@ -239,6 +241,8 @@ void writeConfigParams( unsigned char command, unsigned char lsb,
     unsigned char * clear = (unsigned char *)malloc(sizeof(unsigned char) * 4);
 
     // command, LSB, MSB, PEC
+    pec = findPec(command, lsb, msb);
+    /*printf("%x: pec", pec);*/
     write[0] = command; write[1] = lsb; write[2] = msb; write[3] = pec;
     clear[0] = command; clear[1] = 0x00; clear[2] = 0x00; clear[3] = 0x83;
     // assumes command = 0x25 (for PEC value)
@@ -276,6 +280,7 @@ unsigned char findPec(unsigned char comm, unsigned char lsb, unsigned char msb){
             if(msb==0xb1) return 0x6b;
         }
     }
+    printf("The combination for the PEC wasn't found!\n\n\n");
     return -1;
 
 }

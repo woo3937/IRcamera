@@ -21,7 +21,7 @@
 #include <stdlib.h>
 #include <phidget21.h>
 
-#define ANGLE 45
+#define ANGLE 22
 #define MAX_VEL 480
 #define MIN_ACCEL 20323
 #define WAIT_MS 28

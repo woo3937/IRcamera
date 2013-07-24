@@ -7,13 +7,47 @@ This project is based off the instructions at [cheap-thermocam.tk][1]. These
 instructions aren't very good, and many of the links are dead. Since I find that
 frustrating, some better instructions are below. 
 
-This Arduino writes images to the SD card in the simplest RGB format available
-(PPM). To do that, you'll need a good PPM viewer. For the Mac, look at
-[Xee][xee] (I downloaded it from [here][free-xee], and I didn't get a license).
+Raspberry Pi Project
+====================
+I started off with the Arduino, but it didn't even make enough RAM to hold the
+entire image. I moved to the RPi, which has 250,000x the RAM. I also moved to
+more accurate motors, as the servos were horribly inaccurate.
+
+The parts list for this project:
+
+| Part                      | Number   | Total Price   |
+| ----------------          | -------- | ------------- |
+| [RPi][rpi]                | 1        | 35            |
+| [IR sensor][ir]           | 1        | 35            |
+| [Driver boards][driver]   | 2        | 200           |
+| [Stepper motors][stepper] | 2        | 70            |
+| Total                     |          | 340           |
+*      
+*      - Stepper motors (also in
+steppers.c):
+*          url:
+http://www.phidgets.com/products.php?category=23&product_id=3317_1
+*      -
+Driver
+boards
+(also
+in
+steppers.c):
+*          url:
+http://www.phidgets.com/products.php?product_id=1067
+*      -
+IR
+sensor:
+MLX90614
+DCI
+*          url:
+http://www.futureelectronics.com/en/technologies/semiconductors/analog/sensors/temperature/Pages/3003055-MLX90614ESF-DCI-000-TU.aspx?IM=0
 
 
-Parts List
-=========
+Ardino Project
+================
+To run a cheap version of the thermocam, use (possibly with some modification)
+`IRcamera.ino` in the main folder. For parts, get
 * [IR Sensor][ir3accurate]
 * [Arduino Uno R3][arduino]
 * SD card and [SD card shield][SD]
@@ -21,8 +55,13 @@ Parts List
 * [Servos][servos]
 * breadboard, wires, superglue, etc (you probably have it already)
 
-Physical Directions
-===================
+This Arduino writes images to the SD card in the simplest RGB format available
+(PPM). To do that, you'll need a good PPM viewer. For the Mac, look at
+[Xee][xee] (I downloaded it from [here][free-xee], and I didn't get a license).
+
+
+
+#### Physical Directions
 1. To wire the Arduino and SD card together, and to make the SD card available
    to the Arduino, simply connect all of the output pins (the pins on the side
    with the names) to the Arduino output pins using a [header][header]

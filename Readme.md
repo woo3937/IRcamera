@@ -27,7 +27,7 @@ The parts list for this project:
 1. Look at the comments at the top of `IRcamera.c` to determine where to wire
    SDA/SCK/Vdd/GND, and where those pins are on the IR sensor.
 2. Make a motor controller that allows the motor to rotate in two dimensions.
-   <!--![a shot of the motor setup][-->
+   ![a shot of the motor setup][https://raw.github.com/scottsievert/IRcamera/master/motors.jpg]
 
 
 Ardino Project

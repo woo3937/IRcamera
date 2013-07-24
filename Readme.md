@@ -1,5 +1,5 @@
 This is a single pixel infa-red camera. Normally, IR cameras are in the range
-4,000 -- 40,000 dollars. This camera costs ~400 dollars, and takes a not long
+4,000 - 40,000 dollars. This camera costs ~400 dollars, and takes a not long
 (unknown) time to capture an image. Examples will be shown on this page at a
 later date.
 

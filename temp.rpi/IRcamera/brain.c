@@ -28,14 +28,14 @@ void main2();
 void FISTA(float * xold, float * xold1, float * y, int * idx, 
            int width, int height, float p, float tn, float tn1, int its);
 
-void main2(){
+void mainIST(float * xold, int width, int height){
     // a sample main. i'm just waiting for the motors to be done 
     // --Scott Sievert, 2013-7-22
     int i, j;
     int xx, yy;
     // pass width, height
-    int width = 16;
-    int height = 16;
+    /*int width = 16;*/
+    /*int height = 16;*/
     int n = width * height;
 
     // sampling rate
@@ -43,7 +43,7 @@ void main2(){
     int upper = n * p;
 
     // our approximation
-    float * xold = (float *)malloc(sizeof(float) * n);
+    /*float * xold = (float *)malloc(sizeof(float) * n);*/
     float * xold1 = (float *)malloc(sizeof(float) * n);
     for (i=0; i<n; i++) xold[i] = 0; xold1[i] = 0;
 
@@ -90,7 +90,7 @@ void FISTA(float * xold, float * xold1, float * y, int * idx,
     int i, j, k;
     int n = width * height;
     int upper = (int)(p*n);
-    float cut = 6.0;
+    float cut = 0.2;
 
     float * t1    = (float *)malloc(sizeof(float) * n);
     float * temp  = (float *)malloc(sizeof(float) * n);

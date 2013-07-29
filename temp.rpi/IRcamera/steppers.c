@@ -20,9 +20,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <phidget21.h>
+#include <math.h>
 
 #define ANGLE 22
-#define MAX_VEL 480
+#define MAX_VEL 1000
 #define MIN_ACCEL 20323
 #define WAIT_MS 28
 
@@ -149,25 +150,43 @@ int gotoPixel(CPhidgetStepperHandle stepper, int index, int pixel, int width){
     /*printf("loc: %f\n", loc);*/
     gotoLocation(stepper, index, (int)loc);
 }
-int gotoPixel2D(CPhidgetStepperHandle horizStepper, CPhidgetStepperHandle vertStepper, 
-    int horizPixel, int width, int vertPixel, int height){
+int gotoPixel2D(CPhidgetStepperHandle horizStepper, int indH, 
+                CPhidgetStepperHandle vertStepper, int indV, 
+                int horizPixel2, int width, int vertPixel2, int height){
+    __int64 horizPixel = (__int64)horizPixel2;
+    __int64 vertPixel = (__int64)vertPixel2;
     float horizLoc = ANGLE * horizPixel / width;
     horizLoc = horizLoc * (1200 * 16) / 360;
     float vertLoc = ANGLE * vertPixel / height;
     vertLoc = vertLoc * (1200 * 16) / 360;
 
-    CPhidgetStepper_setTargetPosition(horizStepper, 0, horizLoc);
-    CPhidgetStepper_setTargetPosition(vertStepper, 1, vertLoc);
-    __int64 sendHorizLoc = (int)horizLoc;
+    CPhidgetStepper_setTargetPosition(horizStepper , indH , (__int64)horizLoc);
+    CPhidgetStepper_setTargetPosition(vertStepper  , indV , (__int64)vertLoc);
+    __int64 sendHorizLoc = (__int64)horizLoc;
+    __int64 sendVertLoc = (__int64)vertLoc;
     __int64 desired;
     __int64 current;
-    float off;
+    // off, offHorizontal, offVertical, offTotal
+    float off, offH, offV, offT;
     while(1){
-        CPhidgetStepper_getCurrentPosition(horizStepper, 0, &sendHorizLoc);
-        if((int)horizLoc == sendHorizLoc) break;
+        CPhidgetStepper_getCurrentPosition(horizStepper, indH, &sendHorizLoc);
+        CPhidgetStepper_getCurrentPosition(vertStepper, indV, &sendVertLoc);
+        /*if((int)horizLoc == sendHorizLoc && (int)vertLoc == sendVertLoc) break;*/
+        /*if((__int64)horizLoc == sendHorizLoc) break;*/
+        /*if((__int64)vertLoc == sendVertLoc) break;*/
+        /*printf("%lld, %lld, ", (__int64)vertLoc, sendVertLoc);*/
+        /*printf("%lld, %lld\n", (__int64)horizLoc, sendHorizLoc);*/
+        if((__int64)vertLoc == sendVertLoc && (__int64)horizLoc == sendHorizLoc) break;
+        /*printf("%d\n", sendHorizLoc);*/
 
-        off = abs(sendHorizLoc - horizLoc);
-        if (off * 1000 < MAX_VEL *  WAIT_MS) break; 
+        /*offH = horizLoc - sendHorizLoc;*/
+        /*offV = vertLoc - sendVertLoc;*/
+        /*offT = sqrt(offH*offH + offV*offV);*/
+
+        /*printf("offT %f\n", offT);*/
+        /*if (offT < WAIT_MS * 1000 * MAX_VEL) break;*/
+
+        /*if (off * 1000 < MAX_VEL *  WAIT_MS) break; */
         // breaks in enough time for WAIT_MS
     }
 }
@@ -201,6 +220,19 @@ int haltStepper(CPhidgetStepperHandle stepper){
 
     //all done, exit
     return 0;
+}
+void goDeltaAngle(CPhidgetStepperHandle stepper, float angle){
+    float loc = angle; //ANGLE * (float)(pixel) / (float)(width); // in degrees
+    // what location gives that angle?
+    loc = loc * (1200 * 16) / 360.0f;   // deg * steps/deg
+    /*printf("current loc: %.0f\n", loc);*/
+    /*printf("loc: %f\n", loc);*/
+
+    // go to that location, first setting current loc
+    int index = 0;
+    CPhidgetStepper_setCurrentPosition(stepper, 0, 0);
+    gotoLocation(stepper, index, (int)loc);
+
 }
 
 

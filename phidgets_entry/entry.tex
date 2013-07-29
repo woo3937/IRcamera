@@ -1,0 +1,47 @@
+% a contest found at http://www.phidgets.com/phorum/viewtopic.php?f=52&t=6299
+% grand prize: 1000 worth of phidgets store credit
+% What is expected for submissions:
+    %A video demonstrating your project (ideally a link to a YouTube or Vimeo video)
+    %A brief description of the project
+    %Pictures
+    %Code, schematics or other documents
+
+\documentclass{article}
+\usepackage{hyperref}
+\usepackage[usenames,dvipsnames]{xcolor}
+\hypersetup{
+    unicode=false,                % non-Latin characters in Acrobat’s bookmarks
+    pdftoolbar=true,              % show Acrobat’s toolbar?
+    pdfmenubar=true,              % show Acrobat’s menu?
+    pdffitwindow=false,           % window fit to page when opened
+    pdfstartview={FitH},          % fits the width of the page to the window
+    pdftitle={CV},                % title
+    pdfauthor={Scott Sievert},    % author
+    pdfsubject={},                % subject of the document
+    pdfcreator={Scott Sievert},   % creator of the document
+    pdfproducer={Scott Sievert},  % producer of the document
+    pdfkeywords={compressed sensing,} {research,} {academia,}, % list of keywords
+    pdfnewwindow=true,            % links in new window
+    colorlinks=true,              % false: boxed links; true: colored links
+    linkcolor=red,                % color of internal links
+    citecolor=green,              % color of links to bibliography
+    filecolor=magenta,            % color of file links
+    urlcolor=NavyBlue             % color of external links
+}
+
+\newcommand{\github}{https://github.com/scottsievert/IRcamera/tree/master/temp.rpi/IRcamera}
+
+\begin{document}
+
+    Normally, infa-red (IR) cameras cost between 4,000 and 40,000 dollars. We're making a camera that uses a single sensor to take a picture -- a simple project anyone could do. But, on top of it, we're adding a compressed sensing algorithm to reduce the exposure time. Our final camera is around 400 dollars. Because we're using a compressed sensing algorithm, we have to use extremely precise motors, so we're using two Phidget stepper motors that give percision down to three tenths of a degree.
+
+    All of the code can be found \href{\github}{on my GitHub.} Specifically, look in \texttt{brain.c}. Also, we're written good documentation; we hate it when other people don't write docs all the way.
+
+    % include a photo
+    % include a video of the camera shooting
+
+
+
+\end{document}
+
+

@@ -21,8 +21,9 @@
 #include <stdlib.h>
 #include <phidget21.h>
 #include <math.h>
+#include "steppers.h"
 
-#define ANGLE 22
+/*#define ANGLE 22*/
 #define MAX_VEL 1000
 #define MIN_ACCEL 20323
 #define WAIT_MS 28

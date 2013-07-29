@@ -137,6 +137,7 @@ void main(int argc, char **argv){
     printf("WAIT_MS: %d\n", WAIT_MS);
     printf("\n\n");
 
+
     // init'ing the image
     int width = 32;
     int height = 32;
@@ -157,9 +158,17 @@ void main(int argc, char **argv){
     CPhidgetStepper_create(&vertStepper);
     initStepper(vertStepper, stepV, indV);
 
+    /*goDeltaAngle(horizStepper, 180);*/
+    /*goDeltaAngle(vertStepper, 180);*/
+
+    float loc = ANGLE/2; 
+    // what location gives that angle?
+    loc = loc * (1200 * 16) / 360.0f;   // deg * steps/deg
     // setting the current position, and checking
-    CPhidgetStepper_setCurrentPosition(horizStepper, 0, 0);
-    CPhidgetStepper_setCurrentPosition(vertStepper, 0, 0);
+    /*CPhidgetStepper_setCurrentPosition(horizStepper, 0, 0);*/
+    /*CPhidgetStepper_setCurrentPosition(vertStepper, 0, 0);*/
+    CPhidgetStepper_setCurrentPosition(horizStepper, 0, loc);
+    CPhidgetStepper_setCurrentPosition(vertStepper, 0, loc);
     delay(1000);
     __int64 pos = -1;
     CPhidgetStepper_getCurrentPosition(horizStepper, 0, &pos);
@@ -233,9 +242,9 @@ void main(int argc, char **argv){
         }
     }
     /*FISTA(xold, xold1, y, idx, width, height, p, tn, tn1, its);*/
+    gotoLocation(horizStepper, 0, loc);
+    gotoLocation(vertStepper, 0, loc);
 
-    gotoPixel2D(horizStepper, stepH, vertStepper, stepV,
-                0, width, 0, height);
     for (i=0; i<n; i++) printf("%f\n", y[i]);
     printf("Saving the image\n");
     fflush(stdout);
@@ -369,5 +378,5 @@ void writeImage(char filename[40], float * data, int width, int height){
     strcat(command, filename);
     printf("%s\n", command);
     system(command);
-    system("rm image.csv");
+    /*system("rm image.csv");*/
 }

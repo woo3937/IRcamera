@@ -15,10 +15,10 @@ df = read_csv('image.csv')
 im = array(df)
 
 # depends on the hardware specification!
-im = rot90(im)
+im = rot90(im, 3)
 
 fig = plt.figure()
 plt.axis('off')
 plt.imshow(im, cmap='jet')
-fig.savefig(filename, dpi=100, bbox_inches='tight')
+fig.savefig(filename, dpi=300, bbox_inches='tight')
 

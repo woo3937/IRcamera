@@ -19,6 +19,6 @@ im = rot90(im, 3)
 
 fig = plt.figure()
 plt.axis('off')
-plt.imshow(im, cmap='jet')
+plt.imshow(im, interpolation='nearest', cmap='jet')
 fig.savefig(filename, dpi=300, bbox_inches='tight')
 

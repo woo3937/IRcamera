@@ -9,7 +9,7 @@
 #define WAIT_MS 46
 #define SAME_IMAGE_FILE 1
 #define MIN_TEMP 10
-#define MAX_TEMP 60
+#define MAX_TEMP 300
 
 void initIR();
 float readTemp();

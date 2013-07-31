@@ -102,41 +102,16 @@ void dumbCamera(int width, int height,
     for (yy=0; yy<height; yy++){
         printf("%d\n", yy);
         for (xx=0; xx<width; xx++){
-                /*if (yy%2 == 0) horizPixel = xx;*/
-                /*if (yy%2 == 1) horizPixel = width - xx;*/
-                /*gotoPixel2D(horizStepper, stepH, vertStepper, stepV,*/
-                            /*horizPixel, width, yy, height);*/
-                /*y[j]   = readTemp();*/
-                /*waitMillis(WAIT_MS);*/
-                /*if (y[j] < 10) y[j] = readTemp();*/
-                /*j++;*/
             if (yy%2 == 0) horizPixel = xx;
             if (yy%2 == 1) horizPixel = width - xx - 1;
             gotoPixel2D(horizStepper, stepH, vertStepper, stepV,
                         horizPixel, width, yy, height);
             int ind = yy*width + horizPixel;
+            waitMillis(WAIT_MS);
             while(1){
                 y[ind] = readTemp();
                 if(y[ind] > MIN_TEMP && y[ind] < MAX_TEMP) break;
             }
-            waitMillis(WAIT_MS);
-                /*if (rand() % n < upper){*/
-                    /*if (yy%2 == 0) horizPixel = xx;*/
-                    /*if (yy%2 == 1) horizPixel = width - xx;*/
-
-                    /*printf("%d %d ", horizPixel, yy);*/
-                    /*gotoPixel2D(horizStepper, stepH, vertStepper, stepV,*/
-                                /*horizPixel, width, yy, height);*/
-                    /*y[j]   = readTemp();*/
-                    /*while(1){*/
-                        /*y[j] = readTemp();*/
-                        /*if (y[j] > MIN_TEMP && y[j] < MAX_TEMP) break;*/
-                    /*}*/
-                    /*printf("\t\t%f\n", y[j]);*/
-                    /*waitMillis(WAIT_MS);*/
-                    /*idx[j] = yy*width + horizPixel;*/
-                    /*j++;*/
-                /*}*/
         }
     }
     /*FISTA(xold, xold1, y, idx, width, height, p, tn, tn1, its);*/
@@ -165,7 +140,7 @@ void mainIST(int width, int height,
 
     float * xold = (float *)malloc(sizeof(float) * width * height);
     float * xold1 = (float *)malloc(sizeof(float) * width * height);
-    float p = 0.4;
+    float p = 1.0;
     printf("=======================\n");
     printf("width, height = %d, %d\n", width, height);
     printf("p = %.2f\n\n", p);

@@ -140,7 +140,7 @@ void mainIST(int width, int height,
 
     float * xold = (float *)malloc(sizeof(float) * width * height);
     float * xold1 = (float *)malloc(sizeof(float) * width * height);
-    float p = 1.0;
+    float p = 0.5;
     printf("=======================\n");
     printf("width, height = %d, %d\n", width, height);
     printf("p = %.2f\n\n", p);

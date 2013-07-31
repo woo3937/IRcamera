@@ -131,79 +131,80 @@ unsigned char findPec(unsigned char comm, unsigned char lsb, unsigned char msb);
 void main(int argc, char **argv){
     /*testFunctions();*/
 
-        int data;
-        float temp, temp1;
-        int repeat=0;
-        FILE * file = fopen("FOV.txt", "w");
-        unsigned char pec;
-        unsigned char comm = 0x25;
-        unsigned char lsb = 0x74;
-        unsigned char msb = 0xb4;
-        initIR();
-        writeConfigParams(comm, lsb, msb, pec);
-        data = readConfig();
-        printf("CONFIG: %x\n", data);
-        printf("WAIT_MS: %d\n", WAIT_MS);
-        printf("\n\n");
+    int data;
+    float temp, temp1;
+    int repeat=0;
+    unsigned char pec;
+    unsigned char comm = 0x25;
+    unsigned char lsb = 0x74;
+    unsigned char msb = 0xb1;
+    initIR();
+    writeConfigParams(comm, lsb, msb, pec);
+    data = readConfig();
+    printf("CONFIG: %x\n", data);
+    printf("WAIT_MS: %d\n", WAIT_MS);
+    printf("\n\n");
 
 
-        // init'ing the image
-        int width = 64;
-        int height = 64;
-        int pixel = width/2;
-        int xx, yy, i, j;
+    // init'ing the image
+    /*int pixel = width/2;*/
+    int xx, yy, i, j;
 
-        // init'ing our steppers
-        int stepH = 0;
-        int indH  = 322212;
-        indH = -1;
-        CPhidgetStepperHandle horizStepper = stepH;
-        CPhidgetStepper_create(&horizStepper);
-        initStepper(horizStepper, stepH, indH);
+    // init'ing our steppers
+    int stepH = 0;
+    int indH  = 322212;
+    indH = -1;
+    CPhidgetStepperHandle horizStepper = stepH;
+    CPhidgetStepper_create(&horizStepper);
+    initStepper(horizStepper, stepH, indH);
 
-        int stepV = 0;
-        int indV = -1;
-        CPhidgetStepperHandle vertStepper = stepV;
-        CPhidgetStepper_create(&vertStepper);
-        initStepper(vertStepper, stepV, indV);
+    int stepV = 0;
+    int indV = -1;
+    CPhidgetStepperHandle vertStepper = stepV;
+    CPhidgetStepper_create(&vertStepper);
+    initStepper(vertStepper, stepV, indV);
 
-        /*goDeltaAngle(horizStepper, 180);*/
-        /*goDeltaAngle(vertStepper, 180);*/
+    /*goDeltaAngle(horizStepper, 180);*/
+    /*goDeltaAngle(vertStepper, 180);*/
 
-        float loc = ANGLE/2;
-        // what location gives that angle?
-        loc = loc * (1200 * 16) / 360.0f;   // deg * steps/deg
-        // setting the current position, and checking
-        CPhidgetStepper_setCurrentPosition(horizStepper, 0, loc);
-        CPhidgetStepper_setCurrentPosition(vertStepper, 0, loc);
+    float loc = ANGLE/2;
+    // what location gives that angle?
+    loc = loc * (1200 * 16) / 360.0f;   // deg * steps/deg
+    // setting the current position, and checking
+    CPhidgetStepper_setCurrentPosition(horizStepper, 0, loc);
+    CPhidgetStepper_setCurrentPosition(vertStepper, 0, loc);
 
 
-        // save the image too
-        /*goDeltaAngle(vertStepper, -40);*/
+    // save the image too
+    /*goDeltaAngle(vertStepper, -40);*/
 
-        // setting vertStepper to be slower -- more mass/load.
-        // vertStepper can max out then.
-        /*setVelocity(horizStepper, (int)250e3);*/
-        /*setVelocity(vertStepper, (int)2e3);*/
-        /*setAcceleration(vertStepper, (int)2.5e6);*/
-        /*setAcceleration(horizStepper, (int)10.0e6);*/
-        setVelocity(horizStepper, (int)250e2);
-        setVelocity(vertStepper, (int)2e2);
-        setAcceleration(vertStepper, (int)2.5e4);
-        setAcceleration(horizStepper, (int)10.0e4);
+    // setting vertStepper to be slower -- more mass/load.
+    // vertStepper can max out then.
+    /*setVelocity(horizStepper, (int)250e3);*/
+    /*setVelocity(vertStepper, (int)2e3);*/
+    /*setAcceleration(vertStepper, (int)2.5e6);*/
+    /*setAcceleration(horizStepper, (int)10.0e6);*/
+    setVelocity(horizStepper, (int)250e3);
+    setVelocity(vertStepper, (int)2e3);
+    setAcceleration(vertStepper, (int)2.5e6);
+    setAcceleration(horizStepper, (int)10.0e6);
 
-        gotoPixel2DandExit(horizStepper, stepH, vertStepper, stepV,
-                           width, width, height, height);
-        gotoPixel2DandExit(horizStepper, stepH, vertStepper, stepV,
-                           width/2, width, width/2, height);
+    int width = 256;
+    int height = 256;
+    /*gotoPixel2DandExit(horizStepper, stepH, vertStepper, stepV,*/
+                       /*width, width, height, height);*/
+    /*gotoPixel2DandExit(horizStepper, stepH, vertStepper, stepV,*/
+                       /*width/2, width, width/2, height);*/
 
-        mainIST(width, height, horizStepper, vertStepper);
+    /*goDeltaAngle(vertStepper, 22);*/
+    mainIST(width, height, horizStepper, vertStepper);
+    /*dumbCamera(width, height, horizStepper, vertStepper);*/
 
 
 
-        /*ending I2C operations*/
+    /*ending I2C operations*/
 
-        bcm2835_i2c_end();
+    bcm2835_i2c_end();
 }
 float readTemp(){
     // adapted from  http://www.raspberrypi.org/phpBB3/viewtopic.php?t=17738&p=362569

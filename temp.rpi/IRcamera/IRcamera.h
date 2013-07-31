@@ -6,10 +6,11 @@
 #define WIDTH 100
 #define HEIGHT 100
 
-#define WAIT_MS 60 
+#define WAIT_MS 46
 #define SAME_IMAGE_FILE 1
 #define MIN_TEMP 10
 #define MAX_TEMP 60
+
 void initIR();
 float readTemp();
 int readConfig();

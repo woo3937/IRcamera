@@ -78,7 +78,7 @@ void dumbCamera(int width, int height,
 
     float * xold = (float *)malloc(sizeof(float) * width * height);
     float * xold1 = (float *)malloc(sizeof(float) * width * height);
-    float p = 1.0;
+    float p = 0.2;
     int n = width * height;
     int upper = n * p;
     printf("%f\n", readTemp());
@@ -146,7 +146,7 @@ void dumbCamera(int width, int height,
     for (i=0; i<n; i++) printf("%f\n", y[i]);
     printf("Saving the image\n");
     fflush(stdout);
-    writeImage("coffee.png", y, width, height);
+    writeImage("dumb.pdf", y, width, height);
 
     free(y);
     free(xold);
@@ -165,10 +165,12 @@ void mainIST(int width, int height,
 
     float * xold = (float *)malloc(sizeof(float) * width * height);
     float * xold1 = (float *)malloc(sizeof(float) * width * height);
-    float p = 1.0;
+    float p = 0.4;
+    printf("=======================\n");
+    printf("width, height = %d, %d\n", width, height);
+    printf("p = %.2f\n\n", p);
     int n = width * height;
-    int upper = n * p;
-    printf("%f\n", readTemp());
+    int upper = (int)(n * p);
 
     for (i=0; i<n; i++){
         xold[i] = 0;
@@ -189,7 +191,7 @@ void mainIST(int width, int height,
     for (yy=0; yy<height; yy++){
         printf("%d\n", yy);
         for (xx=0; xx<width; xx++){
-            if (rand() % n < upper 
+            if ((rand() % n < upper) 
                     || (xx==0 && yy==0) || (xx==width-1 && yy==0)
                     || (xx==0 && yy==height-1)|| (xx==width-1 && yy==height-1)){
                 if (yy%2 == 0) horizPixel = xx;
@@ -243,7 +245,7 @@ void FISTA(float * xold, float * xold1, float * y, int * idx,
     int i, j, k;
     int n = width * height;
     int upper = (int)(p*n);
-    float cut = 0.2;
+    float cut = 1.2;
 
     /*for (i=0; i<upper; i++){*/
         /*xold[idx[i]] = y[i];*/

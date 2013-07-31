@@ -9,6 +9,12 @@
  *
  *      -- Scott Sievert, 2013-7-22, sieve121 (at) umn (dot) edu
  */
+/*
+ * IMPORTANT HARDWARE NOTE:
+ *  As of 2013-07-30, horizStepper refers to the stepper that rotates in the
+ *  vertical direction, but who's motor is horizontal (flipped for the
+ *  vertStepper). This depends on the USB drives and the acceleration/velocity limits.
+ */
     /*
      *  My wires are hooked up to the following GPIO pins:
      *  
@@ -83,20 +89,21 @@
 #include <phidget21.h>
 #include "steppers.h"
 #include "brain.h"
+#include "IRcamera.h"
 #include <unistd.h>
 
-#define WIDTH 100
-#define HEIGHT 100
+/*#define WIDTH 100*/
+/*#define HEIGHT 100*/
 
 #define PWR_PIN 4
 
 #define BAUD_RATE 100e3
 #define DEBUG_PRINT 1
 
-#define WAIT_MS 40 // note that the motors (as of 2013-06-27) wait until they're in position
-#define SAME_IMAGE_FILE 1
-#define MIN_TEMP 10
-#define MAX_TEMP 60
+/*#define WAIT_MS 40 // note that the motors (as of 2013-06-27) wait until they're in position*/
+/*#define SAME_IMAGE_FILE 1*/
+/*#define MIN_TEMP 10*/
+/*#define MAX_TEMP 60*/
 
 // the constants that determines the width of blue-red
 #define A 2.4e-1f
@@ -122,143 +129,81 @@ unsigned char findPec(unsigned char comm, unsigned char lsb, unsigned char msb);
 
 
 void main(int argc, char **argv){
-    int data;
-    float temp, temp1;
-    int repeat=0;
-    FILE * file = fopen("FOV.txt", "w");
-    unsigned char pec;
-    unsigned char comm = 0x25;
-    unsigned char lsb = 0x74;
-    unsigned char msb = 0xb4;
-    initIR();
-    writeConfigParams(comm, lsb, msb, pec);
-    data = readConfig();
-    printf("CONFIG: %x\n", data);
-    printf("WAIT_MS: %d\n", WAIT_MS);
-    printf("\n\n");
+    /*testFunctions();*/
+
+        int data;
+        float temp, temp1;
+        int repeat=0;
+        FILE * file = fopen("FOV.txt", "w");
+        unsigned char pec;
+        unsigned char comm = 0x25;
+        unsigned char lsb = 0x74;
+        unsigned char msb = 0xb4;
+        initIR();
+        writeConfigParams(comm, lsb, msb, pec);
+        data = readConfig();
+        printf("CONFIG: %x\n", data);
+        printf("WAIT_MS: %d\n", WAIT_MS);
+        printf("\n\n");
 
 
-    // init'ing the image
-    int width = 32;
-    int height = 32;
-    int pixel = width/2;
-    int xx, yy, i, j;
+        // init'ing the image
+        int width = 64;
+        int height = 64;
+        int pixel = width/2;
+        int xx, yy, i, j;
 
-    // init'ing our steppers
-    int stepH = 0;
-    int indH  = 322212;
-    indH = -1;
-    CPhidgetStepperHandle horizStepper = stepH;
-    CPhidgetStepper_create(&horizStepper);
-    initStepper(horizStepper, stepH, indH);
+        // init'ing our steppers
+        int stepH = 0;
+        int indH  = 322212;
+        indH = -1;
+        CPhidgetStepperHandle horizStepper = stepH;
+        CPhidgetStepper_create(&horizStepper);
+        initStepper(horizStepper, stepH, indH);
 
-    int stepV = 0;
-    int indV = -1;
-    CPhidgetStepperHandle vertStepper = stepV;
-    CPhidgetStepper_create(&vertStepper);
-    initStepper(vertStepper, stepV, indV);
+        int stepV = 0;
+        int indV = -1;
+        CPhidgetStepperHandle vertStepper = stepV;
+        CPhidgetStepper_create(&vertStepper);
+        initStepper(vertStepper, stepV, indV);
 
-    /*goDeltaAngle(horizStepper, 180);*/
-    /*goDeltaAngle(vertStepper, 180);*/
+        /*goDeltaAngle(horizStepper, 180);*/
+        /*goDeltaAngle(vertStepper, 180);*/
 
-    float loc = ANGLE/2; 
-    // what location gives that angle?
-    loc = loc * (1200 * 16) / 360.0f;   // deg * steps/deg
-    // setting the current position, and checking
-    /*CPhidgetStepper_setCurrentPosition(horizStepper, 0, 0);*/
-    /*CPhidgetStepper_setCurrentPosition(vertStepper, 0, 0);*/
-    CPhidgetStepper_setCurrentPosition(horizStepper, 0, loc);
-    CPhidgetStepper_setCurrentPosition(vertStepper, 0, loc);
-    delay(1000);
-    __int64 pos = -1;
-    CPhidgetStepper_getCurrentPosition(horizStepper, 0, &pos);
-    CPhidgetStepper_getCurrentPosition(vertStepper, 0, &pos);
-
-    int horizPixel;
-    /*goDeltaAngle(horizStepper, -20);*/
-    /*goDeltaAngle(vertStepper, -20);*/
+        float loc = ANGLE/2;
+        // what location gives that angle?
+        loc = loc * (1200 * 16) / 360.0f;   // deg * steps/deg
+        // setting the current position, and checking
+        CPhidgetStepper_setCurrentPosition(horizStepper, 0, loc);
+        CPhidgetStepper_setCurrentPosition(vertStepper, 0, loc);
 
 
-    float * xold = (float *)malloc(sizeof(float) * width * height);
-    float * xold1 = (float *)malloc(sizeof(float) * width * height);
-    float p = 1.0;
-    int n = width * height;
-    int upper = n * p;
-    printf("%f\n", readTemp());
+        // save the image too
+        /*goDeltaAngle(vertStepper, -40);*/
 
-    for (i=0; i<n; i++){
-        xold[i] = 0; xold1[i] = 0;
-    }
-    float tn = 1;
-    float tn1;
-    int its = 400;
-    // our measurements. 1.2 is there in case random isn't random
-    float * y   = (float *)malloc(sizeof(float) * n);//upper * 1.2);
-    int * idx = (int *)malloc(sizeof(int) * upper * 1.2);
-    int ra;
+        // setting vertStepper to be slower -- more mass/load.
+        // vertStepper can max out then.
+        /*setVelocity(horizStepper, (int)250e3);*/
+        /*setVelocity(vertStepper, (int)2e3);*/
+        /*setAcceleration(vertStepper, (int)2.5e6);*/
+        /*setAcceleration(horizStepper, (int)10.0e6);*/
+        setVelocity(horizStepper, (int)250e2);
+        setVelocity(vertStepper, (int)2e2);
+        setAcceleration(vertStepper, (int)2.5e4);
+        setAcceleration(horizStepper, (int)10.0e4);
 
-    // actually making our measurements
-    for (i=0; i<n; i++) xold[i] = 0;
-    j = 0;
-    srand(42);
-    for (yy=0; yy<height; yy++){
-        printf("%d\n", yy);
-        for (xx=0; xx<width; xx++){
-                /*if (yy%2 == 0) horizPixel = xx;*/
-                /*if (yy%2 == 1) horizPixel = width - xx;*/
-                /*gotoPixel2D(horizStepper, stepH, vertStepper, stepV,*/
-                            /*horizPixel, width, yy, height);*/
-                /*y[j]   = readTemp();*/
-                /*waitMillis(WAIT_MS);*/
-                /*if (y[j] < 10) y[j] = readTemp();*/
-                /*j++;*/
-            if (yy%2 == 0) horizPixel = xx;
-            if (yy%2 == 1) horizPixel = width - xx - 1;
-            gotoPixel2D(horizStepper, stepH, vertStepper, stepV,
-                        horizPixel, width, yy, height);
-            int ind = yy*width + horizPixel;
-            while(1){
-                y[ind] = readTemp();
-                if(y[ind] > MIN_TEMP && y[ind] < MAX_TEMP) break;
-            }
-            waitMillis(WAIT_MS);
-                /*if (rand() % n < upper){*/
-                    /*if (yy%2 == 0) horizPixel = xx;*/
-                    /*if (yy%2 == 1) horizPixel = width - xx;*/
+        gotoPixel2DandExit(horizStepper, stepH, vertStepper, stepV,
+                           width, width, height, height);
+        gotoPixel2DandExit(horizStepper, stepH, vertStepper, stepV,
+                           width/2, width, width/2, height);
 
-                    /*printf("%d %d ", horizPixel, yy);*/
-                    /*gotoPixel2D(horizStepper, stepH, vertStepper, stepV,*/
-                                /*horizPixel, width, yy, height);*/
-                    /*y[j]   = readTemp();*/
-                    /*while(1){*/
-                        /*y[j] = readTemp();*/
-                        /*if (y[j] > MIN_TEMP && y[j] < MAX_TEMP) break;*/
-                    /*}*/
-                    /*printf("\t\t%f\n", y[j]);*/
-                    /*waitMillis(WAIT_MS);*/
-                    /*idx[j] = yy*width + horizPixel;*/
-                    /*j++;*/
-                /*}*/
-        }
-    }
-    /*FISTA(xold, xold1, y, idx, width, height, p, tn, tn1, its);*/
-    gotoLocation(horizStepper, 0, loc);
-    gotoLocation(vertStepper, 0, loc);
-
-    for (i=0; i<n; i++) printf("%f\n", y[i]);
-    printf("Saving the image\n");
-    fflush(stdout);
-    writeImage("y.png", y, width, height);
-
-    free(y);
-    free(xold);
-    free(xold1);
-    free(idx);
+        mainIST(width, height, horizStepper, vertStepper);
 
 
 
-    // ending I2C operations
-    bcm2835_i2c_end();
+        /*ending I2C operations*/
+
+        bcm2835_i2c_end();
 }
 float readTemp(){
     // adapted from  http://www.raspberrypi.org/phpBB3/viewtopic.php?t=17738&p=362569
@@ -360,6 +305,9 @@ unsigned char findPec(unsigned char comm, unsigned char lsb, unsigned char msb){
 // writeImageWithFilename writes a csv file than has python write the image
 // the filename must be less that 40 characters (shouldn't be a problem)
 void writeImage(char filename[40], float * data, int width, int height){
+    // delete the file, open the file, write the data to *.csv
+    // process the data with the python script writeImage.py
+    system("rm image.csv");
     FILE * file = fopen("image.csv", "w");
     int x=0;
     int y=0;
@@ -367,6 +315,7 @@ void writeImage(char filename[40], float * data, int width, int height){
     // print to a file (a csv)
     for (y=0; y<height; y++){
         for (x=0; x<width; x++){
+            if(1 && y*width + x < 10) printf("%.2f\n", data[y*width + x]);
             fprintf(file, "%.2f", data[y*width + x]);
             if(x<width-1) fprintf(file, ",");
         }

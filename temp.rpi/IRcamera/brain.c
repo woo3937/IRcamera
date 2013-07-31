@@ -2,20 +2,24 @@
 #include <stdlib.h>
 #include <math.h>
 #include "brain.h"
+#include "steppers.h"
+#include "IRcamera.h"
+#include <phidget21.h>
 
+#define DEBUG_PRINT 1
 
-// the nice stuff python has
-void getCol(float * in, int col, float * out, int width, int height);
-void getRow(float * in, int row, float * out, int width, int height);
-void putColIn(float * col, float colNumber, float * arr, int width, int height);
-void putRowIn(float * row, float rowNumber, float * arr, int width, int height);
-void copyPartsOfArray(float * in, float * out, int maxX, int maxY, int width, int height);
-void copyPartsOfArrayInverse(float * in, float * out, int maxX, int maxY, int width, int height);
-void copyArray(float * in, float * out, int len);
-void swap(int * one, int * two);
-void shuffle(int * in, int len);
-void copySelectedInstances(float * in, float * out, int * indicies, int len);
-float sign(float x);
+    // the nice stuff python has
+    void getCol(float * in, int col, float * out, int width, int height);
+    void getRow(float * in, int row, float * out, int width, int height);
+    void putColIn(float * col, float colNumber, float * arr, int width, int height);
+    void putRowIn(float * row, float rowNumber, float * arr, int width, int height);
+    void copyPartsOfArray(float * in, float * out, int maxX, int maxY, int width, int height);
+    void copyPartsOfArrayInverse(float * in, float * out, int maxX, int maxY, int width, int height);
+    void copyArray(float * in, float * out, int len);
+    void swap(int * one, int * two);
+    void shuffle(int * in, int len);
+    void copySelectedInstances(float * in, float * out, int * indicies, int len);
+    float sign(float x);
 
 // the actual dwt/idwt
 float * dwt2(float * x, float * y, int width, int height);
@@ -28,61 +32,210 @@ void main2();
 void FISTA(float * xold, float * xold1, float * y, int * idx, 
            int width, int height, float p, float tn, float tn1, int its);
 
-void mainIST(float * xold, int width, int height){
-    // a sample main. i'm just waiting for the motors to be done 
-    // --Scott Sievert, 2013-7-22
-    int i, j;
-    int xx, yy;
-    // pass width, height
-    /*int width = 16;*/
-    /*int height = 16;*/
-    int n = width * height;
-
-    // sampling rate
+void testFunctions(){
+    int width = 4;
+    int height = 4;
+    int N = width * height;
+    int n = N;
+    int i;
     float p = 0.5;
-    int upper = n * p;
-
-    // our approximation
-    /*float * xold = (float *)malloc(sizeof(float) * n);*/
-    float * xold1 = (float *)malloc(sizeof(float) * n);
-    for (i=0; i<n; i++) xold[i] = 0; xold1[i] = 0;
-
-    // for FISTA
+    int upper = (int)(N * p);
+    float * xold = (float *)malloc(sizeof(float) * N);
+    float * y = (float *)malloc(sizeof(float) * N);
+    float * xold1 = (float *)malloc(sizeof(float) * N);
+    int * idx = (int *)malloc(sizeof(int) * N);
     float tn = 1;
     float tn1;
     int its = 400;
-
-    // our measurements
-    // for our measurements, we want the value at that location and the flat index
-    // assuming we might have 20% more samples than we want (depends on rand())
-    float * y   = (float *)malloc(sizeof(float) * upper * 1.2);
-    int * idx = (int *)malloc(sizeof(int) * upper * 1.2);
+    for (i=0; i<N; i++){
+        xold[i] = i;
+        y[i] = 0;
+    }
+    /*void copyPartsOfArray(float * in, float * out, int maxX, int maxY, int width, int height);*/
+    /*copyPartsOfArray(xold, y, 2, 2, width, height);*/
+    /*for (i=0; i<4; i++) y[i] += 1;*/
+    /*[>void copyPartsOfArrayInverse(float * in, float * out, int maxX, int maxY, int width, int height);<]*/
+    /*copyPartsOfArrayInverse(y, xold, 2, 2, width, height);*/
     
+    printf("y:\n");
+    for (i=0; i<N; i++){
+        printf("%f\n", y[i]);
+    }
+    printf("xold:\n");
+    for (i=0; i<N; i++){
+        printf("%f\n", xold[i]);
+    }
+}
+void dumbCamera(int width, int height,
+        CPhidgetStepperHandle horizStepper, CPhidgetStepperHandle vertStepper){
+    int i, j, xx, yy, horizPixel;
+    int stepH = 0;
+    int stepV = 0;
+
+    float loc = ANGLE/2;
+    // what location gives that angle?
+    loc = loc * (1200 * 16) / 360.0f;   // deg * steps/deg
+
+    float * xold = (float *)malloc(sizeof(float) * width * height);
+    float * xold1 = (float *)malloc(sizeof(float) * width * height);
+    float p = 1.0;
+    int n = width * height;
+    int upper = n * p;
+    printf("%f\n", readTemp());
+
+    for (i=0; i<n; i++){
+        xold[i] = 0;
+        xold1[i] = 0;
+    }
+    float tn = 1;
+    float tn1;
+    int its = 400;
+    // our measurements. 1.2 is there in case random isn't random
+    float * y   = (float *)malloc(sizeof(float) * n);
+    int * idx = (int *)malloc(sizeof(int) * n);
+    int ra;
+
+    // actually making our measurements
     for (i=0; i<n; i++) xold[i] = 0;
     j = 0;
     srand(42);
     for (yy=0; yy<height; yy++){
+        printf("%d\n", yy);
         for (xx=0; xx<width; xx++){
-            if (rand() % n < upper){
-                // gotoPixel(xx, yy)
-                // readTemp()
-                y[j]   = 10;
-                idx[j] = yy*width + xx;
-                j++;
+                /*if (yy%2 == 0) horizPixel = xx;*/
+                /*if (yy%2 == 1) horizPixel = width - xx;*/
+                /*gotoPixel2D(horizStepper, stepH, vertStepper, stepV,*/
+                            /*horizPixel, width, yy, height);*/
+                /*y[j]   = readTemp();*/
+                /*waitMillis(WAIT_MS);*/
+                /*if (y[j] < 10) y[j] = readTemp();*/
+                /*j++;*/
+            if (yy%2 == 0) horizPixel = xx;
+            if (yy%2 == 1) horizPixel = width - xx - 1;
+            gotoPixel2D(horizStepper, stepH, vertStepper, stepV,
+                        horizPixel, width, yy, height);
+            int ind = yy*width + horizPixel;
+            while(1){
+                y[ind] = readTemp();
+                if(y[ind] > MIN_TEMP && y[ind] < MAX_TEMP) break;
             }
+            waitMillis(WAIT_MS);
+                /*if (rand() % n < upper){*/
+                    /*if (yy%2 == 0) horizPixel = xx;*/
+                    /*if (yy%2 == 1) horizPixel = width - xx;*/
+
+                    /*printf("%d %d ", horizPixel, yy);*/
+                    /*gotoPixel2D(horizStepper, stepH, vertStepper, stepV,*/
+                                /*horizPixel, width, yy, height);*/
+                    /*y[j]   = readTemp();*/
+                    /*while(1){*/
+                        /*y[j] = readTemp();*/
+                        /*if (y[j] > MIN_TEMP && y[j] < MAX_TEMP) break;*/
+                    /*}*/
+                    /*printf("\t\t%f\n", y[j]);*/
+                    /*waitMillis(WAIT_MS);*/
+                    /*idx[j] = yy*width + horizPixel;*/
+                    /*j++;*/
+                /*}*/
         }
     }
+    /*FISTA(xold, xold1, y, idx, width, height, p, tn, tn1, its);*/
+    gotoLocation(horizStepper, 0, loc);
+    gotoLocation(vertStepper, 0, loc);
 
-    FISTA(xold, xold1, y, idx, width, height, p, tn, tn1, its);
-    for (i=0; i<n; i++) printf("%d: %f\n",i/height, xold[i]);
-
+    for (i=0; i<n; i++) printf("%f\n", y[i]);
+    printf("Saving the image\n");
     fflush(stdout);
+    writeImage("coffee.png", y, width, height);
+
     free(y);
     free(xold);
     free(xold1);
     free(idx);
+}
+void mainIST(int width, int height,
+        CPhidgetStepperHandle horizStepper, CPhidgetStepperHandle vertStepper){
+    int i, j, xx, yy, horizPixel;
+    int stepH = 0;
+    int stepV = 0;
+
+    float loc = ANGLE/2;
+    // what location gives that angle?
+    loc = loc * (1200 * 16) / 360.0f;   // deg * steps/deg
+
+    float * xold = (float *)malloc(sizeof(float) * width * height);
+    float * xold1 = (float *)malloc(sizeof(float) * width * height);
+    float p = 1.0;
+    int n = width * height;
+    int upper = n * p;
+    printf("%f\n", readTemp());
+
+    for (i=0; i<n; i++){
+        xold[i] = 0;
+        xold1[i] = 0;
+    }
+    float tn = 1;
+    float tn1;
+    int its = 400;
+    // our measurements. 1.2 is there in case random isn't random
+    float * y   = (float *)malloc(sizeof(float) * n);
+    int * idx = (int *)malloc(sizeof(int) * n);
+    int ra;
+
+    // actually making our measurements
+    for (i=0; i<n; i++) xold[i] = 0;
+    j = 0;
+    srand(42);
+    for (yy=0; yy<height; yy++){
+        printf("%d\n", yy);
+        for (xx=0; xx<width; xx++){
+            if (rand() % n < upper 
+                    || (xx==0 && yy==0) || (xx==width-1 && yy==0)
+                    || (xx==0 && yy==height-1)|| (xx==width-1 && yy==height-1)){
+                if (yy%2 == 0) horizPixel = xx;
+                if (yy%2 == 1) horizPixel = width - xx;
+
+                // readTemp must be called right after gotoPixel2DandExit
+                gotoPixel2DandExit(horizStepper, stepH, vertStepper, stepV    ,
+                                   horizPixel  , width, yy         , height);
+                waitMillis(WAIT_MS);
+                while(1){
+                    y[j] = readTemp();
+                    if (y[j] > MIN_TEMP && y[j] < MAX_TEMP) break;
+                }
+                /*printf("\t\t%f\n", y[j]);*/
+                waitMillis(WAIT_MS);
+                idx[j] = yy*width + horizPixel;
+                j++;
+            }
+        }
+    }
+    FISTA(xold, xold1, y, idx, width, height, p, tn, tn1, its);
+    gotoLocation(horizStepper, 0, loc);
+    gotoLocation(vertStepper, 0, loc);
+
+    for (i=0; i<10; i++){
+        printf("xold[i] = %f \n", xold[i]);
+    }
 
 
+    float * zeros   = (float *)malloc(sizeof(float) * n);
+    for(i=0; i<n; i++) zeros[i] = 0;
+    for(i=0; i<upper; i++) zeros[idx[i]] = y[i];
+
+
+    /*for (i=0; i<n; i++) printf("%f\n", y[i]);*/
+    printf("Saving the image\n");
+    fflush(stdout);
+
+    writeImage("y.pdf", zeros, width, height);
+    writeImage("FISTA.png", xold,  width, height);
+    /*writeImage("xold1.png", xold1, width, height);*/
+
+    free(y);
+    free(xold);
+    free(xold1);
+    free(idx);
 }
 
 void FISTA(float * xold, float * xold1, float * y, int * idx, 
@@ -91,6 +244,10 @@ void FISTA(float * xold, float * xold1, float * y, int * idx,
     int n = width * height;
     int upper = (int)(p*n);
     float cut = 0.2;
+
+    /*for (i=0; i<upper; i++){*/
+        /*xold[idx[i]] = y[i];*/
+    /*}*/
 
     float * t1    = (float *)malloc(sizeof(float) * n);
     float * temp  = (float *)malloc(sizeof(float) * n);
@@ -109,12 +266,16 @@ void FISTA(float * xold, float * xold1, float * y, int * idx,
         idwt2_full(t1, width, height);
         copySelectedInstances(t1, temp, idx, upper);
 
+        /*printf("-----------------\n");*/
+        /*for (i=0; i<n; i++) printf("%f, %f\n", xold[i], t1[i]);*/
+
         for (i=0; i<upper; i++) temp2[i] = y[i] - temp[i];
         for (i=0; i<n; i++)     temp3[i] = 0;
         for (i=0; i<upper; i++) temp3[idx[i]] = temp2[i];
         dwt2_full(temp3, width, height);
 
         for (i=0; i<n; i++) xold[i] = temp3[i] + xold[i];
+
         for (i=0; i<n; i++){
             if (abs(xold[i]) < cut) xold[i] = 0;
             else xold[i] = xold[i] - sign(xold[i]) * cut;
@@ -333,6 +494,8 @@ float * idwt2_full(float * x, int width, int height){
     }
 }
 
+// putRowIn, putColIn, getRow, getCol, copyPartsOfArray,
+// copyPartsOfArrayInverse all tested
 
 // BELOW: the nice that C should have is below
 void copyPartsOfArray(float * in, float * out, int maxX, int maxY, int width, int height){

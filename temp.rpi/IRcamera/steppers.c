@@ -101,6 +101,7 @@ int initStepper(CPhidgetStepperHandle stepper, int index, int serialNumber){
 
     CPhidgetStepper_getAccelerationMin(stepper, index, &minAccel);
     CPhidgetStepper_getVelocityMax(stepper, index, &maxVel);
+    printf("Max Velocity: %f, min accel: %f\n", maxVel, minAccel);
 
     /*printf("maxVel: %d, minAccel: %d\n", maxVel, minAccel);*/
     /*int mul = 1000;*/
@@ -151,6 +152,7 @@ int gotoPixel(CPhidgetStepperHandle stepper, int index, int pixel, int width){
     /*printf("loc: %f\n", loc);*/
     gotoLocation(stepper, index, (int)loc);
 }
+// gotoPixel2D does not exit early to allow the IR sensor to settle
 int gotoPixel2D(CPhidgetStepperHandle horizStepper, int indH, 
                 CPhidgetStepperHandle vertStepper, int indV, 
                 int horizPixel2, int width, int vertPixel2, int height){
@@ -189,6 +191,58 @@ int gotoPixel2D(CPhidgetStepperHandle horizStepper, int indH,
 
         /*if (off * 1000 < MAX_VEL *  WAIT_MS) break; */
         // breaks in enough time for WAIT_MS
+    }
+}
+// gotoPixel2D DOES exit early to allow the IR sensor to settle
+int gotoPixel2DandExit(CPhidgetStepperHandle horizStepper, int indH, 
+                CPhidgetStepperHandle vertStepper, int indV, 
+                int horizPixel2, int width, int vertPixel2, int height){
+    __int64 horizPixel = (__int64)horizPixel2;
+    __int64 vertPixel = (__int64)vertPixel2;
+    float horizLoc = ANGLE * horizPixel / width;
+    horizLoc = horizLoc * (1200 * 16) / 360;
+    float vertLoc = ANGLE * vertPixel / height;
+    vertLoc = vertLoc * (1200 * 16) / 360;
+    CPhidgetStepperHandle stepper;
+
+    CPhidgetStepper_setTargetPosition(horizStepper , indH , (__int64)horizLoc);
+    CPhidgetStepper_setTargetPosition(vertStepper  , indV , (__int64)vertLoc);
+    __int64 sendHorizLoc = (__int64)horizLoc;
+    __int64 sendVertLoc = (__int64)vertLoc;
+    __int64 desired;
+    __int64 current;
+    // off, offHorizontal, offVertical, offTotal
+    float off, offH, offV, offT;
+    double vel = -1;
+    while(1){
+        CPhidgetStepper_getCurrentPosition(horizStepper, indH, &sendHorizLoc);
+        CPhidgetStepper_getCurrentPosition(vertStepper, indV, &sendVertLoc);
+
+        if((__int64)vertLoc == sendVertLoc && (__int64)horizLoc == sendHorizLoc) {
+            /*printf("Broken in the wrong spot\n");*/
+            break;
+        }
+        
+
+
+        offH = abs(horizLoc - sendHorizLoc);
+        offV = abs(vertLoc - sendVertLoc);
+        if(offH > offV){
+            off = offH;
+            stepper = horizStepper;
+        }
+        else{
+            off = offV;
+            stepper = vertStepper;
+        }
+
+        CPhidgetStepper_getVelocity(stepper, 0, &vel);
+        /*printf("off %f, vel: %f\n", off, vel);*/
+        vel = abs(vel);
+        if (1000 * off <= WAIT_MS * vel){
+            /*printf("Broken!\n");*/
+            break;
+        }
     }
 }
 
@@ -233,9 +287,15 @@ void goDeltaAngle(CPhidgetStepperHandle stepper, float angle){
     int index = 0;
     CPhidgetStepper_setCurrentPosition(stepper, 0, 0);
     gotoLocation(stepper, index, (int)loc);
-
 }
 
+void setVelocity(CPhidgetStepperHandle stepper, double velocity){
+    CPhidgetStepper_setVelocityLimit(stepper, 0, velocity/2);
+}
+
+void setAcceleration(CPhidgetStepperHandle stepper, double acceleration){
+    CPhidgetStepper_setAcceleration(stepper, 0, acceleration*2);
+}
 
 int fromSampleCode(){
     // from the sample code (Stepper-simple.c)

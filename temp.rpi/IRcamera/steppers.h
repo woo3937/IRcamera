@@ -1,5 +1,6 @@
-
+#include <phidget21.h>
 #define ANGLE 45
+
 
 int functionInSteppers();
 
@@ -15,4 +16,9 @@ void goDeltaAngle(CPhidgetStepperHandle stepper, float angle);
 int haltStepper(CPhidgetStepperHandle stepper);
 
 int fromSampleCode();
+int gotoPixel2DandExit(CPhidgetStepperHandle horizStepper, int indH, 
+                CPhidgetStepperHandle vertStepper, int indV, 
+                int horizPixel2, int width, int vertPixel2, int height);
 
+void setVelocity(CPhidgetStepperHandle stepper, double velocity);
+void setAcceleration(CPhidgetStepperHandle stepper, double acceleration);

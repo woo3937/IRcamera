@@ -10,8 +10,8 @@
 
 // for FISTA
 // cut-off value and sampling rate
-#define CUT 8.2
-#define P 0.5
+#define CUT 2.2
+#define P 0.01
 
     // the nice stuff python has
     void getCol(float * in, int col, float * out, int width, int height);
@@ -123,10 +123,10 @@ void dumbCamera(int width, int height,
     gotoLocation(horizStepper, 0, loc);
     gotoLocation(vertStepper, 0, loc);
 
-    for (i=0; i<n; i++) printf("%f\n", y[i]);
+    for (i=0; i<10; i++) printf("%f\n", y[i]);
     printf("Saving the image\n");
     fflush(stdout);
-    writeImage("dumb.pdf", y, width, height);
+    writeImage("dumb.png", y, width, height);
 
     free(y);
     free(xold);
@@ -194,9 +194,13 @@ void mainIST(int width, int height,
             }
         }
     }
+    printf("Before FISTA\n");
     FISTA(xold, xold1, y, idx, width, height, p, tn, tn1, its);
+    printf("After FISTA\n");
     gotoLocation(horizStepper, 0, loc);
     gotoLocation(vertStepper, 0, loc);
+    printf("After gotoLoc\n");
+
 
     for (i=0; i<10; i++){
         printf("xold[i] = %f \n", xold[i]);

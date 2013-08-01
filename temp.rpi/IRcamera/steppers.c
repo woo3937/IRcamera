@@ -16,6 +16,15 @@
  *  TODO: get rid of the while-loop in gotoLocation. We want to have the sensor
  *  be settling while we're moving to a location. --2013-06-27
  */
+/* for a 32x32 image...
+ *  p=0.5:  58.34s
+ *  p=1.0: 105.89s
+ *
+ *  we're right at the limit for the speed our motors can do. it has to go
+ *  farther for p=0.5, the reason 2*58 > 105.
+ *
+ * --Scott Sievert, 2013-08-1
+ */
 
 #include <stdio.h>
 #include <stdlib.h>

@@ -8,6 +8,11 @@
 
 #define DEBUG_PRINT 1
 
+// for FISTA
+// cut-off value and sampling rate
+#define CUT 8.2
+#define P 0.5
+
     // the nice stuff python has
     void getCol(float * in, int col, float * out, int width, int height);
     void getRow(float * in, int row, float * out, int width, int height);
@@ -140,10 +145,12 @@ void mainIST(int width, int height,
 
     float * xold = (float *)malloc(sizeof(float) * width * height);
     float * xold1 = (float *)malloc(sizeof(float) * width * height);
-    float p = 0.5;
+    float p = P;
     printf("=======================\n");
     printf("width, height = %d, %d\n", width, height);
-    printf("p = %.2f\n\n", p);
+    printf("p = %.2f\n", p);
+    printf("cut = %f\n", CUT);
+    printf("\n\n");
     int n = width * height;
     int upper = (int)(n * p);
 
@@ -220,7 +227,7 @@ void FISTA(float * xold, float * xold1, float * y, int * idx,
     int i, j, k;
     int n = width * height;
     int upper = (int)(p*n);
-    float cut = 1.2;
+    float cut = CUT;
 
     /*for (i=0; i<upper; i++){*/
         /*xold[idx[i]] = y[i];*/

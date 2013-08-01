@@ -189,16 +189,16 @@ void main(int argc, char **argv){
     setAcceleration(vertStepper, (int)2.5e6);
     setAcceleration(horizStepper, (int)4.50e5);
 
-    int width = 128;
-    int height = 128;
+    int width = 32;
+    int height = 32;
     /*gotoPixel2DandExit(horizStepper, stepH, vertStepper, stepV,*/
                        /*width, width, height, height);*/
     /*gotoPixel2DandExit(horizStepper, stepH, vertStepper, stepV,*/
                        /*width/2, width, width/2, height);*/
 
     /*goDeltaAngle(horizStepper, -20);*/
-    mainIST(width, height, horizStepper, vertStepper);
-    /*dumbCamera(width, height, horizStepper, vertStepper);*/
+    /*mainIST(width, height, horizStepper, vertStepper);*/
+    dumbCamera(width, height, horizStepper, vertStepper);
 
 
 

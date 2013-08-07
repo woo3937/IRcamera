@@ -17,8 +17,11 @@ im = array(df)
 # depends on the hardware specification!
 im = rot90(im, 3)
 
+width = im.shape[0]
+
 fig = plt.figure()
 plt.axis('off')
 plt.imshow(im, interpolation='nearest', cmap='jet')
+plt.title("width = " + str(width))
 fig.savefig(filename, dpi=300, bbox_inches='tight')
 

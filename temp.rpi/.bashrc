@@ -4,6 +4,10 @@
 
 # added by scott
 alias c='clear'
+
+# autocomplete based on history
+bind '"\e[A": history-search-backward'
+bind '"\e[B": history-search-forward'
 # done add by scott
 
 # If not running interactively, don't do anything

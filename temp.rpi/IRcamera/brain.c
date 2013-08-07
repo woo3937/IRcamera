@@ -11,7 +11,7 @@
 // for FISTA
 // cut-off value and sampling rate
 #define CUT 2.2
-#define P 0.01
+#define P 0.2
 
     // the nice stuff python has
     void getCol(float * in, int col, float * out, int width, int height);
@@ -37,6 +37,30 @@ void main2();
 void FISTA(float * xold, float * xold1, float * y, int * idx, 
            int width, int height, float p, float tn, float tn1, int its);
 
+void getMeasurementsFromBranch(CPhidgetStepperHandle horizStepper, 
+                               CPhidgetStepperHandle vertStepper,
+                               float * xold, int wait_ms,
+                               int minY, int maxY, int minX, int maxX, 
+                               float rate, int width, int height){
+    int n = (int)(width*height);
+    int upper = (int)(n*rate);
+    int ind;
+    float temp;
+    int x, y;
+
+    for (y=minY; y<maxY; y++){
+        for (x=minX; x<maxX; x++){
+            if (rand() % n < upper){
+                // we might have to change 0 to -1 -- not sure.
+                gotoPixel2DandExit(horizStepper, 0, vertStepper, 0, x, width, y, height);
+                waitMillis(wait_ms); 
+                ind = y*width + x;
+                temp = readTemp();
+                xold[ind] = temp;
+            }
+        }
+    }
+}
 void testFunctions(){
     int width = 4;
     int height = 4;
@@ -162,7 +186,7 @@ void mainIST(int width, int height,
     float tn1;
     int its = 400;
     // our measurements. 1.2 is there in case random isn't random
-    float * y   = (float *)malloc(sizeof(float) * n);
+    float * y   = (float *)malloc(sizeof(float) * n); 
     int * idx = (int *)malloc(sizeof(int) * n);
     int ra;
 
@@ -194,12 +218,14 @@ void mainIST(int width, int height,
             }
         }
     }
-    printf("Before FISTA\n");
-    FISTA(xold, xold1, y, idx, width, height, p, tn, tn1, its);
-    printf("After FISTA\n");
     gotoLocation(horizStepper, 0, loc);
     gotoLocation(vertStepper, 0, loc);
     printf("After gotoLoc\n");
+
+    printf("Before FISTA\n");
+
+    FISTA(xold, xold1, y, idx, width, height, p, tn, tn1, its);
+    printf("After FISTA\n");
 
 
     for (i=0; i<10; i++){
@@ -216,7 +242,7 @@ void mainIST(int width, int height,
     printf("Saving the image\n");
     fflush(stdout);
 
-    writeImage("y.pdf", zeros, width, height);
+    /*writeImage("y.pdf", zeros, width, height);*/
     writeImage("FISTA.png", xold,  width, height);
     /*writeImage("xold1.png", xold1, width, height);*/
 
@@ -233,17 +259,15 @@ void FISTA(float * xold, float * xold1, float * y, int * idx,
     int upper = (int)(p*n);
     float cut = CUT;
 
-    /*for (i=0; i<upper; i++){*/
-        /*xold[idx[i]] = y[i];*/
-    /*}*/
-
-    float * t1    = (float *)malloc(sizeof(float) * n);
-    float * temp  = (float *)malloc(sizeof(float) * n);
+    float * t1    = (float *)malloc(sizeof(float) * n); // n
+    float * temp  = (float *)malloc(sizeof(float) * n); 
     float * temp2 = (float *)malloc(sizeof(float) * n);
-    float * temp3 = (float *)malloc(sizeof(float) * n);
-    float * temp4 = (float *)malloc(sizeof(float) * n);
+    float * temp3 = (float *)malloc(sizeof(float) * n); // n 
+    float * temp4 = (float *)malloc(sizeof(float) * n); // n
+    printf("After malloc\n");
 
     for (k=0; k<its; k++){
+        if(DEBUG_PRINT && k%100==0) printf("%d\n", k);
         tn1 = (1+sqrt(1+4*tn*tn))/2;
 
         for (i=0; i<n; i++){
@@ -253,9 +277,6 @@ void FISTA(float * xold, float * xold1, float * y, int * idx,
         copyArray(xold, t1, n);
         idwt2_full(t1, width, height);
         copySelectedInstances(t1, temp, idx, upper);
-
-        /*printf("-----------------\n");*/
-        /*for (i=0; i<n; i++) printf("%f, %f\n", xold[i], t1[i]);*/
 
         for (i=0; i<upper; i++) temp2[i] = y[i] - temp[i];
         for (i=0; i<n; i++)     temp3[i] = 0;
@@ -271,14 +292,15 @@ void FISTA(float * xold, float * xold1, float * y, int * idx,
 
         for (i=0; i<n; i++){ xold1[i] = xold[i]; }
         tn = tn1; 
-
     }
+    printf("Before free\n");
     idwt2_full(xold, width, height);
     free(t1);
     free(temp);
     free(temp2);
     free(temp3);
     free(temp4);
+    printf("After free\n");
 
 }
 
@@ -345,6 +367,17 @@ void ISTcomplete(){
 
     }
     idwt2_full(xold, width, height);
+
+    free(x);
+    free(y);
+    free(xold);
+    free(xold1);
+    free(t1);
+    free(temp);
+    free(temp2);
+    free(temp3);
+    free(temp4);
+    free(rp);
 
 
 }
@@ -423,6 +456,8 @@ float * dwt2(float * x, float * y, int width, int height){
         dwt(k, height, k1);
         putColIn(k1, i, y, width, height);
     }
+    free(k);
+    free(k1);
 }
 float * dwt2_full(float * x, int width, int height){
     // overwrites x
@@ -441,6 +476,8 @@ float * dwt2_full(float * x, int width, int height){
         // copy the array back
         copyPartsOfArrayInverse(waveletF, x, width>>k, height>>k, width, height);
     }
+    free(wavelet);
+    free(waveletF);
 }
 float * idwt(float * x, int N, float * y){
     int i;
@@ -465,6 +502,8 @@ float * idwt2(float * x, float * y, int width, int height){
         idwt(wavelet, width, wavelet1);
         putColIn(wavelet1, i, y, width, height);
     }
+    free(wavelet);
+    free(wavelet1);
 }
 float * idwt2_full(float * x, int width, int height){
     // overwrites x
@@ -480,6 +519,8 @@ float * idwt2_full(float * x, int width, int height){
         // copy parts of array back in
         copyPartsOfArrayInverse(waveletF, x, width>>k-1, height>>k-1, width, height);
     }
+    free(wavelet);
+    free(waveletF);
 }
 
 // putRowIn, putColIn, getRow, getCol, copyPartsOfArray,
@@ -541,4 +582,69 @@ void getCol(float * in, int col, float * out, int width, int height){
         out[y] = in[y*width + x];
     }
 }
+
+float testWaitTime(int its, int start){
+    int delay;
+    int i, j;
+    float temp, temp1;
+    int repeat;
+    int STOP;
+    for (delay=start; delay<1000; delay++){
+        repeat = 0;
+        j = 0;
+        STOP = 0;
+        printf("%d\n", delay);
+        for (i=0; i<its; i++){
+            j++;
+            temp1 = readTemp();
+            waitMillis(delay);
+            temp = readTemp();
+            if (temp == temp1) j=0;
+            if (j==50) break;
+            /*if (i<10) printf("     %f\n", temp);*/
+        }
+        if (j==50) break;
+    }
+    return (float)(delay/1000.0);
+
+}
+
+float testNoise(int its, int wait){
+    float * x = (float *)malloc(sizeof(float) * its);
+    int i;
+    int j;
+    for (i=0; i<its; i++){
+        j = 0;
+        if ((i%100==0) && (its>500)) printf("%d\n", i);
+        while(1){
+            j++;
+            x[i] = readTemp();
+            if ((x[i] > 20 && x[i] < 200) || (j > 1000)) break;
+            else printf("%f\n", x[i]);
+        }
+        waitMillis(wait);
+    }
+    float st = std(x, its);
+    return st;
+}
+
+// C should really have this function built in.
+float std(float * array, int N){
+    float mean = 0;
+    int i;
+
+    // find the mean
+    for (i=0; i<N; i++) mean += array[i];
+    mean = mean / N;
+    // find the standard deviation
+    float st = 0;
+    for (i=0; i<N; i++) st += (array[i] - mean) * (array[i] - mean);
+    st = sqrt(st / N);
+    return st;
+}
+
+
+
+
+
 

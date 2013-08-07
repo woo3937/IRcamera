@@ -298,12 +298,14 @@ void goDeltaAngle(CPhidgetStepperHandle stepper, float angle){
     gotoLocation(stepper, index, (int)loc);
 }
 
-void setVelocity(CPhidgetStepperHandle stepper, double velocity){
-    CPhidgetStepper_setVelocityLimit(stepper, 0, velocity/2);
+void setVelocity(CPhidgetStepperHandle stepper, float perc){
+    double velocity = (double)(250e3 * perc);
+    CPhidgetStepper_setVelocityLimit(stepper, 0, velocity/1);
 }
 
-void setAcceleration(CPhidgetStepperHandle stepper, double acceleration){
-    CPhidgetStepper_setAcceleration(stepper, 0, acceleration*2);
+void setAcceleration(CPhidgetStepperHandle stepper, float perc){
+    double acceleration = (double)(10e6 * perc);
+    CPhidgetStepper_setAcceleration(stepper, 0, acceleration*1);
 }
 
 int fromSampleCode(){

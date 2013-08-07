@@ -126,9 +126,11 @@ void writeConfigParams( unsigned char command, unsigned char lsb,
                         unsigned char msb,     unsigned char pec);
 void writeImage(char filename[50], float * data, int width, int height);
 unsigned char findPec(unsigned char comm, unsigned char lsb, unsigned char msb);
+void testSpeed(CPhidgetStepperHandle horizStepper, CPhidgetStepperHandle vertStepper,
+        int width, int height);
 
 
-void main(int argc, char **argv){
+int main(int argc, char **argv){
     /*testFunctions();*/
 
     int data;
@@ -140,14 +142,15 @@ void main(int argc, char **argv){
     unsigned char msb = 0xb1;
     initIR();
     writeConfigParams(comm, lsb, msb, pec);
+    waitMillis(400);
     data = readConfig();
     printf("CONFIG: %x\n", data);
     printf("WAIT_MS: %d\n", WAIT_MS);
+    temp = readTemp();
+    printf("SAMPLE_TEMP: %f\n", temp);
     printf("\n\n");
 
-
     // init'ing the image
-    /*int pixel = width/2;*/
     int xx, yy, i, j;
 
     // init'ing our steppers
@@ -164,47 +167,51 @@ void main(int argc, char **argv){
     CPhidgetStepper_create(&vertStepper);
     initStepper(vertStepper, stepV, indV);
 
-    /*goDeltaAngle(horizStepper, 180);*/
-    /*goDeltaAngle(vertStepper, 180);*/
-
     float loc = ANGLE/2;
     // what location gives that angle?
     loc = loc * (1200 * 16) / 360.0f;   // deg * steps/deg
+
     // setting the current position, and checking
     CPhidgetStepper_setCurrentPosition(horizStepper, 0, loc);
     CPhidgetStepper_setCurrentPosition(vertStepper, 0, loc);
 
-
-    // save the image too
-    /*goDeltaAngle(vertStepper, -40);*/
-
     // setting vertStepper to be slower -- more mass/load.
     // vertStepper can max out then.
-    /*setVelocity(horizStepper, (int)250e3);*/
-    /*setVelocity(vertStepper, (int)2e3);*/
-    /*setAcceleration(vertStepper, (int)2.5e6);*/
-    /*setAcceleration(horizStepper, (int)10.0e6);*/
-    setVelocity(horizStepper, (int)250e3);
-    setVelocity(vertStepper, (int)2e3);
-    setAcceleration(vertStepper, (int)2.5e6);
-    setAcceleration(horizStepper, (int)4.50e5);
+    setVelocity(horizStepper, 1e-1);
+    setVelocity(vertStepper, 5e-2);
+    setAcceleration(vertStepper, 5e-2);
+    setAcceleration(horizStepper, 1e-1);
 
-    int width  = 1024;
-    int height = 1024;
-    /*gotoPixel2DandExit(horizStepper, stepH, vertStepper, stepV,*/
-                       /*width, width, height, height);*/
-    /*gotoPixel2DandExit(horizStepper, stepH, vertStepper, stepV,*/
-                       /*width/2, width, width/2, height);*/
+    int N = 16;
+    int width  = N;
+    int height = N;
 
-    /*goDeltaAngle(vertStepper, 10);*/
-    mainIST(width, height, horizStepper, vertStepper);
+    /*goDeltaAngle(vertStepper, -10);*/
+    /*goDeltaAngle(horizStepper, 80);*/
+    /*mainIST(width, height, horizStepper, vertStepper);*/
     /*dumbCamera(width, height, horizStepper, vertStepper);*/
+    /*printf("Here\n");*/
+    float * xold = (float *)malloc(sizeof(float) * width *height);
+    getMeasurementsFromBranch(horizStepper, vertStepper, xold, 46,
+            0, width/2, 0, width/2, 0.1, width, height);
+    for (i=0; i<N*N; i++) printf("%f\n", xold[i]);
+    gotoPixel2D(horizStepper, 0, vertStepper, 0, width/2, width, height/2, height);
+    writeImage("quad.png", xold, width, height);
 
 
-
-    /*ending I2C operations*/
-
+    // ending I2C operations
     bcm2835_i2c_end();
+}
+void testSpeed(CPhidgetStepperHandle horizStepper, CPhidgetStepperHandle vertStepper,
+        int width, int height){
+    int horizPixel;
+    for (int yy=0; yy<height; yy++){
+        if (yy%2 == 0) horizPixel = width-1;
+        if (yy%2 == 1) horizPixel = 0;
+        gotoPixel2D(horizStepper, 0, vertStepper, 0, horizPixel, width, yy, height);
+    }
+    gotoPixel2D(horizStepper, 0, vertStepper, 0, width/2, width, height/2, height);
+
 }
 float readTemp(){
     // adapted from  http://www.raspberrypi.org/phpBB3/viewtopic.php?t=17738&p=362569
@@ -292,10 +299,22 @@ void writeConfigParams( unsigned char command, unsigned char lsb,
 unsigned char findPec(unsigned char comm, unsigned char lsb, unsigned char msb){
     if(comm==0x25){
         if(lsb==0x74){
+            if(msb==0xb7) return 0x79;
+            if(msb==0xb6) return 0x7e;
+            if(msb==0xb5) return 0x77;
             if(msb==0xb4) return 0x70;
             if(msb==0xb3) return 0x65;
             if(msb==0xb2) return 0x62;
             if(msb==0xb1) return 0x6b;
+        }
+        if (lsb==0x75){
+            if(msb==0xb1) return 0x7e;
+            if(msb==0xb2) return 0x77;
+            if(msb==0xb3) return 0x70;
+            if(msb==0xb4) return 0x65;
+            if(msb==0xb5) return 0x62;
+            if(msb==0xb6) return 0x6b;
+            if(msb==0xb7) return 0x6c;
         }
     }
     printf("The combination for the PEC wasn't found!\n\n\n");

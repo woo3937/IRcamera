@@ -47,15 +47,27 @@ void getMeasurementsFromBranch(CPhidgetStepperHandle horizStepper,
     int ind;
     float temp;
     int x, y;
+    int horizPixel;
+
+    // y: 7-16
+    // x: 7-16
 
     for (y=minY; y<maxY; y++){
+        printf("y: %d\n", y);
         for (x=minX; x<maxX; x++){
             if (rand() % n < upper){
                 // we might have to change 0 to -1 -- not sure.
-                gotoPixel2DandExit(horizStepper, 0, vertStepper, 0, x, width, y, height);
+                if (y%2 == 0) horizPixel = x;
+                if (y%2 == 1) horizPixel = maxX-1-x + minX;
+                printf("    %d\n", horizPixel);
+                waitMillis(100);
+                gotoPixel2DandExit(horizStepper, 0, vertStepper, 0, horizPixel, width, y, height);
                 waitMillis(wait_ms); 
                 ind = y*width + x;
-                temp = readTemp();
+                while(1){
+                    temp = readTemp();
+                    if (temp > -240 && temp < 300) break;
+                }
                 xold[ind] = temp;
             }
         }

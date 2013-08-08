@@ -11,17 +11,28 @@ import matplotlib.pyplot as plt
 
 filename = argv[1]
 print filename
-df = read_csv('image.csv')
+df = read_csv('image.csv', header=None)
 im = array(df)
 
+# it is currently (2013-08-07):
+# vertical axis --->
+# horiz    low            high 
+# axis     left      
+#  |                
+#  |       right    
+#  v                
+
+print im.shape
+
 # depends on the hardware specification!
-im = rot90(im, 3)
+im = rot90(im, 1)
 
 width = im.shape[0]
 
 fig = plt.figure()
 plt.axis('off')
 plt.imshow(im, interpolation='nearest', cmap='jet')
+plt.colorbar()
 plt.title("width = " + str(width))
 fig.savefig(filename, dpi=300, bbox_inches='tight')
 

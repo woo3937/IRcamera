@@ -89,11 +89,11 @@ int initStepper(CPhidgetStepperHandle stepper, int index, int serialNumber){
     //open the device for connections
     int serial = -1;
     serial = CPhidget_open((CPhidgetHandle)stepper, -1);
-    printf("serial: %d\n", serial);
+    /*printf("serial: %d\n", serial);*/
     fflush(stdout);
 
     //get the program to wait for an stepper device to be attached
-    printf("Waiting for Phidget to be attached....\n");
+    /*printf("Waiting for Phidget to be attached....\n");*/
     if((result = CPhidget_waitForAttachment((CPhidgetHandle)stepper, 10000))){
         CPhidget_getErrorDescription(result, &err);
         printf("Problem waiting for attachment: %s\n", err);
@@ -101,7 +101,7 @@ int initStepper(CPhidgetStepperHandle stepper, int index, int serialNumber){
     }
 
     //read event data
-    printf("Reading accel/vel data.....\n");
+    /*printf("Reading accel/vel data.....\n");*/
 
     // This example assumes stepper motor is attached to index 0
     // Set up some initial acceleration and velocity values
@@ -129,12 +129,13 @@ int initStepper(CPhidgetStepperHandle stepper, int index, int serialNumber){
 
     //display current motor position if available
     if(CPhidgetStepper_getCurrentPosition(stepper, index, &curr_pos) == EPHIDGET_OK){
-        printf("Motor: 0 > Current Position: %lld\n", curr_pos);
+        /*printf("Motor: 0 > Current Position: %lld\n", curr_pos);*/
+        printf("EPHIDGET_OK\n");
     }
 
     CPhidgetStepper_setCurrentPosition(stepper, index, 0);
     CPhidgetStepper_setEngaged(stepper, index, 1);
-    printf("Done with init.\n");
+    /*printf("Done with init.\n");*/
 }
 int gotoLocation(CPhidgetStepperHandle stepper, int index, int loc){
     // TODO: speed optimizations can occur here. we need to get rid of the

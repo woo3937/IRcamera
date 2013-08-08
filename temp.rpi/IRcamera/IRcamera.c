@@ -105,12 +105,6 @@
 /*#define MIN_TEMP 10*/
 /*#define MAX_TEMP 60*/
 
-// the constants that determines the width of blue-red
-#define A 2.4e-1f
-#define CENTER 30.0f
-#define K 1.0f // since B taken in RGB
-#define E 2.718281828459045f
-
 #define ADDRESS 0x00
 #define COMMAND 0x25
 #define MSB 0xb1
@@ -182,23 +176,35 @@ int main(int argc, char **argv){
     setAcceleration(vertStepper, 5e-2);
     setAcceleration(horizStepper, 1e-1);
 
-    int N = 16;
+    /*goDeltaAngle(vertStepper, -180);*/
+
+    int N = 36;
     int width  = N;
     int height = N;
 
-    /*goDeltaAngle(vertStepper, -10);*/
     /*goDeltaAngle(horizStepper, 80);*/
     /*mainIST(width, height, horizStepper, vertStepper);*/
     /*dumbCamera(width, height, horizStepper, vertStepper);*/
     /*printf("Here\n");*/
+
+
     float * xold = (float *)malloc(sizeof(float) * width *height);
+    for (i=0; i<N*N; i++) xold[i] = 0;
     getMeasurementsFromBranch(horizStepper, vertStepper, xold, 46,
-            0, width/2, 0, width/2, 0.1, width, height);
-    for (i=0; i<N*N; i++) printf("%f\n", xold[i]);
-    gotoPixel2D(horizStepper, 0, vertStepper, 0, width/2, width, height/2, height);
+            0, width/2, 0, height/2, 1, width, height);
+    getMeasurementsFromBranch(horizStepper, vertStepper, xold, 46,
+            width/2, width/1, height/2, height/1, 1, width, height);
+    /*for (i=0; i<N*N; i++) printf("%f\n", xold[i]);*/
     writeImage("quad.png", xold, width, height);
 
 
+
+    /*goDeltaAngle(horizStepper, 15);*/
+    /*goDeltaAngle(vertStepper, 45);*/
+    /*printf("Before setTargetPos\n");*/
+    /*// setting it back to the middle*/
+    gotoPixel(horizStepper, 0, width/2, width);
+    gotoPixel(vertStepper, 0, width/2, width);
     // ending I2C operations
     bcm2835_i2c_end();
 }
@@ -335,7 +341,7 @@ void writeImage(char filename[40], float * data, int width, int height){
     // print to a file (a csv)
     for (y=0; y<height; y++){
         for (x=0; x<width; x++){
-            if(1 && y*width + x < 10) printf("%.2f\n", data[y*width + x]);
+            /*if(1 && y*width + x < 10) printf("%.2f\n", data[y*width + x]);*/
             fprintf(file, "%.2f", data[y*width + x]);
             if(x<width-1) fprintf(file, ",");
         }

@@ -60,10 +60,10 @@ void getMeasurementsFromBranch(CPhidgetStepperHandle horizStepper,
                 if (y%2 == 0) horizPixel = x;
                 if (y%2 == 1) horizPixel = maxX-1-x + minX;
                 printf("    %d\n", horizPixel);
-                waitMillis(100);
+                /*waitMillis(100);*/
+                ind = y*width + horizPixel;
                 gotoPixel2DandExit(horizStepper, 0, vertStepper, 0, horizPixel, width, y, height);
                 waitMillis(wait_ms); 
-                ind = y*width + x;
                 while(1){
                     temp = readTemp();
                     if (temp > -240 && temp < 300) break;

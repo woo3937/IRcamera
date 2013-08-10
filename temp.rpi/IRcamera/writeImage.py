@@ -30,9 +30,11 @@ im = rot90(im, 1)
 width = im.shape[0]
 
 fig = plt.figure()
+plt.text(width*1.00,width*1.05,str(im.shape))
 plt.axis('off')
 plt.imshow(im, interpolation='nearest', cmap='jet')
-plt.colorbar()
-plt.title("width = " + str(width))
+cbr = plt.colorbar()
+cbr.set_label("degrees Celcius")
+
 fig.savefig(filename, dpi=300, bbox_inches='tight')
 

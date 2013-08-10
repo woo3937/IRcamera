@@ -1,5 +1,5 @@
 #include <phidget21.h>
-#define ANGLE 45
+#define ANGLE 20
 
 
 int functionInSteppers();

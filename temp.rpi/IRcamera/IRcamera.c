@@ -178,7 +178,7 @@ int main(int argc, char **argv){
 
     /*goDeltaAngle(vertStepper, -180);*/
 
-    int N = 36;
+    int N = 64;
     int width  = N;
     int height = N;
 
@@ -191,20 +191,20 @@ int main(int argc, char **argv){
     float * xold = (float *)malloc(sizeof(float) * width *height);
     for (i=0; i<N*N; i++) xold[i] = 0;
     getMeasurementsFromBranch(horizStepper, vertStepper, xold, 46,
-            0, width/2, 0, height/2, 1, width, height);
-    getMeasurementsFromBranch(horizStepper, vertStepper, xold, 46,
-            width/2, width/1, height/2, height/1, 1, width, height);
+            0, width/1, 0, height/1, 1, width, height);
+    /*getMeasurementsFromBranch(horizStepper, vertStepper, xold, 46,*/
+            /*width/2, width/1, height/2, height/1, 1, width, height);*/
     /*for (i=0; i<N*N; i++) printf("%f\n", xold[i]);*/
     writeImage("quad.png", xold, width, height);
 
 
 
-    /*goDeltaAngle(horizStepper, 15);*/
-    /*goDeltaAngle(vertStepper, 45);*/
-    /*printf("Before setTargetPos\n");*/
-    /*// setting it back to the middle*/
-    gotoPixel(horizStepper, 0, width/2, width);
-    gotoPixel(vertStepper, 0, width/2, width);
+    /*goDeltaAngle(horizStepper, 5);*/
+    /*goDeltaAngle(vertStepper, -10);*/
+    // setting it back to the middle
+    CPhidgetStepper_setTargetPosition(horizStepper, 0, loc);
+    CPhidgetStepper_setTargetPosition(vertStepper, 0, loc);
+    delay(1000);
     // ending I2C operations
     bcm2835_i2c_end();
 }

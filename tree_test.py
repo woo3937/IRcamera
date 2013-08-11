@@ -122,18 +122,122 @@ x[N/2-2] = 0.5
 
 
 
-# make y some random components of x, and make it power of 2. keep track of the
-# indicies as well
+
+
+def haarMatrix(n):
+    """ 
+    assumes n is to make a haar matrix for signal of size n
+        found at google: "make haar matrix"
+        n=WidthOfSquareMatrix; % copy the parameter
+
+        % check input parameter and make sure it's the power of 2
+        Level=log2(n);
+        if 2^Level<n, error('please ensure the value of input parameter is the power of 2');end 
+
+        %Initialization
+        H=[1];
+        NC=1/sqrt(2);%normalization constant
+        LP=[1 1]; 
+        HP=[1 -1];
+
+        % iteration from H=[1] 
+        for i=1:Level
+            H=NC*[kron(H,LP);kron(eye(size(H)),HP)];
+        end
+        HaarTransformationMatrix=H;
+    """
+    level = log2(n)
+    nc = 1/sqrt(2)
+    h = array([1])
+    lp = array([1, 1])
+    hp = array([1, -1])
+    for i in arange(level):
+        fir = kron(h, lp)
+        sec = kron(eye(h.shape[0]), hp)
+        h = nc * vstack((fir, sec))
+    #h = h / sqrt(8)
+    #h = h/4.0
+    return h
+
+
+def dwt_full(x):
+    order = log2(len(x))
+    n = len(x)
+    y = x.copy()
+    y = asarray(y, dtype=float)
+    for i in arange(order):
+        i = int(i)
+        y[0:n>>i] = dwt(y[0:n>>i])
+    return y
+
+def idwt_full(x):
+    order = log2(len(x))
+    n = len(x)
+    y = x.copy()
+    y = asarray(y, dtype=float)
+    for i in arange(order-1, -1, -1):
+        i = int(i)
+        y[0:n>>i] = idwt(y[0:n>>i])
+    return y
+
+
+def sampleAtInd(ar, ind):
+    seed(42)
+    N = len(ar)
+
+    # make our haar matrix
+    h = haarMatrix(ar.shape[0])
+    h = matrix(h)
+
+    # tell it where we want to delete
+    de = logical_not(sam)
+    ind = arange(N, dtype=int)[de]
+
+    # delete those columns
+    h = delete(h, ind, axis=1)
+
+    h = matrix(h)
+    c = ar[sam]
+    c = matrix(c)
+    c = rot90(c, k=-1)
+
+    # find the wavelet coeffecients
+    w = h * c
+    return w
+
 seed(42)
-i = rand(N) < p
-y = x[i]
-ind = array(where(i==False))
+num = 64; max = 3
+t = linspace(0, max, num=num)
+x = e**((t-max/2)**2)
+x = 1 / (1 + exp(10 * (t-max/2)**4))
 
-# depends on seed()! for 2**n!
-yW = dwt(y)
-xW = dwt(x)
+N = len(x)
+p = 0.3
+sam = array(np.round(rand(N) * 1 - 0.5 + p), dtype=bool)
+
+# an approximation in the wavelet domain
+y = sampleAtInd(x, sam)
+y = idwt_full(y)
 
 
 
-plot(x, marker='o')
+
+
+
+
+
+
+
+figure(figsize=(8,8))
+subplot(211)
+plot(t, x)
+plot(t, y)
+title('\\textrm{The time domain}')
+
+subplot(212)
+plot(dwt_full(x))
+plot(dwt_full(y))
+title('\\textrm{The wavelet domain}')
+savefig('tree-sampling.png', dpi=300)
 show()
+

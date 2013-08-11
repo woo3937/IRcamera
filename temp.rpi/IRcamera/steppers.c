@@ -43,7 +43,7 @@ int CCONV AttachHandler(CPhidgetHandle stepper, void *userptr){
 
     CPhidget_getDeviceName (stepper, &name);
     CPhidget_getSerialNumber(stepper, &serialNo);
-    printf("%s %10d attached!\n", name, serialNo);
+    printf("%s %10d attached! -- and ", name, serialNo);
     return 0;
 }
 
@@ -110,7 +110,7 @@ int initStepper(CPhidgetStepperHandle stepper, int index, int serialNumber){
 
     CPhidgetStepper_getAccelerationMin(stepper, index, &minAccel);
     CPhidgetStepper_getVelocityMax(stepper, index, &maxVel);
-    printf("Max Velocity: %f, min accel: %f\n", maxVel, minAccel);
+    /*printf("Max Velocity: %f, min accel: %f\n", maxVel, minAccel);*/
 
     /*printf("maxVel: %d, minAccel: %d\n", maxVel, minAccel);*/
     /*int mul = 1000;*/
@@ -206,7 +206,7 @@ int gotoPixel2D(CPhidgetStepperHandle horizStepper, int indH,
 // gotoPixel2D DOES exit early to allow the IR sensor to settle
 int gotoPixel2DandExit(CPhidgetStepperHandle horizStepper, int indH, 
                 CPhidgetStepperHandle vertStepper, int indV, 
-                int horizPixel2, int width, int vertPixel2, int height){
+                int horizPixel2, int width, int vertPixel2, int height, int wait_ms){
     __int64 horizPixel = (__int64)horizPixel2;
     __int64 vertPixel = (__int64)vertPixel2;
     float horizLoc = ANGLE * horizPixel / width;
@@ -229,12 +229,9 @@ int gotoPixel2DandExit(CPhidgetStepperHandle horizStepper, int indH,
         CPhidgetStepper_getCurrentPosition(vertStepper, indV, &sendVertLoc);
 
         if((__int64)vertLoc == sendVertLoc && (__int64)horizLoc == sendHorizLoc) {
-            /*printf("Broken in the wrong spot\n");*/
             break;
         }
         
-
-
         offH = abs(horizLoc - sendHorizLoc);
         offV = abs(vertLoc - sendVertLoc);
         if(offH > offV){
@@ -245,12 +242,9 @@ int gotoPixel2DandExit(CPhidgetStepperHandle horizStepper, int indH,
             off = offV;
             stepper = vertStepper;
         }
-
         CPhidgetStepper_getVelocity(stepper, 0, &vel);
-        /*printf("off %f, vel: %f\n", off, vel);*/
         vel = abs(vel);
-        if (1000 * off <= WAIT_MS * vel){
-            /*printf("Broken!\n");*/
+        if (1000 * off <= wait_ms * vel){
             break;
         }
     }

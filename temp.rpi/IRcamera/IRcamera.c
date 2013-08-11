@@ -122,6 +122,7 @@ void writeImage(char filename[50], float * data, int width, int height);
 unsigned char findPec(unsigned char comm, unsigned char lsb, unsigned char msb);
 void testSpeed(CPhidgetStepperHandle horizStepper, CPhidgetStepperHandle vertStepper,
         int width, int height);
+void setMotorToInitialState(CPhidgetStepperHandle stepper, __int64 loc);
 
 
 int main(int argc, char **argv){
@@ -166,8 +167,8 @@ int main(int argc, char **argv){
     loc = loc * (1200 * 16) / 360.0f;   // deg * steps/deg
 
     // setting the current position, and checking
-    CPhidgetStepper_setCurrentPosition(horizStepper, 0, loc);
-    CPhidgetStepper_setCurrentPosition(vertStepper, 0, loc);
+    CPhidgetStepper_setCurrentPosition(horizStepper, 0, (__int64)loc);
+    CPhidgetStepper_setCurrentPosition(vertStepper, 0, (__int64)loc);
 
     // setting vertStepper to be slower -- more mass/load.
     // vertStepper can max out then.
@@ -178,7 +179,7 @@ int main(int argc, char **argv){
 
     /*goDeltaAngle(vertStepper, -180);*/
 
-    int N = 64;
+    int N = 16;
     int width  = N;
     int height = N;
 
@@ -190,24 +191,33 @@ int main(int argc, char **argv){
 
     float * xold = (float *)malloc(sizeof(float) * width *height);
     for (i=0; i<N*N; i++) xold[i] = 0;
-    getMeasurementsFromBranch(horizStepper, vertStepper, xold, 46,
+    int wait_ms = 70;
+    // getting the wait times right
+    wait_ms = (46 * wait_ms) / 51;
+    printf("wait_ms: %d\n", wait_ms);
+    getMeasurementsFromBranch(horizStepper, vertStepper, xold, wait_ms,
             0, width/1, 0, height/1, 1, width, height);
     /*getMeasurementsFromBranch(horizStepper, vertStepper, xold, 46,*/
             /*width/2, width/1, height/2, height/1, 1, width, height);*/
-    /*for (i=0; i<N*N; i++) printf("%f\n", xold[i]);*/
-    writeImage("quad.png", xold, width, height);
+    writeImage("test.png", xold, width, height);
 
 
 
+    setMotorToInitialState(horizStepper, (__int64)loc);
+    setMotorToInitialState(vertStepper, (__int64)loc);
     /*goDeltaAngle(horizStepper, 5);*/
     /*goDeltaAngle(vertStepper, -10);*/
     // setting it back to the middle
-    CPhidgetStepper_setTargetPosition(horizStepper, 0, loc);
-    CPhidgetStepper_setTargetPosition(vertStepper, 0, loc);
-    delay(1000);
+    delay(5000);
     // ending I2C operations
     bcm2835_i2c_end();
 }
+void setMotorToInitialState(CPhidgetStepperHandle stepper, __int64 loc){
+    setVelocity(stepper, 1e-2);
+    setAcceleration(stepper, 5e-1);
+    CPhidgetStepper_setTargetPosition(stepper, 0, loc);
+}
+
 void testSpeed(CPhidgetStepperHandle horizStepper, CPhidgetStepperHandle vertStepper,
         int width, int height){
     int horizPixel;

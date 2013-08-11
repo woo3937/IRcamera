@@ -59,10 +59,10 @@ void getMeasurementsFromBranch(CPhidgetStepperHandle horizStepper,
                 // we might have to change 0 to -1 -- not sure.
                 if (y%2 == 0) horizPixel = x;
                 if (y%2 == 1) horizPixel = maxX-1-x + minX;
-                printf("    %d\n", horizPixel);
-                /*waitMillis(100);*/
+                /*printf("    %d\n", horizPixel);*/
                 ind = y*width + horizPixel;
-                gotoPixel2DandExit(horizStepper, 0, vertStepper, 0, horizPixel, width, y, height);
+                gotoPixel2DandExit(horizStepper, 0, vertStepper, 0, 
+                        horizPixel, width, y, height, wait_ms);
                 waitMillis(wait_ms); 
                 while(1){
                     temp = readTemp();
@@ -217,7 +217,7 @@ void mainIST(int width, int height,
 
                 // readTemp must be called right after gotoPixel2DandExit
                 gotoPixel2DandExit(horizStepper, stepH, vertStepper, stepV    ,
-                                   horizPixel  , width, yy         , height);
+                                   horizPixel  , width, yy         , height, WAIT_MS);
                 waitMillis(WAIT_MS);
                 while(1){
                     y[j] = readTemp();

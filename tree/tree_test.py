@@ -123,6 +123,46 @@ x[N/2-2] = 0.5
 
 
 
+def FISTA_1D(samples, locations, n, its=100, p=0.5, cut=6, draw=False):
+    """ 
+    n === size of full signal
+    samples === sampled locations
+    locations === the location of those samples
+    """
+    sz = (n,)
+    y = samples
+
+    xold = zeros(sz);
+    xold1 = zeros(sz);
+    tn = 1;
+    for i in arange(its):
+        tn1 = (1 + sqrt(1 + 4*tn*tn))/2;
+        xold = xold + (tn-1)/tn1 * (xold - xold1)
+        
+        t1 = idwt_full(xold);
+        temp = t1.flat[locations];
+        temp2 = y - temp;
+
+        temp3 = zeros(sz);
+        temp3.flat[locations] = temp2;
+        temp3 = dwt_full(temp3);
+
+        temp4 = xold + temp3;
+        xold = temp4;
+
+
+        j = abs(xold) < cut
+        xold[j] = 0
+        j = abs(xold) > cut
+        xold[j] = xold[j] - sign(xold[j])*cut
+      
+        
+        xold1 = xold
+        xold = xold
+        tn = tn1
+        
+
+    return xold
 
 def haarMatrix(n):
     """ 
@@ -180,8 +220,27 @@ def idwt_full(x):
         y[0:n>>i] = idwt(y[0:n>>i])
     return y
 
+def findIndiciesForHaar(n):
+    """ assumes n dimensional haar wavelet
+    returns what indicies are used at those locations"""
+    #i = arange(n, dtype=int)
+    re = zeros(n, dtype=object )
 
-def sampleAtInd(ar, ind):
+    h = haarMatrix(n)
+    row, col = where(h != 0)
+    # we don't care about the rows -- always 0...n
+
+    # row, seperate the cols by row
+    for i in arange(n):
+        j = where(row == i)
+        re[i] = col[j]
+
+    #for i in arange(len(re)):
+        #re[i] = tuple(re[i])
+    #re = tuple(re)
+    return re
+
+def sampleAtInd(ar, sam):
     seed(42)
     N = len(ar)
 
@@ -201,43 +260,93 @@ def sampleAtInd(ar, ind):
     c = matrix(c)
     c = rot90(c, k=-1)
 
-    # find the wavelet coeffecients
+    # find the wavelet coeffecients (approximation!)
     w = h * c
     return w
 
 seed(42)
-num = 64; max = 3
+num = 1024; max = 3
 t = linspace(0, max, num=num)
 x = e**((t-max/2)**2)
-x = 1 / (1 + exp(10 * (t-max/2)**4))
+x = 1 / (1 + exp(10 * (t-max/2)**8)) * 10
 
-N = len(x)
-p = 0.3
+N = len(x); n = N
+p = 0.03
 sam = array(np.round(rand(N) * 1 - 0.5 + p), dtype=bool)
 
 # an approximation in the wavelet domain
-y = sampleAtInd(x, sam)
-y = idwt_full(y)
+w = sampleAtInd(x, sam)
+stayW = w
+y = idwt_full(w)
+
+# what indicies are important?
+# the ones where the wavelet domain is large there
+waveletIndicies = findIndiciesForHaar(n)
+
+level = 0
+l = 1.2
+j = 0
+while level <= 5:
+    # telling when we've reached level <4>
+    j += 1
+    print level
+    past_len = len(waveletIndicies[j-1])
+    if len(waveletIndicies[j]) != past_len:
+        level += 1
+    
+    # finding the wavelet transform from our samples
+    w = sampleAtInd(x, sam)
+
+    # seeing which indices matter (only want indices in the pointed to by
+    # waveletInd[j], not all the samples
+    ind = argwhere(abs(w) > l) 
+
+    # we have where our error is large
+
+    # what indicies should we measure to minimize that?
+    ind = unique(clip(ind, waveletIndicies[j][0], waveletIndicies[j][-1]))
+
+    # transforming ind to be nice
+    ind = asarray(ind)
+    #ind = ind[:,0,0]
+    ind.shape = (len(ind),)
+
+    # sample at the indicies where the wavelet domain error is large: the edges
+    #sam[idx[0][ind]] = True
+    # waveletIndicies point to the indicies that are included in the transform
+    sam[ind] = True
+    w = sampleAtInd(x, sam)
+    
+    # it's just error[ind]. we need to trim ind
 
 
+xh = FISTA_1D(x[sam], waveletIndicies[0][sam], len(x), cut=0.5, its=500)
 
-
-
-
-
-
-
-
-figure(figsize=(8,8))
-subplot(211)
-plot(t, x)
-plot(t, y)
+figure(figsize=(8,12))
+subplot(311)
+plot(t, x, '-.')
+plot(t, idwt_full(w), label='\\textrm{Active measurements}')
+plot(t, idwt_full(stayW), '--', label='\\textrm{Initial measurements}')
+legend(loc='lower right')
 title('\\textrm{The time domain}')
 
-subplot(212)
-plot(dwt_full(x))
-plot(dwt_full(y))
-title('\\textrm{The wavelet domain}')
-savefig('tree-sampling.png', dpi=300)
+subplot(312)
+w = asarray(w)
+w.shape = (-1,)
+plot(t, abs(dwt_full(x) - w))
+title('\\textrm{The wavelet domain error}')
+legend()
+savefig('tree-sampling-reconstruct.png', dpi=300)
+
+subplot(313)
+plot(t, idwt_full(xh))
+plot(t, x)
+title('\\textrm{The reconstruction (after FISTA)}')
+
+
 show()
+
+
+
+
 

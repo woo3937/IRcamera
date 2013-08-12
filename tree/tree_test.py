@@ -240,129 +240,62 @@ def findIndiciesForHaar(n):
     #re = tuple(re)
     return re
 
-def sampleAtInd(ar, sam):
-    seed(42)
-    N = len(ar)
 
-    # make our haar matrix
-    k = haarMatrix(ar.shape[0])
-    h = matrix(k)
+seed(4)
+#n = 32
+#maxx = 3
+#t = linspace(0, maxx, num=n)
 
-    # our wavelet trasform: x = h w
-    h = h.T
-    h = linalg.pinv(h)
+#x = 1 / (1 + exp(-50 * (t-2)))
+#plot(x, marker='o')
+#show()
 
+#wavletIndicies = findIndiciesForHaar(n)
 
-    # tell it where we want to delete
-    de = logical_not(sam)
-    ind = arange(N, dtype=int)[de]
+#t = 1e-3
+#p = 0.2
+#sam = array(around(rand(n) - 0.5 + p), dtype=bool)
+#i = arange(n)
+#for level in arange(log2(len(x)))+1:
+    #print level
+    #w = approxWavelet(x, sam)
 
-    # delete those columns
-    h = delete(h, ind, axis=1)
+    ## see where the wavelet is not zero. approximate closer to there
 
-    h = matrix(h)
-    c = ar[sam]
-    c = matrix(c)
-    c = rot90(c, k=-1)
+#plot(sam, marker='o')
+#show()
 
-    # find the wavelet coeffecients (approximation!)
-    w = h * c
-    return w
+#plot(dwt_full(x))
+#plot(w)
+#show()
 
-def old():
-    seed(42)
-    num = 1024; max = 3
-    t = linspace(0, max, num=num)
-    x = e**((t-max/2)**2)
-    x = 1 / (1 + exp(10 * (t-max/2)**8)) * 10
+x = 1 / (1 + exp(-50 * (t-2)))
 
-    N = len(x); n = N
-    p = 0.03
-    sam = array(np.round(rand(N) * 1 - 0.5 + p), dtype=bool)
+#def approxWavelet(x, level):
+""" 
+    approximates the haar wavelet transform of x at location sam.
+    sam -- boolean array of to index x
+    x   -- numerical
+"""
+# it should be at a level
+# setting the "level" -- 2**level indicies
+j = arange(n)
 
-    # an approximation in the wavelet domain
-    w = sampleAtInd(x, sam)
-    stayW = w
-    y = idwt_full(w)
+# find the haar matrix
+h = haarMatrix(n)
+# getting x = h w
+h = asmatrix(h)
+h = h.T
 
-    # what indicies are important?
-    # the ones where the wavelet domain is large there
-    waveletIndicies = findIndiciesForHaar(n)
+# delete columns -- find an approximation
+indd = j[logical_not(sam)]
+j = asmatrix( delete(h, indd, axis=1))
 
-    # 2 for every other element
-    sampleLess = 1
-    level = 0
-    l = 1e-14
-    j = -1
-    while level <= 4:
-        # telling when we've reached level <4>
-        j += 1
+f = (j.T * j).I * j.T
 
-        print level, j
-        if level > log2(n): break
-        past_len = len(waveletIndicies[j-1])
-        try:
-            if len(waveletIndicies[j]) != past_len:
-                level += 1
-        except:
-            break
-        
-        # finding the wavelet transform from our samples
-        w = sampleAtInd(x, sam)
+x = asmatrix(x)
+x.shape = (-1,1)
 
-        # seeing where the wavelet transform is off
-        ind = argwhere(abs(w) > l) 
-        ind = ind[::sampleLess] # n for every other element
-
-        # only include indices in the range we want
-        indi = unique(clip(ind, waveletIndicies[j][0], waveletIndicies[j][-1]))
-        ind = asarray(indi)
-
-        # transforming ind to be nice
-        ind = asarray(ind)
-        ind.shape = (-1,)
-
-        # sample at the indicies where the wavelet domain error is large: the edges
-        # waveletIndicies point to the indicies that are included in the transform
-        sam[ind] = True
-        w = sampleAtInd(x, sam)
-        
-        # it's just error[ind]. we need to trim ind
-
-
-    xh = FISTA_1D(x[sam], waveletIndicies[0][sam], len(x), cut=0.5, its=500)
-
-    figure(figsize=(8,12))
-    subplot(311)
-    plot(t, x, '-.')
-    plot(t, idwt_full(w), label='\\textrm{Active measurements}')
-    plot(t, idwt_full(stayW), '--', label='\\textrm{Initial measurements}')
-    legend(loc='lower right')
-    title('\\textrm{The time domain}')
-
-    subplot(312)
-    w = asarray(w)
-    w.shape = (-1,)
-    plot(t, abs(dwt_full(x) - w))
-    title('\\textrm{The wavelet domain error}')
-    legend()
-    savefig('tree-sampling-reconstruct.png', dpi=300)
-
-    subplot(313)
-    plot(t, idwt_full(xh))
-    plot(t, x)
-    title('\\textrm{The reconstruction (after FISTA)}')
-
-
-    show()
-
-n = 1024
-maxx = 3
-t = linspace(0, maxx, num=n)
-
-x = 1 / (1 + 10 * exp(10 * (t-maxx/2)**4))
-
-l = 1e-14
-
-
-# find an approximation of the wavelet transform
+# an exact approximation of the wavelet coeffs. of x!
+w = f * x
+    #return w

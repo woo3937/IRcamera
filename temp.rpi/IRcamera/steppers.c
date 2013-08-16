@@ -209,10 +209,14 @@ int gotoPixel2DandExit(CPhidgetStepperHandle horizStepper, int indH,
                 int horizPixel2, int width, int vertPixel2, int height, int wait_ms){
     __int64 horizPixel = (__int64)horizPixel2;
     __int64 vertPixel = (__int64)vertPixel2;
-    float horizLoc = ANGLE * horizPixel / width;
+    float horizLoc, vertLoc;
+
+    horizLoc = ANGLE * horizPixel2 / (width * 1.0);
     horizLoc = horizLoc * (1200 * 16) / 360;
-    float vertLoc = ANGLE * vertPixel / height;
+
+    vertLoc = ANGLE * vertPixel2 / (height * 1.0);
     vertLoc = vertLoc * (1200 * 16) / 360;
+
     CPhidgetStepperHandle stepper;
 
     CPhidgetStepper_setTargetPosition(horizStepper , indH , (__int64)horizLoc);

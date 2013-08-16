@@ -179,19 +179,13 @@ int main(int argc, char **argv){
 
     /*goDeltaAngle(vertStepper, -180);*/
 
-    int N = 16;
+    int N = 64;
     int width  = N;
     int height = N;
 
-    /*goDeltaAngle(horizStepper, 80);*/
-    /*mainIST(width, height, horizStepper, vertStepper);*/
-    /*dumbCamera(width, height, horizStepper, vertStepper);*/
-    /*printf("Here\n");*/
-
-
     float * xold = (float *)malloc(sizeof(float) * width *height);
     for (i=0; i<N*N; i++) xold[i] = 0;
-    int wait_ms = 70;
+    int wait_ms = 40;
     // getting the wait times right
     wait_ms = (46 * wait_ms) / 51;
     printf("wait_ms: %d\n", wait_ms);
@@ -199,14 +193,13 @@ int main(int argc, char **argv){
             0, width/1, 0, height/1, 1, width, height);
     /*getMeasurementsFromBranch(horizStepper, vertStepper, xold, 46,*/
             /*width/2, width/1, height/2, height/1, 1, width, height);*/
-    writeImage("test.png", xold, width, height);
-
+    writeImage("best.png", xold, width, height);
 
 
     setMotorToInitialState(horizStepper, (__int64)loc);
     setMotorToInitialState(vertStepper, (__int64)loc);
-    /*goDeltaAngle(horizStepper, 5);*/
-    /*goDeltaAngle(vertStepper, -10);*/
+    /*goDeltaAngle(horizStepper, 15);*/
+    /*goDeltaAngle(vertStepper, 20);*/
     // setting it back to the middle
     delay(5000);
     // ending I2C operations

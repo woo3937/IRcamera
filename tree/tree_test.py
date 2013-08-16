@@ -1,39 +1,23 @@
+
+"""
+COPYRIGHT BY SparKEL Lab, University of Minnesota
+DIRECTOR OF LAB: Jarvis Haupt (jdhaupt@umn.edu)
+CREATOR OF SCRIPT: Scott Sievert (sieve121@umn.edu)
+
+This script does edge detection, and finds the interested parts of an image. It
+looks for the edges in an image, because that's the interesting part of an
+image. The other areas, the "flat" areas, can be approximated with just a
+couple samples.
+"""
+
+
 from __future__ import division
-from pylab import *
-
-
-
-
-
-# for an approx of the image
-# Notes:
-#   the base functions are defined first, and should probably be in their own
-#   script. the base functions are i/dwt, i/dwt2, i/dwt2_full -- they're just
-#   functions to put the image in a sparse (wavelet) domain.
-
-#   I solely declared them early on to call them later, in IST and ISTreal.
-#   Here, I use IST to time in the notebook (in this same folder) and ISTreal
-#   as my callable function (you can change iterations/sampling rate/cut off
-#   value).
-
-# Some notes on notation and variable names, in ISTreal:
-#   cut:    this is the cut off value that is done for iterative soft
-#           thresholding. everything below this value is set to 0
-#   I:      Our original image/signal.
-#   rp:     Our random permuatation of indicies, to ensure random sampling. If we
-#           had [1,2,3,4], rp would be [3,1,2,4]
-#   tn1:    Stands for t_{n+1} (explained elsewhere, I'm sure)
-#   xold1:  Stands for xold_{n-1}
-#   ys:     Our sampled measurements
-#   y:      Our measurements
-#   p:      Our sampling rate
-
-# What IST actually does:
-#   The equation for IST is 
-
 from pylab import *
 import pywt
 import random
+
+# a c-style '#define'
+PRINT = True
 
 def dwt(x):
     y = zeros_like(x)
@@ -44,6 +28,8 @@ def dwt(x):
     y = y / sqrt(2)
     return y
 
+
+
 def dwt2(x):
     y = x.copy()
     w = y.shape[0]
@@ -53,8 +39,6 @@ def dwt2(x):
     y = dwt(y[i])
     y = fliplr(y).T
     return y
-
-x = arange(64).reshape(8,8)
 
 def dwt2_order(s, order):
     # order means how many places width is shifted over: the bottom of the
@@ -110,19 +94,6 @@ def idwt2_full(x):
     order = int(log2(len(x)))
     return idwt2_order(x, order)
 
-
-N = 16
-p = 0.42
-# setting up our coeffecient mctrix
-
-x = zeros(N)
-x[N/2:N/1] = 1
-x[N/2-1] = 0.75
-x[N/2-2] = 0.5
-
-
-
-
 def FISTA_1D(samples, locations, n, its=100, p=0.5, cut=6, draw=False):
     """ 
     n === size of full signal
@@ -164,7 +135,7 @@ def FISTA_1D(samples, locations, n, its=100, p=0.5, cut=6, draw=False):
 
     return xold
 
-def haarMatrix(n):
+def haarMatrix(n, level=-1):
     """ 
     assumes n is to make a haar matrix for signal of size n
         found at google: "make haar matrix"
@@ -186,7 +157,8 @@ def haarMatrix(n):
         end
         HaarTransformationMatrix=H;
     """
-    level = log2(n)
+    if level == -1: level = log2(n)
+    #level = log2(n)
     nc = 1/sqrt(2)
     h = array([1])
     lp = array([1, 1])
@@ -220,11 +192,46 @@ def idwt_full(x):
         y[0:n>>i] = idwt(y[0:n>>i])
     return y
 
+############################################################
+############ BEGINNING OF 1D CASE FUNCTIONS ################
+############################################################
+def approxWavelet(x, sam, level):
+    """
+        x   -- numerical. the full signal.
+        sam -- boolean array. the indicies where we should sample.
+    """
+    n = x.shape[0]
+    # x = h w
+    h = haarMatrix(n)
+    h = asmatrix(h)
+    h = h.I
+
+    dele = arange(n)
+    dele = where(dele >= 2**level)
+    h = delete(h, dele, axis=1)
+
+    # h.I * h = eye
+    l = pinv(h)
+
+    # now l * x = w
+    # but we still have to delete come columns
+    i = arange(n, dtype=int)
+    i = i[logical_not(sam)]
+    l = delete(l, i, axis=1)
+
+    x = asmatrix(x); x.shape = (-1,1)
+    c = l * x[sam]
+
+    w = zeros_like(x)
+    w[0:2**level] = c
+    return w
+
 def findIndiciesForHaar(n):
     """ assumes n dimensional haar wavelet
     returns what indicies are used at those locations"""
     #i = arange(n, dtype=int)
     re = zeros(n, dtype=object )
+    re = zeros((n, n))
 
     h = haarMatrix(n)
     row, col = where(h != 0)
@@ -233,69 +240,216 @@ def findIndiciesForHaar(n):
     # row, seperate the cols by row
     for i in arange(n):
         j = where(row == i)
-        re[i] = col[j]
+        re[i] = hstack((col[j], zeros(len(re[i])-len(col[j]))-1))
 
-    #for i in arange(len(re)):
-        #re[i] = tuple(re[i])
-    #re = tuple(re)
     return re
 
+def findElement(array, error_value):
+    idx = -1
+    while idx == -1:
+        idx = array[np.random.randint(0, n)]
+    return idx
 
-seed(4)
-#n = 32
-#maxx = 3
-#t = linspace(0, maxx, num=n)
+def approxWavelet(x, sampleAt, m):
+    """
+        x: the original signal
+        sampleAt: where we should sample
+        m: how many terms to get (Haar: 2**level)
+    """
+    # h as in x = h w
+    n = x.shape[0]
+    h = haarMatrix(n)
+    h = asmatrix(h); h = h.I
+    x = asmatrix(x).reshape((-1,1))
 
-#x = 1 / (1 + exp(-50 * (t-2)))
-#plot(x, marker='o')
-#show()
 
-#wavletIndicies = findIndiciesForHaar(n)
+    h = asmatrix(h); 
 
-#t = 1e-3
-#p = 0.2
-#sam = array(around(rand(n) - 0.5 + p), dtype=bool)
-#i = arange(n)
-#for level in arange(log2(len(x)))+1:
-    #print level
-    #w = approxWavelet(x, sam)
+    j = arange(0, n)
+    toDelete = logical_not(sampleAt)
+    h = delete(h, j[j >= m], axis=1)
 
-    ## see where the wavelet is not zero. approximate closer to there
+    h = delete(h, j[toDelete], axis=0)
 
-#plot(sam, marker='o')
-#show()
+    h = h.I
+    w = h * x[sampleAt]
 
-#plot(dwt_full(x))
-#plot(w)
-#show()
+    approx = zeros_like(x)
+    approx[0:len(w)] = w
+    return approx
 
-x = 1 / (1 + exp(-50 * (t-2)))
+def oneD():
+    np.random.seed(42)
+    seed(42)
 
-#def approxWavelet(x, level):
-""" 
-    approximates the haar wavelet transform of x at location sam.
-    sam -- boolean array of to index x
-    x   -- numerical
-"""
-# it should be at a level
-# setting the "level" -- 2**level indicies
-j = arange(n)
+    # the size of our signal
+    n = 2**11
 
-# find the haar matrix
-h = haarMatrix(n)
-# getting x = h w
-h = asmatrix(h)
-h = h.T
+    # wavelet above this term are looked at closer
+    threshold = 0.2
 
-# delete columns -- find an approximation
-indd = j[logical_not(sam)]
-j = asmatrix( delete(h, indd, axis=1))
+    # how far down the wavelet "tree" should we approximate?
+    levelA = 8
 
-f = (j.T * j).I * j.T
+    # the maximum time value?
+    maxx = 5
 
-x = asmatrix(x)
-x.shape = (-1,1)
+    # how many samples do we want to take to better approximate the wavelet?
+    maxNumber = 7
 
-# an exact approximation of the wavelet coeffs. of x!
-w = f * x
-    #return w
+    # initially, take "everyOther" sample.
+    everyOther = 2**9
+
+    # making our signal
+    t = linspace(0, maxx, num=n)
+    x  = 1 / (1 + exp(500 * (t - maxx*1/4)**2))
+    x += 1 / (1 + exp(500 * (t - maxx*3/4)**2))
+    x += 1 / (1 + exp(500 * (t - maxx*2/4)**2))
+
+
+
+
+    # select random indicies from this
+    haarToTimeInd = findIndiciesForHaar(n)
+    haarToTimeInd = asarray(haarToTimeInd, dtype=int)
+
+    # sam is "where we want to SAMple at
+    sam = zeros(n, dtype=bool)
+    sam[::everyOther] = True
+
+
+
+    for level in arange(levelA):
+        if PRINT: print level
+
+        # approximate the wavelet with the terms we sample at
+        w = approxWavelet(x, sam, 2**level)
+
+        j = argwhere(abs(asarray(w).reshape(-1,)) > threshold)
+
+        # we have the indicies where it's off (in the wavelet domain)
+        k = unique(clip(j, 2**(level-1), 2**(level)))
+
+        k = asarray(k, dtype=int)
+        if PRINT: print k
+        for element in haarToTimeInd[k]:
+            if 0 in element and level > 2: 
+                continue
+            totalNumber = 0
+            while totalNumber < maxNumber:
+                idx = findElement(element, -1)
+                sam[idx] = True
+                totalNumber += 1
+
+
+
+    w = asarray(w); w.shape = (-1,)
+    error = abs(x - idwt_full(w))
+
+
+
+
+    ########################################################################
+    ########################### PLOTTING ###################################
+    ########################################################################
+
+    perc = 100 * len(sam[sam==True])/n
+    ind = arange(n)
+    wA = asarray(w).reshape(-1,)
+
+
+    fig, ax1 = subplots()
+    ax2 = ax1.twinx()
+
+    # plot
+    ax1.plot(ind, idwt_full(w), 'g')
+    ax1.plot(ind, x, 'r--')
+    ax1.set_xlabel('\\textrm{Index}')
+    junk, y = ax1.get_ylim()
+    ax1.set_ylim(0, 1.2*y)
+
+    # plot
+    ax2.hist(ind[sam], bins=15,label='\\textrm{Samples per index range}',\
+            ls='dashed', histtype='step')
+    ax2.legend(loc='best')
+    ax2.set_ylabel('\\textrm{Frequency}')
+    junk,current_y = ax2.get_ylim()
+    ax2.set_ylim(0, 1.2*current_y)
+
+    ti = 'Reconstruction after sampling at {:.1f}\% rate'.format(perc)
+    title('\\textrm{'+ti+'}')
+    savefig('reconstruction.png', dpi=200)
+    show()
+
+    #plot(abs(dwt_full(x) - wA))
+    #title('\\textrm{Wavelet domain error}')
+    #show()
+
+    print "l1 norm: ", sum(error)
+    print "l2 norm: ", sum(error**2)
+
+############################################################
+############ BEGINNING OF 2D CASE FUNCTIONS ################
+############################################################
+
+
+def haarMatrix2D(x):
+    """ 
+        relies on x being invertible. that's not likely with the images we'll
+        be dealing with.
+    """
+    x = asarray(x)
+    w = dwt2_full(x)
+    w = asmatrix(w)
+    x = asmatrix(x)
+
+    m = w * x.I
+    return m
+
+
+def dwt_ind(n):
+    ind = zeros((n,n)) - 1
+    half = int(n/2)
+    for i in arange(n/2):
+        ind[i, 0:2] = i, i+1
+        ind[i+half, 0:2] = i, i+1
+    return ind
+
+
+
+def returnIndForWaveletXY(argX, argY):
+    """
+        argX, argY: some arguments that are functions of where you want to
+        sample the wavelet domain signal
+
+        returns a set of coordinates that you can access with
+            >>> array[x, y] = True
+        That will set the portion of the array to True for sampling.
+    """
+    # we're going to "stack" the values
+    #sig = arange(n*n, dtype=int).reshape(n,n)
+    x = findIndiciesForHaar(n)
+    y = findIndiciesForHaar(n).T
+    x = asarray(x, dtype=int)
+    y = asarray(x, dtype=int)
+
+    xx = x[argX]
+    xx = xx[xx != -1]
+
+    yy = y[argY]
+    yy = yy[yy != -1]
+    return xx, yy[:, newaxis]
+
+
+n = 8
+sig = asarray(around(zeros((n,n))), dtype=bool)
+
+x, y = returnIndForWaveletXY(4, 5)
+
+sig[x,y] = True
+sometimes = asarray(around(rand(sig[x,y].shape[0], sig[x,y].shape[1])), dtype=bool)
+sig[x,y] = logical_and(sometimes, sig[x,y])
+
+
+#argwhere(array==-1)
+#argwhere[-1]

@@ -195,36 +195,7 @@ def idwt_full(x):
 ############################################################
 ############ BEGINNING OF 1D CASE FUNCTIONS ################
 ############################################################
-def approxWavelet(x, sam, level):
-    """
-        x   -- numerical. the full signal.
-        sam -- boolean array. the indicies where we should sample.
-    """
-    n = x.shape[0]
-    # x = h w
-    h = haarMatrix(n)
-    h = asmatrix(h)
-    h = h.I
 
-    dele = arange(n)
-    dele = where(dele >= 2**level)
-    h = delete(h, dele, axis=1)
-
-    # h.I * h = eye
-    l = pinv(h)
-
-    # now l * x = w
-    # but we still have to delete come columns
-    i = arange(n, dtype=int)
-    i = i[logical_not(sam)]
-    l = delete(l, i, axis=1)
-
-    x = asmatrix(x); x.shape = (-1,1)
-    c = l * x[sam]
-
-    w = zeros_like(x)
-    w[0:2**level] = c
-    return w
 
 def findIndiciesForHaar(n):
     """ assumes n dimensional haar wavelet
@@ -406,17 +377,6 @@ def haarMatrix2D(x):
     m = w * x.I
     return m
 
-
-def dwt_ind(n):
-    ind = zeros((n,n)) - 1
-    half = int(n/2)
-    for i in arange(n/2):
-        ind[i, 0:2] = i, i+1
-        ind[i+half, 0:2] = i, i+1
-    return ind
-
-
-
 def returnIndForWaveletXY(argX, argY):
     """
         argX, argY: some arguments that are functions of where you want to
@@ -449,6 +409,23 @@ x, y = returnIndForWaveletXY(4, 5)
 sig[x,y] = True
 sometimes = asarray(around(rand(sig[x,y].shape[0], sig[x,y].shape[1])), dtype=bool)
 sig[x,y] = logical_and(sometimes, sig[x,y])
+
+
+#def approxWavelet2D(...):
+level = 2
+x = arange(n*n).reshape(n,n)
+c = haarMatrix(n)
+r = haarMatrix(n)
+
+r = r.T
+
+r = asmatrix(r)
+c = asmatrix(c)
+x = asmatrix(x)
+
+#c = c[0:2**level]
+#r = r[:, 0:2**level]
+
 
 
 #argwhere(array==-1)

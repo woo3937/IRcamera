@@ -363,20 +363,6 @@ def oneD():
 ############ BEGINNING OF 2D CASE FUNCTIONS ################
 ############################################################
 
-
-def haarMatrix2D(x):
-    """ 
-        relies on x being invertible. that's not likely with the images we'll
-        be dealing with.
-    """
-    x = asarray(x)
-    w = dwt2_full(x)
-    w = asmatrix(w)
-    x = asmatrix(x)
-
-    m = w * x.I
-    return m
-
 def returnIndForWaveletXY(argX, argY):
     """
         argX, argY: some arguments that are functions of where you want to
@@ -400,33 +386,60 @@ def returnIndForWaveletXY(argX, argY):
     yy = yy[yy != -1]
     return xx, yy[:, newaxis]
 
-
-n = 8
-sig = asarray(around(zeros((n,n))), dtype=bool)
-
-x, y = returnIndForWaveletXY(4, 5)
-
-sig[x,y] = True
-sometimes = asarray(around(rand(sig[x,y].shape[0], sig[x,y].shape[1])), dtype=bool)
-sig[x,y] = logical_and(sometimes, sig[x,y])
+def approxWavelet2D(x, sampleAt, level):
+    n = x.shape[0]
+    c = haarMatrix(n)
+    r = c.copy().T
 
 
-#def approxWavelet2D(...):
-level = 2
-x = arange(n*n).reshape(n,n)
+    r = asmatrix(r)
+    c = asmatrix(c)
+
+    wOrg = around(c * x * r, decimals=1)
+    under = sampleAt * x
+    x = asmatrix(x)
+
+    c = c[0:2**level, :]
+    r = r[:, 0:2**level]
+    approx = c * under * r
+    ret = zeros((n,n))
+    ret[0:2**level, 0:2**level] = approx
+    return ret
+
+x = imread('./lenna.png')
+x = mean(x, axis=2)
+n = x.shape[0]
+
+# every other element
+sampleAt = zeros((n,n))
+sampleAt[::2**4, ::2**4] = 1
+
+
 c = haarMatrix(n)
-r = haarMatrix(n)
-
-r = r.T
-
-r = asmatrix(r)
+r = c.copy().T
 c = asmatrix(c)
-x = asmatrix(x)
+r = asmatrix(r)
+real = c * x * r
+level = 5
+approx = approxWavelet2D(x, sampleAt, level)
 
-#c = c[0:2**level]
-#r = r[:, 0:2**level]
 
 
+xt = c.I * real * r.I
+at = c.I * approx * r.I
+#ap = zeros((n,n))
+#ap[0:2**level, 0:2**level] = approx
 
-#argwhere(array==-1)
-#argwhere[-1]
+figure(figsize=(6,14))
+subplot(211)
+imshow(c.I * approx * r.I, interpolation='nearest', cmap='gray')
+title('\\textrm{The Approximation}')
+axis('off')
+
+subplot(212)
+imshow(abs(xt-at), interpolation='nearest')
+colorbar()
+title('\\textrm{Error}')
+savefig('lena-approx.png', dpi=300)
+show()
+

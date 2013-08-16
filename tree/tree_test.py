@@ -386,60 +386,45 @@ def returnIndForWaveletXY(argX, argY):
     yy = yy[yy != -1]
     return xx, yy[:, newaxis]
 
-def approxWavelet2D(x, sampleAt, level):
-    n = x.shape[0]
-    c = haarMatrix(n)
-    r = c.copy().T
 
-
-    r = asmatrix(r)
-    c = asmatrix(c)
-
-    wOrg = around(c * x * r, decimals=1)
-    under = sampleAt * x
-    x = asmatrix(x)
-
-    c = c[0:2**level, :]
-    r = r[:, 0:2**level]
-    approx = c * under * r
-    ret = zeros((n,n))
-    ret[0:2**level, 0:2**level] = approx
-    return ret
 
 x = imread('./lenna.png')
 x = mean(x, axis=2)
 n = x.shape[0]
 
-# every other element
 sampleAt = zeros((n,n))
 sampleAt[::2**4, ::2**4] = 1
-
-
+level = 7
+#def approxWavelet2D(x, sampleAt, level):
+n = x.shape[0]
 c = haarMatrix(n)
 r = c.copy().T
-c = asmatrix(c)
+
 r = asmatrix(r)
-real = c * x * r
-level = 5
-approx = approxWavelet2D(x, sampleAt, level)
+c = asmatrix(c)
+x = asmatrix(x)
 
+cO = c.copy()
+rO = r.copy()
+wOrg = c * x * r
 
+under = multiply(sampleAt, x)
 
-xt = c.I * real * r.I
-at = c.I * approx * r.I
-#ap = zeros((n,n))
-#ap[0:2**level, 0:2**level] = approx
+c = c[0:2**level, :]
+r = r[:, 0:2**level]
 
-figure(figsize=(6,14))
-subplot(211)
-imshow(c.I * approx * r.I, interpolation='nearest', cmap='gray')
-title('\\textrm{The Approximation}')
-axis('off')
+under = asmatrix(under)
 
-subplot(212)
-imshow(abs(xt-at), interpolation='nearest')
-colorbar()
-title('\\textrm{Error}')
-savefig('lena-approx.png', dpi=300)
+approx = c * under * r
+ret = zeros((n,n))
+ret[0:2**level, 0:2**level] = approx
+#return ret
+
+#i = argwhere(multiply(sampleAt, x) != 0)
+
+imshow(cO.I * wOrg * rO.I, interpolation='nearest')
 show()
 
+imshow(cO.I * ret * rO.I, interpolation='nearest')
+axis('off')
+show()

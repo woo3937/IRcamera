@@ -387,44 +387,69 @@ def returnIndForWaveletXY(argX, argY):
     return xx, yy[:, newaxis]
 
 
-
+seed(42)
+n = 256
 x = imread('./lenna.png')
 x = mean(x, axis=2)
+x = resize(x, (n,n))
+
+n = 8
+x = arange(n * n).reshape(n,n)
 n = x.shape[0]
 
+
+level = 1
 sampleAt = zeros((n,n))
-sampleAt[::2**4, ::2**4] = 1
-level = 7
+sampleAt[::2**(level-1), ::2**(level-1)] = 1
+sampleAt = asarray(sampleAt, dtype=bool)
 #def approxWavelet2D(x, sampleAt, level):
-n = x.shape[0]
-c = haarMatrix(n)
-r = c.copy().T
-
-r = asmatrix(r)
-c = asmatrix(c)
-x = asmatrix(x)
-
-cO = c.copy()
-rO = r.copy()
-wOrg = c * x * r
-
-under = multiply(sampleAt, x)
-
-c = c[0:2**level, :]
-r = r[:, 0:2**level]
-
-under = asmatrix(under)
-
-approx = c * under * r
+h = haarMatrix(n)
+c = h.copy()
+r = h.copy().T
 ret = zeros((n,n))
-ret[0:2**level, 0:2**level] = approx
+i = arange(n, dtype=int)
+for j in arange(n):
+    # approx wavelet columns
+    sig = x[:,j]
+    sig.shape = (-1, 1)
+    
+    samp = sampleAt[:,j]
+    if True in samp:
+        temp = approxWavelet(sig, samp, 2**(level))
+        temp.shape = (-1,)
+
+        ret[:,j] = temp
+
+
+
+for j in arange(2**level):
+    # form an approximation of each rows
+    sig = x[j,:]
+    sig.shape = (1, -1)
+    samp = sampleAt[j,:]
+
+    # delete columns from sig and rows from row
+    sig = delete(sig, i[logical_not(samp)], axis=1)
+
+
+    continue
+
 #return ret
+#ret = ret.dot(r)
+
+print "approx: \n", around(ret.dot(r))
+print "exact : \n",around(c.dot(x).dot(r))
 
 #i = argwhere(multiply(sampleAt, x) != 0)
+im = inv(c).dot(ret).dot(inv(r))
 
-imshow(cO.I * wOrg * rO.I, interpolation='nearest')
+imshow(x, interpolation='nearest')
+title('\\textrm{Exact}')
+colorbar()
 show()
 
-imshow(cO.I * ret * rO.I, interpolation='nearest')
-axis('off')
+imshow(im, interpolation='nearest')
+title('\\textrm{Approx}')
+colorbar()
 show()
+

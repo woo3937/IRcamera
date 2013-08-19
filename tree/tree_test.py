@@ -387,69 +387,119 @@ def returnIndForWaveletXY(argX, argY):
     return xx, yy[:, newaxis]
 
 
+def approxCol(x, sampleAt, m):
+    # doesn't work
+    """
+        x: the original signal
+        sampleAt: where we should sample
+        m: how many terms to get (Haar: 2**level)
+    """
+    # h as in x = h w
+    n = x.shape[0]
+    h = haarMatrix(n)
+    h = inv(h)
+    x = reshape(x, (-1, 1))
+    j = arange(0, n)
+    toDelete = logical_not(sampleAt)
+
+    h = delete(h, j[j >= m], axis=1)
+    h = delete(h, j[toDelete], axis=0)
+    h = pinv(h)
+    #w = h * x[sampleAt]
+    w = h.dot(x[sampleAt])
+    approx = zeros_like(x)
+    approx[0:len(w)] = w
+    return approx
+
 seed(42)
-n = 256
 x = imread('./lenna.png')
 x = mean(x, axis=2)
-x = resize(x, (n,n))
 
 n = 8
 x = arange(n * n).reshape(n,n)
 n = x.shape[0]
 
 
-level = 1
+level = 2
 sampleAt = zeros((n,n))
-sampleAt[::2**(level-1), ::2**(level-1)] = 1
+sampleAt[::4, ::4] = 1
 sampleAt = asarray(sampleAt, dtype=bool)
+
 #def approxWavelet2D(x, sampleAt, level):
-h = haarMatrix(n)
-c = h.copy()
-r = h.copy().T
+c = haarMatrix(n)
+r = c.copy().T
 ret = zeros((n,n))
+
+rows = asarray( zeros(n), dtype=bool)
 i = arange(n, dtype=int)
+
+# approximate each row and column
 for j in arange(n):
-    # approx wavelet columns
-    sig = x[:,j]
-    sig.shape = (-1, 1)
-    
-    samp = sampleAt[:,j]
-    if True in samp:
-        temp = approxWavelet(sig, samp, 2**(level))
-        temp.shape = (-1,)
+    # approximating columns
+    signal = x[:,j]
+    sample = sampleAt[:,j]
+    if len(sample[sample == True]) > 0:
+        w = approxWavelet(signal, sample, 2**level)
+        ret[:,j].flat = w
+        rows[j] = True
+    # this part works: approximating the wavelet transform of the columns
+half = ret.copy()
 
-        ret[:,j] = temp
+def approxRow(x, sampleAt, m):
+    """
+        x: the original signal
+        sampleAt: where we should sample
+        m: how many terms to get (Haar: 2**level)
+    """
+    #h as in x = h w
+    n = x.shape[0]
+    h = haarMatrix(n)
+    h = asmatrix(h); h = h.I
+    x = asmatrix(x).reshape((-1,1))
+
+
+    h = asmatrix(h); 
+
+    j = arange(0, n)
+    toDelete = logical_not(sampleAt)
+    h = delete(h, j[j >= m], axis=1)
+
+    h = delete(h, j[toDelete], axis=0)
+
+    h = h.I
+    w = x[sampleAt].dot(h.T)
+
+    approx = zeros_like(x)
+    approx[0:len(w)] = w
+    return approx
+
+
+# then we just have to work on this part: approximating the rows
+ret = delete(ret, i[logical_not(rows)], axis=1)
+ret = delete(ret, i[i >= 2**level], axis=0)
+half = ret.copy()
+
+h = haarMatrix(len(ret))
+h = h.T
+h = delete(h, i[i>=ret.shape[1]], axis=0)
+
+approx = ret.dot(h)
 
 
 
-for j in arange(2**level):
-    # form an approximation of each rows
-    sig = x[j,:]
-    sig.shape = (1, -1)
-    samp = sampleAt[j,:]
-
-    # delete columns from sig and rows from row
-    sig = delete(sig, i[logical_not(samp)], axis=1)
 
 
-    continue
+c = haarMatrix(n)
+exact = c.dot(x).dot(c.T)
 
-#return ret
-#ret = ret.dot(r)
+exact = around(exact)
+approx = around(approx)
 
-print "approx: \n", around(ret.dot(r))
-print "exact : \n",around(c.dot(x).dot(r))
 
-#i = argwhere(multiply(sampleAt, x) != 0)
-im = inv(c).dot(ret).dot(inv(r))
 
-imshow(x, interpolation='nearest')
-title('\\textrm{Exact}')
-colorbar()
-show()
 
-imshow(im, interpolation='nearest')
-title('\\textrm{Approx}')
-colorbar()
-show()
+
+
+
+
 

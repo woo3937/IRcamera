@@ -1,6 +1,6 @@
 # Fdb version 3
-["pdflatex"] 1376864335 "/Users/scott/Developer/IRcamera/algorithm-description/alg.tex" "alg.pdf" "alg" 1376864336
-  "/Users/scott/Developer/IRcamera/algorithm-description/alg.tex" 1376864335 7224 0c4da24399cc8a1eb51df20064471229 ""
+["pdflatex"] 1376841838 "/Users/scott/Developer/IRcamera/algorithm-description/alg.tex" "Output/alg.pdf" "alg" 1376841839
+  "/Users/scott/Developer/IRcamera/algorithm-description/alg.tex" 1376772555 7224 0c4da24399cc8a1eb51df20064471229 ""
   "/usr/local/texlive/2013/texmf-dist/fonts/map/fontname/texfonts.map" 1272929888 3287 e6b82fe08f5336d4d5ebc73fb1152e87 ""
   "/usr/local/texlive/2013/texmf-dist/fonts/tfm/public/amsfonts/cmextra/cmex7.tfm" 1246382020 1004 54797486969f23fa377b128694d548df ""
   "/usr/local/texlive/2013/texmf-dist/fonts/tfm/public/amsfonts/cmextra/cmex8.tfm" 1246382020 988 bdf658c3bfc2d96d3c8b02cfc1c94c20 ""
@@ -137,12 +137,12 @@
   "/usr/local/texlive/2013/texmf-var/fonts/map/pdftex/updmap/pdftex.map" 1369923225 1072746 3ce1f23f203cb4a0015ca3c8411dee4a ""
   "/usr/local/texlive/2013/texmf-var/web2c/pdftex/pdflatex.fmt" 1369923264 3827029 ad4432546849f432c3154779662c76c8 ""
   "/usr/local/texlive/2013/texmf.cnf" 1369923207 577 cbc827f6294276973a1952e86e8ad73a ""
-  "alg.aux" 1376864336 1167 0c09a7c59f650833eeb152287fbad8e1 ""
-  "alg.tex" 1376864335 7224 0c4da24399cc8a1eb51df20064471229 ""
-  "alg.toc" 1376864336 592 fa754b12af85bfcb21c6da9f71d61542 ""
+  "Output/alg.aux" 1376841839 1167 0c09a7c59f650833eeb152287fbad8e1 ""
+  "Output/alg.toc" 1376841839 592 fa754b12af85bfcb21c6da9f71d61542 ""
+  "alg.tex" 1376772555 7224 0c4da24399cc8a1eb51df20064471229 ""
   "better_diagram.pdf" 1376772471 3623 b763a06ce3d81954d01a9cff5f389872 ""
   (generated)
-  "alg.toc"
-  "alg.aux"
-  "alg.pdf"
-  "alg.log"
+  "Output/alg.log"
+  "Output/alg.pdf"
+  "Output/alg.toc"
+  "Output/alg.aux"

@@ -115,10 +115,9 @@
 
             We know that if any of these ``branches'' are close enough to zero ($|x| < \lambda$) that all of it's child branches are close enough to 0 as well. Therefore, we only look at where the branches are not close enough to zero ($|x| > \lambda$). As we go further down the branch, we form a better approximation of the wavelet transform.
             
-            \begin{figure}
-            	\hspace{8em}
-                \includegraphics[angle=90]{tree}
-                \caption{A visualization of a tree. The wavelet transform only includes high frequency components in the lower "branches", so we only go deeper in the tree if necessary. Each level of the wavelet contains horizontal, vertical and diagonal branches. }
+            \begin{figure}[h]
+                \includegraphics[angle=0]{better_diagram}
+                \caption{A visualization of our tree. The blue square is our current node. Only two of it's components are non-zero, meaning that there's more detail at lower levels we need to look at closer. We then build a better and better approximation as we need too.}
                 \label{fig:tree}
             \end{figure}
             

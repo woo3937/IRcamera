@@ -1,7 +1,7 @@
 
 """
 COPYRIGHT BY SparKEL Lab, University of Minnesota
-DIRECTOR OF LAB: Jarvis Haupt (jdhaupt@umn.edu)
+DIRECTOR OF LAB: Prof. Jarvis Haupt (jdhaupt@umn.edu)
 CREATOR OF SCRIPT: Scott Sievert (sieve121@umn.edu)
 
 This script does edge detection, and finds the interested parts of an image. It
@@ -363,7 +363,7 @@ def oneD():
 ############ BEGINNING OF 2D CASE FUNCTIONS ################
 ############################################################
 
-def returnIndForWaveletXY(argX, argY):
+def waveletIndToTimeInd(argX, argY, n):
     """
         argX, argY: some arguments that are functions of where you want to
         sample the wavelet domain signal
@@ -387,119 +387,199 @@ def returnIndForWaveletXY(argX, argY):
     return xx, yy[:, newaxis]
 
 
-def approxCol(x, sampleAt, m):
-    # doesn't work
-    """
-        x: the original signal
-        sampleAt: where we should sample
-        m: how many terms to get (Haar: 2**level)
-    """
-    # h as in x = h w
-    n = x.shape[0]
-    h = haarMatrix(n)
-    h = inv(h)
-    x = reshape(x, (-1, 1))
-    j = arange(0, n)
-    toDelete = logical_not(sampleAt)
-
-    h = delete(h, j[j >= m], axis=1)
-    h = delete(h, j[toDelete], axis=0)
-    h = pinv(h)
-    #w = h * x[sampleAt]
-    w = h.dot(x[sampleAt])
-    approx = zeros_like(x)
-    approx[0:len(w)] = w
-    return approx
 
 seed(42)
-x = imread('./lenna.png')
-x = mean(x, axis=2)
+#x = imread('./lenna.png')
+#x = mean(x, axis=2)
 
 n = 8
-x = arange(n * n).reshape(n,n)
+x = arange(n * n).reshape(n,n) * 100 / (n*n)
+x = around(x)
 n = x.shape[0]
 
 
-level = 2
+level = 1
 sampleAt = zeros((n,n))
-sampleAt[::4, ::4] = 1
+sampleAt[::n/2, ::n/2] = 1
 sampleAt = asarray(sampleAt, dtype=bool)
 
-#def approxWavelet2D(x, sampleAt, level):
-c = haarMatrix(n)
-r = c.copy().T
-ret = zeros((n,n))
 
-rows = asarray( zeros(n), dtype=bool)
-i = arange(n, dtype=int)
+# we want to approximate the top m terms, meaning we have to use
+# waveletIndToTimeInd(x, y) in the top m places (read: top quadrant)
 
-# approximate each row and column
-for j in arange(n):
-    # approximating columns
-    signal = x[:,j]
-    sample = sampleAt[:,j]
-    if len(sample[sample == True]) > 0:
-        w = approxWavelet(signal, sample, 2**level)
-        ret[:,j].flat = w
-        rows[j] = True
-    # this part works: approximating the wavelet transform of the columns
-half = ret.copy()
+# I *need* a linear system of equations
+level = 3
+#def ...
+# gets a linear combination 
 
-def approxRow(x, sampleAt, m):
-    """
-        x: the original signal
-        sampleAt: where we should sample
-        m: how many terms to get (Haar: 2**level)
-    """
-    #h as in x = h w
-    n = x.shape[0]
+# we're only interested in *some* coefficients.
+# using the variables we have, get a system of equations for the wavelet
+#     coefficients we're interested in.
+
+# so, look to see where where \phi and \psi are +/-?
+
+# we want a linear combination for some pixel location
+
+# did I just have an "aha!" moment? Could we find which indices are important
+# then select the appropiate column/row from c/r?
+
+def phi(x, pwr, shift):
+    factor = (2**(pwr/2.0))
+    if type(x) == ndarray:
+        phi = zeros_like(x)
+        i = ((2**pwr)*x - shift >= 0) & ((2**pwr)*x - shift < 1)
+        phi[i] = 1
+        phi = phi * factor
+        return phi
+    if type(x) == int or type(x)==float or type(x)==np.int64:
+        if (2**pwr)*x - shift >=0 and (2**pwr)*x - shift <1:
+            return factor
+        else:
+            return 0
+
+def psi(x, pwr, shift):
+    factor = (2**(pwr/2.0))
+    if type(x) == ndarray:
+        psi = zeros_like(x)
+        i = ((2**pwr)*x - shift >= 0) & ((2**pwr)*x - shift < 0.5)
+        j = ((2**pwr)*x - shift >= 0.5) & ((2**pwr)*x - shift < 1)
+        psi[i] = 1
+        psi[j] = -1
+        psi = psi * factor
+        return psi
+    if type(x) == int or type(x) == float or type(x)==np.int64:
+        if (2**pwr)*x - shift >=0 and (2**pwr)*x - shift <0.5:
+            return factor
+        if (2**pwr)*x - shift >=0.5 and (2**pwr)*x - shift <1:
+            return -1 * factor
+        else:
+            return 0
+
+def phiphi(x, y, pwr, shiftX, shiftY):
+    return phi(x, pwr, shiftX) * phi(y, pwr, shiftY)
+def psiphi(x, y, pwr, shiftX, shiftY):
+    return psi(x, pwr, shiftX) * phi(y, pwr, shiftY)
+def phipsi(x, y, pwr, shiftX, shiftY):
+    return phi(x, pwr, shiftX) * psi(y, pwr, shiftY)
+def psipsi(x, y, pwr, shiftX, shiftY):
+    a = psi(x, pwr, shiftX)
+    b = psi(y, pwr, shiftY)
+    return a * b
+
+def proofThat2Dworks():
+    n = 8
+    pwr = -3; j = 0
+    m = zeros((n,n))
+    f = arange(n*n).reshape(n,n)
+    #np.random.shuffle(f)
+    #f = rand(n,n)
+    xx = []
+    sampleAt = zeros((n,n))
+
+    x1, y1 = int(1*n/4), int(1*n/4)
+    x2, y2 = int(1*n/4), int(3*n/4)
+    x3, y3 = int(3*n/4), int(1*n/4)
+    x4, y4 = int(3*n/4), int(3*n/4)
+
+    for x,y in [(x1, y1),(x2, y2),(x3, y3),(x4, y4)]:
+        sampleAt[y,x] = True
+    sampleAt = asarray(sampleAt, dtype=bool)
+
+    # get the x,y coord's of all the True's
+    pos = argwhere(sampleAt == True)
+
+    # select the phi's and psi's we want
+    shiftX = 0
+    shiftY = 0
+
+    i = 0
+    for p in pos:
+        x, y = p
+        print x, y
+        m[0,i] = phiphi(x, y, pwr, 0, 0)
+        m[1,i] = psiphi(x, y, pwr, 0, 0)
+        m[2,i] = phipsi(x, y, pwr, 0, 0)
+        m[3,i] = psipsi(x, y, pwr, 0, 0)
+        xx += [f[y, x]]
+        i += 1
+        
+    xx = asarray(xx)
+
+    xx = xx.T
+    m = m[0:4, 0:4]
+    m = m * n**2/4
+    approx = m.dot(xx)
+    approx = reshape(approx, (2,2))
+    approx = approx.T
+
+
     h = haarMatrix(n)
-    h = asmatrix(h); h = h.I
-    x = asmatrix(x).reshape((-1,1))
+    exact = h.dot(f).dot(h.T)
+    exact = around(exact, decimals=2)
+    exact = exact[0:2, 0:2]
+
+    approx.shape = (2,2)
+    approx = approx.T
+
+    imshow(approx, interpolation='nearest')
+    colorbar()
+    title('\\textrm{Approx}')
+    show()
+
+    imshow(exact, interpolation='nearest')
+    colorbar()
+    title('\\textrm{Exact}')
+    show()
+
+    imshow(abs(exact-approx), interpolation='nearest')
+    colorbar()
+    title('\\textrm{abs(exact-approx)}')
+    show()
+
+def makePwr(pwr):
+    y = 0
+    n = pwr.shape[0]
+    for x in arange(n):
+        pwr[y, x] = floor(log2(x))
+        if pwr[y, x] == -inf: pwr[y,x] = 0
+        y += 1
+
+    x = 0
+    for y in arange(n):
+        pwr[y, x] = floor(log2(x))
+        if pwr[y, x] == -inf: pwr[y,x] = 0
+        x += 1
+
+    # it's now diagonal -- fill in the diagonals
+    for i in arange(n):
+        #print pwr[i,i]
+        pwr[0:i, i] = pwr[i,i]
+        pwr[i, 0:i] = pwr[i,i]
+    pwr = pwr - log2(n)
+    return pwr
 
 
-    h = asmatrix(h); 
+n = 8
+log2n = int(log2(n))
+f = arange(n*n).reshape(n,n)
 
-    j = arange(0, n)
-    toDelete = logical_not(sampleAt)
-    h = delete(h, j[j >= m], axis=1)
+i = arange(log2n)
 
-    h = delete(h, j[toDelete], axis=0)
+pwr = zeros((n,n))
+pwr = makePwr(pwr)
 
-    h = h.I
-    w = x[sampleAt].dot(h.T)
+shift = zeros((n,n))
 
-    approx = zeros_like(x)
-    approx[0:len(w)] = w
-    return approx
+# get possible number of shifts -- use pwr?
+shifts = 2**(-1 * pwr) / n
+shifts = 1/shifts
 
+# get the shift for each index
+i = arange(n)
+s = shifts[0]
+j = argwhere(s[i] == s[i-1])
 
-# then we just have to work on this part: approximating the rows
-ret = delete(ret, i[logical_not(rows)], axis=1)
-ret = delete(ret, i[i >= 2**level], axis=0)
-half = ret.copy()
+# seeing where those indices are >2**level and <2**(level+1)
 
-h = haarMatrix(len(ret))
-h = h.T
-h = delete(h, i[i>=ret.shape[1]], axis=0)
-
-approx = ret.dot(h)
-
-
-
-
-
-c = haarMatrix(n)
-exact = c.dot(x).dot(c.T)
-
-exact = around(exact)
-approx = around(approx)
-
-
-
-
-
-
-
-
+    
 

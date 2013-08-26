@@ -630,9 +630,6 @@ topMTerms = 5
 m = zeros((topMTerms, totalPixels))
 
 
-# how do I tell it that it's looking for phiphi/phipsi/etc?
-
-
 f = phiphi
 power = base * -1
 shiftX = shiftY = 0
@@ -643,19 +640,57 @@ def putNStrDown(strings, string, n):
     for i in arange(n):
         strings += [string]
     return strings
-strings = []
 
-power = 2
-delay = 3
-for string in ['H_', 'V_', 'D_']:
-    for i in arange(power*power):
-        toPrint = string + str(i) + str(delay)
-        print toPrint
+# we know we want a wavelet term at some index. what shift does that correspond to?
+# it's just the index (in number of terms): 0 1 1 2 2 * 2 corresponds to shift of 2
 
+# H_1_23 corresponds to power 1, 2 horizontal shift, 3 vertical shift
 
+def writeHVDOfPower(listOfStrings, power):
+    """
+        generates a list of strings that will be used for solving the linear
+        system of equation. Our image is something like...
 
+        .--------|----------|---------------------
+        |        |          |                     |
+        |  A     |  H_0_00  | H_1_00     H_1_10   |
+        |        |          |                     |
+        |-------------------|                     |
+        |        |          |                     |
+        |  V_0_00|  D_0_00  | H_1_01     H_1_11   |
+        |        |          |                     |
+        |------------------------------------------
+        |                   |                     |
+        | V_1_00   V_1_10   | D_1_00     D_1_10   |
+        |                   |                     |
+        |                   |                     |
+        |                   |                     |
+        | V_1_10   V_1_11   | D_1_10     D_1_11   |
+        |                   |                     |
+        .-------------------|---------------------
 
+        power: how large do you want each square to be? e.g., if power=3, each
+               "square" will be 3x3
+    """
+    for string in ['H_', 'V_', 'D_']:
+        for vshift in arange(power):
+            for hshift in arange(power):
+                toPrint = string + str(power-1) + '_' + str(hshift) + str(vshift)
+                listOfStrings += [toPrint]
+    return listOfStrings
 
+l = ['A_0_00']
+power = 3
+
+for p in arange(2):
+    l = writeHVDOfPower(l, 2**p)
+
+for element in l:
+    if element[0] == 'H': f = psiphi
+    if element[0] == 'V': f = phipsi
+    if element[0] == 'D': f = psipsi
+    hShift = element[-2]
+    vShift = element[-1]
 
 
 

@@ -558,28 +558,123 @@ def makePwr(pwr):
     pwr = pwr - log2(n)
     return pwr
 
+def oldShift():
+    n = 8
+    log2n = int(log2(n))
+    f = arange(n*n).reshape(n,n)
+
+    i = arange(log2n)
+
+    pwr = zeros((n,n))
+    pwr = makePwr(pwr)
+
+    shift = zeros((n,n))
+
+    # get possible number of shifts -- use pwr?
+    shifts = 2**(-1 * pwr) / n
+    shifts = 1/shifts
+
+    # get the shift for each index
+    i = arange(n)
+    s = shifts[0]
+    j = argwhere(s[i] == s[i-1])
+    # seeing where those indices are >2**level and <2**(level+1)
 
 n = 8
-log2n = int(log2(n))
-f = arange(n*n).reshape(n,n)
+power = 2
+pixelPos = 5
+def newShift(pixelPos, power, n):
+    """
+        pixelPos: where is the pixel, either in x or y axis?
+        power: what percentage of the image? 
+                2^1 = 2 --> 1/2 = 0.5 = half the image. 
+                2^2 = 4 --> 1/4 = 0.25 = one quarter
+        n: how large is the oringal image?
+    """
+    parts = 2**power
+    p = pixelPos
+    width = n/parts
 
-i = arange(log2n)
+    # see which part the pixel is in
+    i = arange(parts) * width
 
-pwr = zeros((n,n))
-pwr = makePwr(pwr)
+    j = argwhere((p - i < width) & (p-i>=0))
+    shifts = int(j)
+    return shifts
 
-shift = zeros((n,n))
+def evalFunctionAtPixel(f, m, shiftX, shiftY, power, pos):
+    i = 0
+    for i in arange(len(pos)):
+        x, y = pos[i]
+        m[row, i] = f(x, y, power, shiftX, shiftY)
+        i += 1
+    return m
+# we can go from space indices to wavelet shifts
+# we know what power we want
 
-# get possible number of shifts -- use pwr?
-shifts = 2**(-1 * pwr) / n
-shifts = 1/shifts
+n = 8
+base = log2(n)
+x = arange(n*n).reshape(n,n)
+level = 2
 
-# get the shift for each index
-i = arange(n)
-s = shifts[0]
-j = argwhere(s[i] == s[i-1])
+s = zeros((n,n), dtype=bool)
+i = arange(2)*n/2
+i = array(i, dtype=int)
+s[i, i[:,newaxis]] = True
+#def approx2DWaveletFromSamples(...):
+pos = argwhere(s == True)
+totalPixels = len(pos)
+topMTerms = 5
 
-# seeing where those indices are >2**level and <2**(level+1)
+# assumes [A, H, V, D] -- a flattened 2D matrix
+m = zeros((topMTerms, totalPixels))
 
-    
+
+# how do I tell it that it's looking for phiphi/phipsi/etc?
+
+
+f = phiphi
+power = base * -1
+shiftX = shiftY = 0
+row = 0
+
+
+def putNStrDown(strings, string, n):
+    for i in arange(n):
+        strings += [string]
+    return strings
+strings = []
+
+power = 2
+delay = 3
+for string in ['H_', 'V_', 'D_']:
+    for i in arange(power*power):
+        toPrint = string + str(i) + str(delay)
+        print toPrint
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

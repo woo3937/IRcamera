@@ -6,6 +6,6 @@
 \contentsline {subsection}{\numberline {2.1}Approximating the wavelet transform}{2}{subsection.2.1}
 \contentsline {subsection}{\numberline {2.2}The approximation algorithm}{3}{subsection.2.2}
 \contentsline {subsubsection}{\numberline {2.2.1}$j$ -- the power variable}{3}{subsubsection.2.2.1}
-\contentsline {subsubsection}{\numberline {2.2.2}$k$ -- the shift variable}{4}{subsubsection.2.2.2}
-\contentsline {subsection}{\numberline {2.3}Which indices are important?}{4}{subsection.2.3}
+\contentsline {subsubsection}{\numberline {2.2.2}$k$ -- the shift variable}{3}{subsubsection.2.2.2}
+\contentsline {subsection}{\numberline {2.3}Which indices are important?}{3}{subsection.2.3}
 \contentsline {subsection}{\numberline {2.4}The reconstruction}{4}{subsection.2.4}

@@ -190,10 +190,10 @@ INPUT alg.out
 INPUT alg.out
 INPUT alg.out
 INPUT alg.out
-OUTPUT alg.pdf
 INPUT ./alg.out
 INPUT ./alg.out
 OUTPUT alg.out
+OUTPUT alg.pdf
 INPUT /usr/local/texlive/2013/texmf-dist/fonts/map/fontname/texfonts.map
 INPUT /usr/local/texlive/2013/texmf-dist/fonts/map/fontname/texfonts.map
 INPUT /usr/local/texlive/2013/texmf-dist/fonts/tfm/public/cm/cmr17.tfm
@@ -213,16 +213,15 @@ INPUT /usr/local/texlive/2013/texmf-dist/fonts/tfm/public/cm/cmtt12.tfm
 INPUT /usr/local/texlive/2013/texmf-dist/fonts/tfm/public/cm/cmr12.tfm
 INPUT /usr/local/texlive/2013/texmf-dist/fonts/tfm/public/cm/cmbx12.tfm
 INPUT alg.toc
-INPUT alg.toc
-INPUT /usr/local/texlive/2013/texmf-dist/fonts/tfm/public/cm/cmbx10.tfm
-INPUT /usr/local/texlive/2013/texmf-dist/fonts/tfm/public/amsfonts/cmextra/cmex7.tfm
-INPUT /usr/local/texlive/2013/texmf-dist/fonts/tfm/public/amsfonts/cmextra/cmex7.tfm
 OUTPUT alg.toc
 INPUT /usr/local/texlive/2013/texmf-dist/fonts/tfm/public/cm/cmbx12.tfm
+INPUT /usr/local/texlive/2013/texmf-dist/fonts/tfm/public/amsfonts/cmextra/cmex7.tfm
+INPUT /usr/local/texlive/2013/texmf-dist/fonts/tfm/public/amsfonts/cmextra/cmex7.tfm
 INPUT /usr/local/texlive/2013/texmf-var/fonts/map/pdftex/updmap/pdftex.map
 INPUT signs.pdf
 INPUT ./signs.pdf
 INPUT ./signs.pdf
+INPUT /usr/local/texlive/2013/texmf-dist/fonts/tfm/public/cm/cmbx10.tfm
 INPUT /usr/local/texlive/2013/texmf-dist/fonts/tfm/public/cm/cmtt10.tfm
 INPUT better_diagram.pdf
 INPUT ./better_diagram.pdf
@@ -244,5 +243,3 @@ INPUT /usr/local/texlive/2013/texmf-dist/fonts/type1/public/amsfonts/cm/cmr5.pfb
 INPUT /usr/local/texlive/2013/texmf-dist/fonts/type1/public/amsfonts/cm/cmr7.pfb
 INPUT /usr/local/texlive/2013/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb
 INPUT /usr/local/texlive/2013/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy7.pfb
-INPUT /usr/local/texlive/2013/texmf-dist/fonts/type1/public/amsfonts/cm/cmtt10.pfb
-INPUT /usr/local/texlive/2013/texmf-dist/fonts/type1/public/amsfonts/cm/cmtt12.pfb

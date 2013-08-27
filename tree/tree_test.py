@@ -388,21 +388,8 @@ def waveletIndToTimeInd(argX, argY, n):
 
 
 
-seed(42)
 #x = imread('./lenna.png')
 #x = mean(x, axis=2)
-
-n = 8
-x = arange(n * n).reshape(n,n) * 100 / (n*n)
-x = around(x)
-n = x.shape[0]
-
-
-level = 1
-sampleAt = zeros((n,n))
-sampleAt[::n/2, ::n/2] = 1
-sampleAt = asarray(sampleAt, dtype=bool)
-
 
 # we want to approximate the top m terms, meaning we have to use
 # waveletIndToTimeInd(x, y) in the top m places (read: top quadrant)
@@ -602,38 +589,16 @@ def newShift(pixelPos, power, n):
     shifts = int(j)
     return shifts
 
-def evalFunctionAtPixel(f, m, shiftX, shiftY, power, pos):
+def evalFunctionAtPixel(fu, m, row, shiftX, shiftY, power, pos):
     i = 0
     for i in arange(len(pos)):
         x, y = pos[i]
-        m[row, i] = f(x, y, power, shiftX, shiftY)
+        m[row, i] = fu(x, y, power, shiftX, shiftY)
         i += 1
     return m
 # we can go from space indices to wavelet shifts
 # we know what power we want
 
-n = 8
-base = log2(n)
-x = arange(n*n).reshape(n,n)
-level = 2
-
-s = zeros((n,n), dtype=bool)
-i = arange(2)*n/2
-i = array(i, dtype=int)
-s[i, i[:,newaxis]] = True
-#def approx2DWaveletFromSamples(...):
-pos = argwhere(s == True)
-totalPixels = len(pos)
-topMTerms = 5
-
-# assumes [A, H, V, D] -- a flattened 2D matrix
-m = zeros((topMTerms, totalPixels))
-
-
-f = phiphi
-power = base * -1
-shiftX = shiftY = 0
-row = 0
 
 
 def putNStrDown(strings, string, n):
@@ -679,22 +644,67 @@ def writeHVDOfPower(listOfStrings, power):
                 listOfStrings += [toPrint]
     return listOfStrings
 
+seed(42)
 l = ['A_0_00']
-power = 3
+maxPower = 3
+# len(x) = 2**maxPower
 
 for p in arange(2):
     l = writeHVDOfPower(l, 2**p)
 
+
+x = arange(n*n).reshape(n,n)
+
+sampleAt = zeros((n,n))
+sampleAt[::n/4, ::n/4] = 1
+sampleAt = asarray(sampleAt, dtype=bool)
+pos = argwhere(sampleAt == True)
+
+m = zeros((len(l), len(pos)))
+j = 0
 for element in l:
-    if element[0] == 'H': f = psiphi
-    if element[0] == 'V': f = phipsi
-    if element[0] == 'D': f = psipsi
+    if element[0] == 'A': fu = phiphi
+    if element[0] == 'H': fu = phipsi
+    if element[0] == 'V': fu = psiphi
+    if element[0] == 'D': fu = psipsi
+
     hShift = element[-2]
     vShift = element[-1]
+    power  = element[2]
+
+    power  = int(power)
+    vShift = int(vShift)
+    hShift = int(hShift)
+
+    power = power - maxPower
+
+    # we have to change power around -- a simple subtract/add
+    m = evalFunctionAtPixel(fu, m, j, hShift, vShift, power, pos)
+    j += 1
+    if j >= m.shape[0]: break
+
+# we have the matrix; now the vector?
+vec = x[pos[:,0], pos[:,1]]
+vec.shape = (-1, 1)
+
+h = haarMatrix(n)
+exact = h.dot(x).dot(h.T)
+exact = around(exact)
 
 
+# a tall matrix means we want many elements
+# a long matrix means we have many measurements
 
 
+# TODO:
+#   1. make the approximation work fully (we're just off by constants)
+#       a. we're off by a constant
+#       b. 
+#   2. Unflatten the array / (aka, approximate!)
+
+
+mat = m.copy()
+#def flattenPartialMatrix(mat):
 
 
 

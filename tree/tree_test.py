@@ -942,5 +942,5 @@ S2imshow(exact, 'exact')
 S2imshow(approx, 'approx')
 S2imshow(time, 'time')
 
-
+ 
 

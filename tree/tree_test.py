@@ -1,7 +1,7 @@
 
 """
 COPYRIGHT BY SparKEL Lab, University of Minnesota
-DIRECTOR OF LAB: Prof. Jarvis Haupt (jdhaupt@umn.edu)
+ADVISOR OF LAB: Prof. Jarvis Haupt (jdhaupt@umn.edu)
 CREATOR OF SCRIPT: Scott Sievert (sieve121@umn.edu)
 
 This script does edge detection, and finds the interested parts of an image. It
@@ -75,7 +75,6 @@ def idwt2(x):
     y = rot90(y, 3)
     y = idwt(y[i])
     y = fliplr(y).T
-    y = np.round(y)
     return y
 
 def idwt2_order(x, order):
@@ -412,28 +411,14 @@ level = 3
 
 def phi(x, pwr, shift):
     factor = (2**(pwr/2.0))
-    if type(x) == ndarray:
-        phi = zeros_like(x)
-        i = ((2**pwr)*x - shift >= 0) & ((2**pwr)*x - shift < 1)
-        phi[i] = 1
-        phi = phi * factor
-        return phi
     if type(x) == int or type(x)==float or type(x)==np.int64:
-        if (2**pwr)*x - shift >=0 and (2**pwr)*x - shift <1:
-            return factor
+        if (2**pwr)*x - shift >=0 and (2**pwr)*x - shift <= 1:
+            return 1 * factor
         else:
             return 0
 
 def psi(x, pwr, shift):
     factor = (2**(pwr/2.0))
-    if type(x) == ndarray:
-        psi = zeros_like(x)
-        i = ((2**pwr)*x - shift >= 0) & ((2**pwr)*x - shift < 0.5)
-        j = ((2**pwr)*x - shift >= 0.5) & ((2**pwr)*x - shift < 1)
-        psi[i] = 1
-        psi[j] = -1
-        psi = psi * factor
-        return psi
     if type(x) == int or type(x) == float or type(x)==np.int64:
         if (2**pwr)*x - shift >=0 and (2**pwr)*x - shift <0.5:
             return factor
@@ -606,8 +591,65 @@ def putNStrDown(strings, string, n):
         strings += [string]
     return strings
 
-# we know we want a wavelet term at some index. what shift does that correspond to?
-# it's just the index (in number of terms): 0 1 1 2 2 * 2 corresponds to shift of 2
+def flattenPartialMatrix(l, mat, coeffs, n):
+    ret = zeros((n,n))
+    j = 0
+    for element in l:
+        x = arange(n)
+        y = arange(n)
+        # get the power square
+        power = element[2]
+        power = int(power)
+        x = x[0:2**(power+1)]
+        y = y[0:2**(power+1)]
+
+        # get the H/V/A/D square
+        half = len(x) / 2
+        if element[0] == 'H': 
+            x = x[half:]
+            y = y[:half]
+        if element[0] == 'V': 
+            x = x[:half]
+            y = y[half:]
+        if element[0] == 'D': 
+            x = x[half:]
+            y = y[half:]
+
+        # get the vshift, hshift
+        vshift = element[-1]
+        hshift = element[-2]
+        vshift = int(vshift)
+        hshift = int(hshift)
+        x = x[hshift]
+        y = y[vshift]
+        ret[y, x] = coeffs[j]
+        j += 1
+    return ret
+
+def make2DhaarMatrix(n, l):
+    m = zeros((len(l), len(pos)))
+    j = 0
+    for element in l:
+        if element[0] == 'A': fu = phiphi
+        if element[0] == 'H': fu = phipsi
+        if element[0] == 'V': fu = psiphi
+        if element[0] == 'D': fu = psipsi
+
+        hShift = element[-2]
+        vShift = element[-1]
+        power  = element[2]
+
+        power  = int(power)
+        vShift = int(vShift)
+        hShift = int(hShift)
+
+        power = power - powerN
+
+        # we have to change power around -- a simple subtract/add
+        m = evalFunctionAtPixel(fu, m, j, hShift, vShift, power, pos)
+        j += 1
+        if j >= m.shape[0]: break
+    return m
 
 # H_1_23 corresponds to power 1, 2 horizontal shift, 3 vertical shift
 
@@ -644,82 +686,261 @@ def writeHVDOfPower(listOfStrings, power):
                 listOfStrings += [toPrint]
     return listOfStrings
 
-seed(42)
-l = ['A_0_00']
-maxPower = 3
-# len(x) = 2**maxPower
+def oldMethod():
+    seed(42)
+    l = ['A_0_00']
+    powerN = 4
+    powerToApproxTo = 3
+    # len(x) = 2**powerN
+    n = 2**powerN
 
-for p in arange(2):
-    l = writeHVDOfPower(l, 2**p)
+    # TODO:
+    #   1. make the approximation work fully (we're just off by constants)
+    #       a. we're off by a constant
+    #   2. something is wrong with my phiphi/etc functions
+    #   3. make more modular. 
 
+    for p in arange(powerToApproxTo):
+        # to be changed when we actual do the approximation
+        l = writeHVDOfPower(l, 2**p)
+
+
+    x = arange(n*n).reshape(n,n)
+
+    sampleAt = zeros((n,n))
+    sampleAt[::n/4, ::n/4] = 1
+    # sampling at every pixel
+    sampleAt[:, :] = 1
+    sampleAt = asarray(sampleAt, dtype=bool)
+    pos = argwhere(sampleAt == True)
+
+
+    m = make2DhaarMatrix(n, l)
+
+    # we have the matrix; now the vector?
+    vec = x[pos[:,0], pos[:,1]]
+    vec.shape = (-1, 1)
+
+
+    mat = m.copy()
+    coeffs = m.dot(vec)
+
+
+
+    approx = flattenPartialMatrix(l, mat, coeffs, n)
+    #approx = approx * 4
+
+
+    space = idwt2_full(approx)
+    exact = dwt2_full(x)
+    exactS = x.copy()
+
+
+    imshow(exact, interpolation='nearest')
+    colorbar()
+    title('\\textrm{Exact wavelet}')
+    show()
+
+    imshow(approx, interpolation='nearest')
+    colorbar()
+    title('\\textrm{Approx wavelet}')
+    show()
+
+
+
+    imshow(space, interpolation='nearest')
+    colorbar()
+    title('\\textrm{Approx}')
+    show()
+
+    imshow(exactS, interpolation='nearest')
+    colorbar()
+    title('\\textrm{Exact}')
+    show()
+
+def old():
+    nPower = 5
+    level = 4
+    n = 2**nPower
+    h = haarMatrix(n)
+    i = arange(n*n)
+
+    x = arange(n*n).reshape(n,n) / (n*n)
+    x = imread('./lenna.png')
+    x = mean(x, axis=2)
+    y = x.copy()
+    n = x.shape[0]
+    h = haarMatrix(n)
+    sampleAt = zeros((n,n))
+    sampleAt[::2, ::2] = 1
+    print sampleAt
+    sampleAt = asarray(sampleAt, dtype=bool)
+    #sampleAt[0:4, 0:4] = True
+
+
+    # we have everything. now vectorize.
+    x = x.T.flat[:]
+    sampleAt = sampleAt.T.flat[:]
+    #x = x[sampleAt]
+
+    m = kron(h, h)
+    #m = delete(m, i[logical_not(sampleAt)], axis=1)
+
+    # we're only interested in the first 2**n x 2**n square
+    ind = zeros((n, n))
+    makePwr(ind)
+    ind = ind.flat[:]
+
+    # delete the columns corresponding to those powers
+    #j = delete(m, argwhere(ind >= level), axis=0)
+    j = m.copy()
+
+    approx = j.dot(x)
+
+    exact = h.dot(y).dot(h.T)
+
+    approx = approx.reshape(2**level, 2**level).T
+    z = zeros((n,n))
+
+    z[:2**level, :2**level] = approx
+
+    time = h.T.dot(z).dot(h)
+
+def incorrectLevels():
+    approxLevel = 2
+
+    # we still need to delete where we're not interested in.
+
+    # we should do...
+    #   deleting unsampled indices.
+    #   deleting level to ensure enough variables
+
+    nPower      = 3
+    n = 2**nPower
+    x = arange(n*n).reshape(n,n) * 100 / (n * n)
+    #x = imread('./lenna.png').mean(axis=2)
+    n = x.shape[0]
+    nPower = log2(n)
+
+    # making the sample matrix
+    sampleAt = zeros((n,n))
+    sampleAt[::4, ::4] = 1
+    sampleAt[0:4, 0:4] = 1
+    sampleAt = asarray(sampleAt, dtype=bool)
+
+    h = haarMatrix(n)
+
+    # our matrix
+    m = kron(h, h)
+
+    # vec(c) = m.dot(vec(x))
+
+    # deleting the specific rows to get highest approx terms
+    pwr = makePwr(zeros((n,n))) + nPower
+    pwr = pwr.flat[:]
+
+    # actually deleting
+    m = delete(m, argwhere(pwr >= approxLevel), axis=0)
+
+    # now, delete the places we don't sample at
+
+    # making vec(x)
+    y = x.T.flat[:]
+    s = sampleAt.T.flat[:]
+
+    # making our samples
+    y = y[s]
+
+    # deleting the columns
+    m = delete(m, argwhere(s==False), axis=1)
+
+    # deleting those columns
+
+    # we can now get vec(c) 
+    c = m.dot(y)
+
+    # reshaping that matrix
+    c = c.reshape(2**approxLevel, 2**approxLevel).T
+
+    # making the full approximation
+    z = zeros((n,n))
+    z[0:2**approxLevel, 0:2**approxLevel] = c
+    z = h.T.dot(z).dot(h)
+
+
+
+    imshow(x, interpolation='nearest')
+    colorbar()
+    title('\\textrm{Time domain exact}')
+    show()
+
+    imshow(c, interpolation='nearest')
+    colorbar()
+    title('\\textrm{Wavelet approx terms}')
+    show()
+
+
+    imshow(z, interpolation='nearest')
+    colorbar()
+    title('\\textrm{Time domain approx}')
+    show()
+
+def S2imshow(im, top):
+    imshow(im, interpolation='nearest')
+    axis('off')
+    title('\\textrm{'+top+'}')
+    colorbar()
+
+    show()
+
+nPower = 2
+n = 2**nPower
 
 x = arange(n*n).reshape(n,n)
+waveletCoeffs = array([0, 1, 2, 3, n,n+1,n+2,n+3,2*n,2*n+1,2*n+2,2*n+3,3*n+0,3*n+1,3*n+2,3*n+3])
 
-sampleAt = zeros((n,n))
-sampleAt[::n/4, ::n/4] = 1
-sampleAt = asarray(sampleAt, dtype=bool)
-pos = argwhere(sampleAt == True)
-
-m = zeros((len(l), len(pos)))
-j = 0
-for element in l:
-    if element[0] == 'A': fu = phiphi
-    if element[0] == 'H': fu = phipsi
-    if element[0] == 'V': fu = psiphi
-    if element[0] == 'D': fu = psipsi
-
-    hShift = element[-2]
-    vShift = element[-1]
-    power  = element[2]
-
-    power  = int(power)
-    vShift = int(vShift)
-    hShift = int(hShift)
-
-    power = power - maxPower
-
-    # we have to change power around -- a simple subtract/add
-    m = evalFunctionAtPixel(fu, m, j, hShift, vShift, power, pos)
-    j += 1
-    if j >= m.shape[0]: break
-
-# we have the matrix; now the vector?
-vec = x[pos[:,0], pos[:,1]]
-vec.shape = (-1, 1)
-
+# w = h x (1D)
 h = haarMatrix(n)
+
+# vec(w) = m vec(x) = vec(c x r)
+m = kron(h,h)
+
+# deleting where we don't sample at
+sampleAt = zeros((n,n))
+sampleAt[::1, ::1] = 1
+sampleAt = asarray(sampleAt, dtype=bool)
+
+s = sampleAt.T.flat[:]
+
+# our samples
+y = x.T.flat[:][s]
+
+# deleting the corresponding columns of m
+m = delete(m, argwhere(s==False), axis=1)
+
+i = arange(n*n)
+i = delete(i, waveletCoeffs)
+
+m = delete(m, i, axis=0)
+
+# our actual approx, in flat form
+terms = m.dot(y)
+
+# now, put the flat back into a square and zeros otherwise
+approx = zeros((n,n))
+
+for i in arange(len(waveletCoeffs)):
+    print i
+    approx.T.flat[waveletCoeffs[i]] = terms[i]
+
+
 exact = h.dot(x).dot(h.T)
-exact = around(exact)
+#approx = approx.T
+time = h.T.dot(approx).dot(h)
 
-
-# a tall matrix means we want many elements
-# a long matrix means we have many measurements
-
-
-# TODO:
-#   1. make the approximation work fully (we're just off by constants)
-#       a. we're off by a constant
-#       b. 
-#   2. Unflatten the array / (aka, approximate!)
-
-
-mat = m.copy()
-#def flattenPartialMatrix(mat):
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+S2imshow(exact, 'exact')
+S2imshow(approx, 'approx')
+S2imshow(time, 'time')
 
 
 

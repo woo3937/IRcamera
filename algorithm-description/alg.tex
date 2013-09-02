@@ -15,6 +15,8 @@
 \date{}
 \author{Scott Sievert\\ \texttt{sieve121@umn.edu}}
 
+\newcommand{\kron}{http://en.wikipedia.org/wiki/Kronecker\_product\#Matrix\_equations}
+
 \begin{document}
 
 
@@ -104,84 +106,17 @@
 
             I tried to make the approximation procedure similar to the 1D case. I tried deleting rows and columns from the two matrices from $c$ and $r$ as well as finer terms. I was hoping for a psuedo-inverse type situation, as in the 1D case.
 
-            Before I tried this method, I was introduced to $\phi$ and $\psi$, the approximation and detail functions. I ignored these because they seemed to mathematical at the time, and too far in the clouds. I was guessing that it would be a much simpler operation.
-
-            I'll introduce the basic equations now. I don't see a way around it.
-
-            \begin{equation}
-                \phi(n) = 
-                \begin{cases}
-                    1 & n=0,1 \\
-                    0 & \mathrm{otherwise}
-                \end{cases}
-                \label{eq:phi}
-            \end{equation}
-            \begin{equation}
-                \psi(n) = 
-                \begin{cases}
-                    1 & n=0 \\
-                    -1 & n=1 \\
-                    0 & \mathrm{otherwise}
-                \end{cases}
-                \label{eq:phi}
-            \end{equation}
-
-            These equations are just implement the Haar transform. You call $\phi$ and $\psi$ recursively, using the output from the previous example as input. But, they aren't scaled right. When you recursively call this function, you get a factor of $\sqrt{2}$. Then, this equation can also represent different powers and different shifts. We wind up calling...
 
 
-            $$2^{-j/2}\phi(2^j x - k)$$
-            
-            There's a much better example at \cite{stollnitz1995wavelets}. It fully explains the powers and shifts: I just touched on it. For the powers, we can think of each function as having a different scale. Since it's at a different power, we need to have a different shift, since each one is uniquely localized. 
-
-            But, that's just for the 1D case. Since we apply it to the rows and the columns, we have the 2D functions:
-
-            $$ \phi\phi(x,y) = \phi(x) \phi(y) $$
-            $$ \psi\phi(x,y) = \psi(x) \phi(y) $$
-            $$ \phi\psi(x,y) = \phi(x) \psi(y) $$
-            $$ \psi\psi(x,y) = \psi(x) \psi(y) $$
-
-            These correspond to the four quadrants of an image: $A$, $V$, $D$, and $H$.
-
-            %TODO: more stuff explaining
-
-            The long and the short of it is that we have four samples (let's say):
-
-            $$ w = h s $$
-
-            $w$ are the approximations of the wavelet coefficients, $h$ some magic $N \times N$ matrix that represents a linear system, and $s$ our samples.
-
-            \begin{equation}
-                \begin{bmatrix}
-                   w_A \\ w_H \\ w_V \\ w_D 
-                \end{bmatrix}
-                =
-                \begin{bmatrix}
-                    \phi\phi(x_{s_1},y_{s_1})& \phi\phi(x_{s_2},y_{s_2})&\phi\phi(x_{s_3},y_{s_3}) &\phi\phi(x_{s_4},y_{s_4})\\
-                    \phi\psi(x_{s_1},y_{s_1})& \phi\psi(x_{s_2},y_{s_2})& \phi\psi(x_{s_3},y_{s_3})& \phi\psi(x_{s_4},y_{s_4})\\ 
-                    \psi\phi(x_{s_1},y_{s_1})& \psi\phi(x_{s_2},y_{s_2})& \psi\phi(x_{s_3},y_{s_3})& \psi\phi(x_{s_4},y_{s_4})\\ 
-                    \psi\psi(x_{s_1},y_{s_1})& \psi\psi(x_{s_2},y_{s_2})& \psi\psi(x_{s_3},y_{s_3})& \psi\phi(x_{s_4},y_{s_4})\\ 
-                \end{bmatrix}
-                \begin{bmatrix}
-                   s_1 \\ s_2 \\ s_3 \\ s_4 
-                \end{bmatrix}
-                \label{eq:theeq}
-            \end{equation}
-
-            This is just saying that we know that the wavelet coefficients are just scaled properly and include those terms.
-
-            The calling of $\phi$ and $\psi$ are simply putting \Cref{fig:signs} into a mathematical package.
 
         \subsection{The approximation algorithm}
-        Yes, we know how to make the matrix: it's just full of $\phi$ and $\psi$ in the approbate places. $j$ is determined by the level of wavelet and $k,l$ are determined by where we are in the square (we have to look at how many shifts are possible and determine if $x,y$ is in that. 
+            I went through a long, intensive process to find this. But of course, there's a simple mathematical fix to this problem. Let's say you have 
+                $$AXB = C$$
+                Using the \href{\kron}{Kroneker product} ($\otimes$), that's equivalent to
 
-        But the algorithm is a different story -- we have to write down \textbf{how} to tell what $j$ and $k$ are.
+                $$(B^T \otimes A)\text{vec}(X) = \text{vec}(C) = \text{vec}(AXB) $$
 
-        \subsubsection{$j$ -- the power variable}
-            This is easy. We know how far we are away from the top left corner and what power of wavelet we're going for.
-
-        \subsubsection{$k$ -- the shift variable}
-            This is slightly more complex. This involves both the power (how many shifts are possible?) and the $(x,y)$ position. But we know how far we are away from the upper left corner of the current quadrant (either in the $x$ or $y$ directions). We know that the number of shifts increases by one for each shift in position, making sense since the power is halfed each time.
-
+                This is remarkably similar to the 1D case. You have to delete the rows corresponding to where the finer detail lies and the columns that correspond to where you don't sample.
 
 
         \subsection{Which indices are important?}

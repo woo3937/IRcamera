@@ -5,5 +5,6 @@
 \BOOKMARK [1][-]{section.2}{Two Dimensions}{}% 5
 \BOOKMARK [2][-]{subsection.2.1}{Approximating the wavelet transform}{section.2}% 6
 \BOOKMARK [2][-]{subsection.2.2}{The approximation algorithm}{section.2}% 7
-\BOOKMARK [2][-]{subsection.2.3}{Which indices are important?}{section.2}% 8
-\BOOKMARK [2][-]{subsection.2.4}{The reconstruction}{section.2}% 9
+\BOOKMARK [3][-]{subsubsection.2.2.1}{Scaling}{subsection.2.2}% 8
+\BOOKMARK [2][-]{subsection.2.3}{Which indices are important?}{section.2}% 9
+\BOOKMARK [2][-]{subsection.2.4}{The reconstruction}{section.2}% 10

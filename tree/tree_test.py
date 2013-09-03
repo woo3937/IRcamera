@@ -17,7 +17,7 @@ import pywt
 import random
 
 # a c-style '#define'
-PRINT = True
+PRINT = False
 
 def dwt(x):
     y = zeros_like(x)
@@ -259,7 +259,7 @@ def oneD():
     threshold = 0.2
 
     # how far down the wavelet "tree" should we approximate?
-    levelA = 8
+    levelA = 7
 
     # the maximum time value?
     maxx = 5
@@ -276,9 +276,6 @@ def oneD():
     x += 1 / (1 + exp(500 * (t - maxx*3/4)**2))
     x += 1 / (1 + exp(500 * (t - maxx*2/4)**2))
 
-
-
-
     # select random indicies from this
     haarToTimeInd = findIndiciesForHaar(n)
     haarToTimeInd = asarray(haarToTimeInd, dtype=int)
@@ -287,13 +284,12 @@ def oneD():
     sam = zeros(n, dtype=bool)
     sam[::everyOther] = True
 
-
-
     for level in arange(levelA):
         if PRINT: print level
 
         # approximate the wavelet with the terms we sample at
         w = approxWavelet(x, sam, 2**level)
+        print abs(w).max()
 
         j = argwhere(abs(asarray(w).reshape(-1,)) > threshold)
 
@@ -311,13 +307,8 @@ def oneD():
                 sam[idx] = True
                 totalNumber += 1
 
-
-
     w = asarray(w); w.shape = (-1,)
     error = abs(x - idwt_full(w))
-
-
-
 
     ########################################################################
     ########################### PLOTTING ###################################
@@ -386,128 +377,6 @@ def waveletIndToTimeInd(argX, argY, n):
     return xx, yy[:, newaxis]
 
 
-
-#x = imread('./lenna.png')
-#x = mean(x, axis=2)
-
-# we want to approximate the top m terms, meaning we have to use
-# waveletIndToTimeInd(x, y) in the top m places (read: top quadrant)
-
-# I *need* a linear system of equations
-level = 3
-#def ...
-# gets a linear combination 
-
-# we're only interested in *some* coefficients.
-# using the variables we have, get a system of equations for the wavelet
-#     coefficients we're interested in.
-
-# so, look to see where where \phi and \psi are +/-?
-
-# we want a linear combination for some pixel location
-
-# did I just have an "aha!" moment? Could we find which indices are important
-# then select the appropiate column/row from c/r?
-
-def phi(x, pwr, shift):
-    factor = (2**(pwr/2.0))
-    if type(x) == int or type(x)==float or type(x)==np.int64:
-        if (2**pwr)*x - shift >=0 and (2**pwr)*x - shift <= 1:
-            return 1 * factor
-        else:
-            return 0
-
-def psi(x, pwr, shift):
-    factor = (2**(pwr/2.0))
-    if type(x) == int or type(x) == float or type(x)==np.int64:
-        if (2**pwr)*x - shift >=0 and (2**pwr)*x - shift <0.5:
-            return factor
-        if (2**pwr)*x - shift >=0.5 and (2**pwr)*x - shift <1:
-            return -1 * factor
-        else:
-            return 0
-
-def phiphi(x, y, pwr, shiftX, shiftY):
-    return phi(x, pwr, shiftX) * phi(y, pwr, shiftY)
-def psiphi(x, y, pwr, shiftX, shiftY):
-    return psi(x, pwr, shiftX) * phi(y, pwr, shiftY)
-def phipsi(x, y, pwr, shiftX, shiftY):
-    return phi(x, pwr, shiftX) * psi(y, pwr, shiftY)
-def psipsi(x, y, pwr, shiftX, shiftY):
-    a = psi(x, pwr, shiftX)
-    b = psi(y, pwr, shiftY)
-    return a * b
-
-def proofThat2Dworks():
-    n = 8
-    pwr = -3; j = 0
-    m = zeros((n,n))
-    f = arange(n*n).reshape(n,n)
-    #np.random.shuffle(f)
-    #f = rand(n,n)
-    xx = []
-    sampleAt = zeros((n,n))
-
-    x1, y1 = int(1*n/4), int(1*n/4)
-    x2, y2 = int(1*n/4), int(3*n/4)
-    x3, y3 = int(3*n/4), int(1*n/4)
-    x4, y4 = int(3*n/4), int(3*n/4)
-
-    for x,y in [(x1, y1),(x2, y2),(x3, y3),(x4, y4)]:
-        sampleAt[y,x] = True
-    sampleAt = asarray(sampleAt, dtype=bool)
-
-    # get the x,y coord's of all the True's
-    pos = argwhere(sampleAt == True)
-
-    # select the phi's and psi's we want
-    shiftX = 0
-    shiftY = 0
-
-    i = 0
-    for p in pos:
-        x, y = p
-        print x, y
-        m[0,i] = phiphi(x, y, pwr, 0, 0)
-        m[1,i] = psiphi(x, y, pwr, 0, 0)
-        m[2,i] = phipsi(x, y, pwr, 0, 0)
-        m[3,i] = psipsi(x, y, pwr, 0, 0)
-        xx += [f[y, x]]
-        i += 1
-        
-    xx = asarray(xx)
-
-    xx = xx.T
-    m = m[0:4, 0:4]
-    m = m * n**2/4
-    approx = m.dot(xx)
-    approx = reshape(approx, (2,2))
-    approx = approx.T
-
-
-    h = haarMatrix(n)
-    exact = h.dot(f).dot(h.T)
-    exact = around(exact, decimals=2)
-    exact = exact[0:2, 0:2]
-
-    approx.shape = (2,2)
-    approx = approx.T
-
-    imshow(approx, interpolation='nearest')
-    colorbar()
-    title('\\textrm{Approx}')
-    show()
-
-    imshow(exact, interpolation='nearest')
-    colorbar()
-    title('\\textrm{Exact}')
-    show()
-
-    imshow(abs(exact-approx), interpolation='nearest')
-    colorbar()
-    title('\\textrm{abs(exact-approx)}')
-    show()
-
 def makePwr(pwr):
     y = 0
     n = pwr.shape[0]
@@ -530,398 +399,76 @@ def makePwr(pwr):
     pwr = pwr - log2(n)
     return pwr
 
-def oldShift():
-    n = 8
-    log2n = int(log2(n))
-    f = arange(n*n).reshape(n,n)
-
-    i = arange(log2n)
-
-    pwr = zeros((n,n))
-    pwr = makePwr(pwr)
-
-    shift = zeros((n,n))
-
-    # get possible number of shifts -- use pwr?
-    shifts = 2**(-1 * pwr) / n
-    shifts = 1/shifts
-
-    # get the shift for each index
-    i = arange(n)
-    s = shifts[0]
-    j = argwhere(s[i] == s[i-1])
-    # seeing where those indices are >2**level and <2**(level+1)
-
-n = 8
-power = 2
-pixelPos = 5
-def newShift(pixelPos, power, n):
-    """
-        pixelPos: where is the pixel, either in x or y axis?
-        power: what percentage of the image? 
-                2^1 = 2 --> 1/2 = 0.5 = half the image. 
-                2^2 = 4 --> 1/4 = 0.25 = one quarter
-        n: how large is the oringal image?
-    """
-    parts = 2**power
-    p = pixelPos
-    width = n/parts
-
-    # see which part the pixel is in
-    i = arange(parts) * width
-
-    j = argwhere((p - i < width) & (p-i>=0))
-    shifts = int(j)
-    return shifts
-
-def evalFunctionAtPixel(fu, m, row, shiftX, shiftY, power, pos):
-    i = 0
-    for i in arange(len(pos)):
-        x, y = pos[i]
-        m[row, i] = fu(x, y, power, shiftX, shiftY)
-        i += 1
-    return m
-# we can go from space indices to wavelet shifts
-# we know what power we want
-
-
-
-def putNStrDown(strings, string, n):
-    for i in arange(n):
-        strings += [string]
-    return strings
-
-def flattenPartialMatrix(l, mat, coeffs, n):
-    ret = zeros((n,n))
-    j = 0
-    for element in l:
-        x = arange(n)
-        y = arange(n)
-        # get the power square
-        power = element[2]
-        power = int(power)
-        x = x[0:2**(power+1)]
-        y = y[0:2**(power+1)]
-
-        # get the H/V/A/D square
-        half = len(x) / 2
-        if element[0] == 'H': 
-            x = x[half:]
-            y = y[:half]
-        if element[0] == 'V': 
-            x = x[:half]
-            y = y[half:]
-        if element[0] == 'D': 
-            x = x[half:]
-            y = y[half:]
-
-        # get the vshift, hshift
-        vshift = element[-1]
-        hshift = element[-2]
-        vshift = int(vshift)
-        hshift = int(hshift)
-        x = x[hshift]
-        y = y[vshift]
-        ret[y, x] = coeffs[j]
-        j += 1
-    return ret
-
-def make2DhaarMatrix(n, l):
-    m = zeros((len(l), len(pos)))
-    j = 0
-    for element in l:
-        if element[0] == 'A': fu = phiphi
-        if element[0] == 'H': fu = phipsi
-        if element[0] == 'V': fu = psiphi
-        if element[0] == 'D': fu = psipsi
-
-        hShift = element[-2]
-        vShift = element[-1]
-        power  = element[2]
-
-        power  = int(power)
-        vShift = int(vShift)
-        hShift = int(hShift)
-
-        power = power - powerN
-
-        # we have to change power around -- a simple subtract/add
-        m = evalFunctionAtPixel(fu, m, j, hShift, vShift, power, pos)
-        j += 1
-        if j >= m.shape[0]: break
-    return m
-
-# H_1_23 corresponds to power 1, 2 horizontal shift, 3 vertical shift
-
-def writeHVDOfPower(listOfStrings, power):
-    """
-        generates a list of strings that will be used for solving the linear
-        system of equation. Our image is something like...
-
-        .--------|----------|---------------------
-        |        |          |                     |
-        |  A     |  H_0_00  | H_1_00     H_1_10   |
-        |        |          |                     |
-        |-------------------|                     |
-        |        |          |                     |
-        |  V_0_00|  D_0_00  | H_1_01     H_1_11   |
-        |        |          |                     |
-        |------------------------------------------
-        |                   |                     |
-        | V_1_00   V_1_10   | D_1_00     D_1_10   |
-        |                   |                     |
-        |                   |                     |
-        |                   |                     |
-        | V_1_10   V_1_11   | D_1_10     D_1_11   |
-        |                   |                     |
-        .-------------------|---------------------
-
-        power: how large do you want each square to be? e.g., if power=3, each
-               "square" will be 3x3
-    """
-    for string in ['H_', 'V_', 'D_']:
-        for vshift in arange(power):
-            for hshift in arange(power):
-                toPrint = string + str(power-1) + '_' + str(hshift) + str(vshift)
-                listOfStrings += [toPrint]
-    return listOfStrings
-
-def oldMethod():
-    seed(42)
-    l = ['A_0_00']
-    powerN = 4
-    powerToApproxTo = 3
-    # len(x) = 2**powerN
-    n = 2**powerN
-
-    # TODO:
-    #   1. make the approximation work fully (we're just off by constants)
-    #       a. we're off by a constant
-    #   2. something is wrong with my phiphi/etc functions
-    #   3. make more modular. 
-
-    for p in arange(powerToApproxTo):
-        # to be changed when we actual do the approximation
-        l = writeHVDOfPower(l, 2**p)
-
-
-    x = arange(n*n).reshape(n,n)
-
-    sampleAt = zeros((n,n))
-    sampleAt[::n/4, ::n/4] = 1
-    # sampling at every pixel
-    sampleAt[:, :] = 1
-    sampleAt = asarray(sampleAt, dtype=bool)
-    pos = argwhere(sampleAt == True)
-
-
-    m = make2DhaarMatrix(n, l)
-
-    # we have the matrix; now the vector?
-    vec = x[pos[:,0], pos[:,1]]
-    vec.shape = (-1, 1)
-
-
-    mat = m.copy()
-    coeffs = m.dot(vec)
-
-
-
-    approx = flattenPartialMatrix(l, mat, coeffs, n)
-    #approx = approx * 4
-
-
-    space = idwt2_full(approx)
-    exact = dwt2_full(x)
-    exactS = x.copy()
-
-
-    imshow(exact, interpolation='nearest')
-    colorbar()
-    title('\\textrm{Exact wavelet}')
-    show()
-
-    imshow(approx, interpolation='nearest')
-    colorbar()
-    title('\\textrm{Approx wavelet}')
-    show()
-
-
-
-    imshow(space, interpolation='nearest')
-    colorbar()
-    title('\\textrm{Approx}')
-    show()
-
-    imshow(exactS, interpolation='nearest')
-    colorbar()
-    title('\\textrm{Exact}')
-    show()
-
-def old():
-    nPower = 5
-    level = 4
-    n = 2**nPower
-    h = haarMatrix(n)
-    i = arange(n*n)
-
-    x = arange(n*n).reshape(n,n) / (n*n)
-    x = imread('./lenna.png')
-    x = mean(x, axis=2)
-    y = x.copy()
-    n = x.shape[0]
-    h = haarMatrix(n)
-    sampleAt = zeros((n,n))
-    sampleAt[::2, ::2] = 1
-    print sampleAt
-    sampleAt = asarray(sampleAt, dtype=bool)
-    #sampleAt[0:4, 0:4] = True
-
-
-    # we have everything. now vectorize.
-    x = x.T.flat[:]
-    sampleAt = sampleAt.T.flat[:]
-    #x = x[sampleAt]
-
-    m = kron(h, h)
-    #m = delete(m, i[logical_not(sampleAt)], axis=1)
-
-    # we're only interested in the first 2**n x 2**n square
-    ind = zeros((n, n))
-    makePwr(ind)
-    ind = ind.flat[:]
-
-    # delete the columns corresponding to those powers
-    #j = delete(m, argwhere(ind >= level), axis=0)
-    j = m.copy()
-
-    approx = j.dot(x)
-
-    exact = h.dot(y).dot(h.T)
-
-    approx = approx.reshape(2**level, 2**level).T
-    z = zeros((n,n))
-
-    z[:2**level, :2**level] = approx
-
-    time = h.T.dot(z).dot(h)
-
-def incorrectLevels():
-    approxLevel = 2
-
-    # we still need to delete where we're not interested in.
-
-    # we should do...
-    #   deleting unsampled indices.
-    #   deleting level to ensure enough variables
-
-    nPower      = 3
-    n = 2**nPower
-    x = arange(n*n).reshape(n,n) * 100 / (n * n)
-    #x = imread('./lenna.png').mean(axis=2)
-    n = x.shape[0]
-    nPower = log2(n)
-
-    # making the sample matrix
-    sampleAt = zeros((n,n))
-    sampleAt[::4, ::4] = 1
-    sampleAt[0:4, 0:4] = 1
-    sampleAt = asarray(sampleAt, dtype=bool)
-
-    h = haarMatrix(n)
-
-    # our matrix
-    m = kron(h, h)
-
-    # vec(c) = m.dot(vec(x))
-
-    # deleting the specific rows to get highest approx terms
-    pwr = makePwr(zeros((n,n))) + nPower
-    pwr = pwr.flat[:]
-
-    # actually deleting
-    m = delete(m, argwhere(pwr >= approxLevel), axis=0)
-
-    # now, delete the places we don't sample at
-
-    # making vec(x)
-    y = x.T.flat[:]
-    s = sampleAt.T.flat[:]
-
-    # making our samples
-    y = y[s]
-
-    # deleting the columns
-    m = delete(m, argwhere(s==False), axis=1)
-
-    # deleting those columns
-
-    # we can now get vec(c) 
-    c = m.dot(y)
-
-    # reshaping that matrix
-    c = c.reshape(2**approxLevel, 2**approxLevel).T
-
-    # making the full approximation
-    z = zeros((n,n))
-    z[0:2**approxLevel, 0:2**approxLevel] = c
-    z = h.T.dot(z).dot(h)
-
-
-
-    imshow(x, interpolation='nearest')
-    colorbar()
-    title('\\textrm{Time domain exact}')
-    show()
-
-    imshow(c, interpolation='nearest')
-    colorbar()
-    title('\\textrm{Wavelet approx terms}')
-    show()
-
-
-    imshow(z, interpolation='nearest')
-    colorbar()
-    title('\\textrm{Time domain approx}')
-    show()
-
 def S2imshow(im, top):
     imshow(im, interpolation='nearest')
-    axis('off')
     title('\\textrm{'+top+'}')
     colorbar()
-
     show()
 
-nPower = 2
+nPower = 3
 n = 2**nPower
+approxLevel = 2
 
-x = arange(n*n).reshape(n,n)
-waveletCoeffs = array([0, 1, 2, 3, n,n+1,n+2,n+3,2*n,2*n+1,2*n+2,2*n+3,3*n+0,3*n+1,3*n+2,3*n+3])
+x = imread('./lenna.png').mean(axis=2) * 100
+#n = x.shape[0]
+x = arange(n*n).reshape(n,n) * 100 / (n*n)
 
-# w = h x (1D)
+h = haarMatrix(n)
+ii = arange(n*n).reshape(n,n).T
+ii = ii[:2**approxLevel, :2**approxLevel]
+waveletCoeffs = ii.flat[:]
+
+# deleting where we don't sample at
+sampleAt = zeros((n,n))
+sampleAt[::n/(2**approxLevel), ::n/(2**approxLevel)] = 1
+sampleAt = asarray(sampleAt, dtype=bool)
+
+#waveletCoeffs = hstack((waveletCoeffs, n*n-1))
+#sampleAt[-2:, -2:] = True
+
+#def approxWavelet2D(x, sampleAt, waveletCoeffs):
+"""
+    x: the original signal
+    sampleAt: where to sample that signal -- an array of bool's
+    waveletCoeffs: 
+        what wavelet coeffs are you interested in? Note that you
+        *must* sample in appropiate locations to guarantee a correct result.
+        This is ordered as flat, column wise. If you were interested in
+        every location, you would pass an array like so in: 
+
+        >>> arange(n*n).reshape(n,n).T.flat[:]
+"""
+# w = h x (for 1D)
+n = x.shape[0]
 h = haarMatrix(n)
 
 # vec(w) = m vec(x) = vec(c x r)
 m = kron(h,h)
+k = m.copy()
 
-# deleting where we don't sample at
-sampleAt = zeros((n,n))
-sampleAt[::1, ::1] = 1
-sampleAt = asarray(sampleAt, dtype=bool)
 
+# making it flat
 s = sampleAt.T.flat[:]
+
+for i in arange(m.shape[0]):
+    samples = len(argwhere((k[i] != 0) & (s==True)))
+    sampleSpots = len(argwhere((k[i] != 0)))# & (s==s)))
+
+    if samples != 0:
+        factor = sampleSpots / samples
+        #m[i] = factor * m[i]
 
 # our samples
 y = x.T.flat[:][s]
 
-# deleting the corresponding columns of m
-m = delete(m, argwhere(s==False), axis=1)
 
+# what terms are we interested in?
 i = arange(n*n)
 i = delete(i, waveletCoeffs)
-
 m = delete(m, i, axis=0)
+
+# deleting the corresponding columns of m
+m = delete(m, argwhere(s==False), axis=1)
 
 # our actual approx, in flat form
 terms = m.dot(y)
@@ -929,18 +476,24 @@ terms = m.dot(y)
 # now, put the flat back into a square and zeros otherwise
 approx = zeros((n,n))
 
-for i in arange(len(waveletCoeffs)):
-    print i
-    approx.T.flat[waveletCoeffs[i]] = terms[i]
+for j in arange(len(waveletCoeffs)):
+    approx.flat[waveletCoeffs[j]] = terms[j]
+    #return approx
+
+# len((s == False) & (m[i] != 0))
+#approx = approxWavelet2D(x, sampleAt, waveletCoeffs)
+
+
 
 
 exact = h.dot(x).dot(h.T)
-#approx = approx.T
 time = h.T.dot(approx).dot(h)
+exactT = x
 
-S2imshow(exact, 'exact')
-S2imshow(approx, 'approx')
-S2imshow(time, 'time')
+rate = len(sampleAt[sampleAt == True]) / (n*n)
+S2imshow(exact[:2**approxLevel, :2**approxLevel], 'exact')
+S2imshow(approx[:2**approxLevel, :2**approxLevel], 'approx')
+S2imshow(time, 'approx time, %.0f'%(100*rate)+'\% rate')
+S2imshow(x, 'exact time')
 
- 
 

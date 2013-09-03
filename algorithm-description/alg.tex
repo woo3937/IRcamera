@@ -100,15 +100,6 @@
                 \label{fig:signs}    
             \end{wrapfigure}
 
-            We're given a randomly undersampled image and asked to approximate it's wavelet transform, a daunting task to the unexperienced. The unexperienced, myself, went through quite a process in figuring out how to do this. 
-
-            First, some preface. We have $w = c x r$ where $w$ are the wavelet coefficients, $c$ the matrix that performs the wavelet transform on the columns, $r$ the rows and $x$ our 2D signal (an image in this case).
-
-            I tried to make the approximation procedure similar to the 1D case. I tried deleting rows and columns from the two matrices from $c$ and $r$ as well as finer terms. I was hoping for a psuedo-inverse type situation, as in the 1D case.
-
-
-
-
         \subsection{The approximation algorithm}
             I went through a long, intensive process to find this. But of course, there's a simple mathematical fix to this problem. Let's say you have 
                 $$AXB = C$$
@@ -117,6 +108,13 @@
                 $$(B^T \otimes A)\text{vec}(X) = \text{vec}(C) = \text{vec}(AXB) $$
 
                 This is remarkably similar to the 1D case. You have to delete the rows corresponding to where the finer detail lies and the columns that correspond to where you don't sample.
+
+                In our case, we have $w = c x r$, where $c$ performs the complete wavelet transform on the columns and $r$ the complete transform on the rows. 
+
+                \subsubsection{Scaling}
+                    We are currently saying ``we're interested in these coefficients, and don't care where they lie.'' That means that to get an accurate reconstruction, we have to have scale our function right.
+
+                    But, we could just approximate our wavelet to some level. Then, when we don't care about terms, they're automatically set to 0 (via the dot product).
 
 
         \subsection{Which indices are important?}

@@ -547,29 +547,113 @@ def old2Dv2():
     S2imshow(z.T[:st, :st], 'wavelet approx')
     S2imshow(exactW[:st, :st], 'wavelet exact')
 
-nPower = 2
+def approxWavelet2D(x, interestedIn, sampleAt):
+    """
+        x: a full 2D signal. it is complete and not already sampled.
+        sampleAt: where you want to sample this signal. 2D again.
+        interestedIn: 
+            what wavelet terms you're interested in. Note that this
+            is column wise flat. The terms go as below:
+
+            >>> waveletInd = arange(n*n).reshape(n,n).T
+    """
+    s = sampleAt.T.flat[:]
+
+    n = x.shape[0]
+    h = haarMatrix(n)
+    m = kron(h,h)
+
+    # our measurements
+    y = x.T.flat[s]
+
+    # deleting the rows where we don't sample
+    i = arange(n*n)
+    m = delete(m, delete(i, interestedIn), axis=0)
+    print m.shape
+
+    # deleting the columns we don't sample at
+    m = delete(m, i[logical_not(s)], axis=1)
+
+    # getting the wavelet coeffs.
+    c = m.dot(y)
+
+    # putting the 1D back into the 2D
+    z = zeros((n,n))
+    z.flat[interestedIn] = c
+
+    # some proper scaling?
+    #z = z * n * n / len(argwhere(s==True))
+    return z
+
+# basics
+seed(31)
+nPower = 5
 n = 2**nPower
-approxLevel = 1
-
-x = zeros((n,n)) + 10
-
-sampleAt = zeros((n,n))
-sampleAt[::n/2, ::n/2] = 1
-sampleAt = asarray(sampleAt, dtype=bool)
-s = sampleAt.T.flat[:]
-
-waveletTerms = arange(n*n).reshape(n,n).T
-# change this with hstack later
-interestedIn = waveletTerms[:2**approxLevel, :2**approxLevel].flat[:]
-
+approxLevel = 2
 h = haarMatrix(n)
-m = kron(h,h)
+MAX_TERMS = 4
 
-# our measurements
-y = x.T.flat[s]
+threshold = 50e-3
+ar = arange(n, dtype=int)
+
+# the signal
+x = zeros((n,n)) 
+x[ar, ar] = sin(2.673*pi*ar/n)+1
+
+# sampling at the minimum required
+sampleAt = zeros((n,n))
+sampleAt[::n/4, ::n/4] = 1
+sampleAt = asarray(sampleAt, dtype=bool)
+
+# where are the wavelet terms?
+waveletTerms = arange(n*n).reshape(n,n).T
+interestedIn = waveletTerms[:2**approxLevel, :2**approxLevel].flat[:]
+interestedIn = hstack((interestedIn))
+
+# initial approx
+z = approxWavelet2D(x, interestedIn, sampleAt)
+
+pwr = makePwr(zeros((n,n))) + nPower
+
+level = 0
+MAX_LEVEL = 4
+for level in arange(MAX_LEVEL):
+    print "LEVEL: ", level
+    i = argwhere(abs(z) >= threshold)
+
+    # only look at the values of the appropiate level
+    yI = i[:,0]
+    xI = i[:,1]
+    trim = pwr[yI, xI] == level
+    if len(i) > 0: i = i[trim]
+    elif len(i)==0: i= arrayI([])
+
+    # for each element, find the corresponding wavelet indicies that matter and
+    # set those to True
+    for element in i:
+        ## try reversing [1] and [0]?
+        x1, y1 = waveletIndToTimeInd(element[1], element[0], n)
+        y1 = y1.reshape(-1,)
+        shuffle(x1)
+        shuffle(y1)
+        x2 = x1[:MAX_TERMS]
+        y2 = y1[:MAX_TERMS]
+
+        ## finally. sampling at MAX_TERM locations
+        sampleAt[y2, x2] = True
+
+        ## now where're interested in those locations.
+        term = element[1]*n + element[0]
+        interesting = array([2*term, 2*term+1, 2*term+n, 2*term+n+1])
+        interestedIn = unique(hstack((interestedIn, interesting)))
 
 
-S2imshow(x, 'original')
+    # finally, approximate the wavelet with those terms again
+    z = approxWavelet2D(x, interestedIn, sampleAt)
+
+
+
+sampleAt[-1, -1] = False
 
 
 
@@ -578,6 +662,51 @@ S2imshow(x, 'original')
 
 
 
+time = h.T.dot(z).dot(h)
+exact = h.dot(x).dot(h.T)
+rate = 100 * len(argwhere(sampleAt == True)) / (n*n)
+
+print "\n\n---------v exact v----------"
+S2imshow(x, 'exact')
+S2imshow(exact, 'wavelet exact')
+
+print "\n\n-----------v reconstructed v----------"
+S2imshow(z, 'wavelet reconstruction')
+S2imshow(time, 'time reconstructed, %.2f'%rate+'\% rate')
+S2imshow(sampleAt, 'where sampled')
+
+
+
+
+
+
+"""
+                                                         
+   find level = 2 and 2 only                                                      
+   n = 8
+                                       
+     0    1   2  3  4   5  6   7       
+   .----|---|--|--|---|---|--|---.                       
+   | 0  | 0 | 1 1 |  2       2   |                       
+   |--------|     |              |                       
+   |    |   |     |              |                       
+   -----|---|------              |                       
+   |        |     |              |                       
+   |        |     |              |                       
+   |        |     |              |                       
+   |        |     |              |                       
+   ---------|---------------------                       
+   |              |              |                       
+   |              |              |                       
+   |              |              |                       
+   |              |              |                       
+   |              |              |                       
+   |              |              |                       
+   .--------------|--------------.                       
+
+
+
+"""
 
 
 

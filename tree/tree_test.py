@@ -405,95 +405,179 @@ def S2imshow(im, top):
     colorbar()
     show()
 
-nPower = 3
+def old2D():
+    nPower = 3
+    n = 2**nPower
+    sampleLevel = 2
+
+    x = imread('./lenna.png').mean(axis=2) * 100
+    #n = x.shape[0]
+    x = arange(n*n).reshape(n,n) * 100 / (n*n)
+
+    h = haarMatrix(n)
+
+    # deleting where we don't sample at
+    sampleAt = zeros((n,n))
+    sampleAt[::n/(2**sampleLevel), ::n/(2**sampleLevel)] = 1
+    sampleAt = asarray(sampleAt, dtype=bool)
+
+    approxLevel = 2
+
+    #waveletCoeffs = hstack((waveletCoeffs, n*n-1))
+    #sampleAt[-2:, -2:] = True
+
+    #def approxWavelet2D(x, sampleAt, approxLevel):
+    """
+        x: the original signal
+        sampleAt: where to sample that signal -- an array of bool's
+        waveletCoeffs: 
+            what wavelet coeffs are you interested in? Note that you
+            *must* sample in appropiate locations to guarantee a correct result.
+            This is ordered as flat, column wise. If you were interested in
+            every location, you would pass an array like so in: 
+
+            >>> arange(n*n).reshape(n,n).T.flat[:]
+    """
+    # w = h x (for 1D)
+    n = x.shape[0]
+    h = haarMatrix(n)
+
+    # making our array of which index
+    ii = arange(n*n).reshape(n,n).T
+    ii = ii[:2**approxLevel, :2**approxLevel]
+    waveletCoeffs = ii.flat[:]
+
+    # vec(w) = m vec(x) = vec(c x r)
+    m = kron(h,h)
+    k = m.copy()
+
+
+    # making it flat
+    s = sampleAt.T.flat[:]
+
+    # our samples
+    y = x.T.flat[:][s]
+
+
+    # what terms are we interested in?
+    i = arange(n*n)
+    i = delete(i, waveletCoeffs)
+    m = delete(m, i, axis=0)
+
+    # deleting the corresponding columns of m
+    m = delete(m, argwhere(s==False), axis=1)
+
+    # our actual approx, in flat form
+    terms = m.dot(y)
+
+    # now, put the flat back into a square and zeros otherwise
+    approx = zeros((n,n))
+
+    for j in arange(len(waveletCoeffs)):
+        approx.flat[waveletCoeffs[j]] = terms[j]
+        #return approx
+
+    # len((s == False) & (m[i] != 0))
+    #approx = approxWavelet2D(x, sampleAt, waveletCoeffs)
+
+
+
+
+    exact = h.dot(x).dot(h.T)
+    time = h.T.dot(approx).dot(h)
+    exactT = x
+
+    rate = len(sampleAt[sampleAt == True]) / (n*n)
+    S2imshow(exact[:2**approxLevel, :2**approxLevel], 'exact')
+    S2imshow(approx[:2**approxLevel, :2**approxLevel], 'approx')
+    S2imshow(time, 'approx time, %.0f'%(100*rate)+'\% rate')
+    S2imshow(x, 'exact time')
+
+def old2Dv2():
+    nPower = 5
+    n = 2**nPower
+    sampleLevel = 1
+    approxLevel = 3
+
+    x = arange(n*n).reshape(n,n) * 100 / (n*n)
+    x = zeros((n,n))
+    x[0*n/2:1*n/2, 0*n/2:1*n/2] = 3
+    x[1*n/2:2*n/2, 0*n/2:1*n/2] = 3
+    x[0*n/2:1*n/2, 1*n/2:2*n/2] = 3
+    x[1*n/2:2*n/2, 1*n/2:2*n/2] = 3
+
+    sampleAt = zeros((n,n))
+    sample = n/(2**(sampleLevel-0))
+    sampleAt[::sample, ::sample] = 1
+    sampleAt = asarray(sampleAt, dtype=bool)
+    sampleAt[n/2-1:n/2+1, n/2-1:n/2+1] = True
+    s = sampleAt.T.flat[:]
+
+    i = arange(n)
+    h = haarMatrix(n)
+    m = kron(h,h)
+
+
+    # the level
+    m = delete(m, argwhere(i >= 2**approxLevel), axis=0)
+
+    # the samples
+    m = delete(m, argwhere(s == False), axis=1)
+
+    # the samples
+    y = x.T.flat[s]
+
+    # the coeffs
+    c = m.dot(y)
+
+    # actually making the approx
+    z = zeros((n,n))
+    z[0:2**approxLevel, 0:2**approxLevel].flat[:] = c
+
+    exact = x
+    exactW = h.dot(x).dot(h.T)
+    approx = h.T.dot(z.T).dot(h)
+
+
+
+    rate = 100 * len(y) / len(x.flat[:]) 
+    st = 2**approxLevel
+    S2imshow(exact, 'exact')
+    S2imshow(approx, 'approx: %.0f'%rate + '\% rate')
+    S2imshow(z.T[:st, :st], 'wavelet approx')
+    S2imshow(exactW[:st, :st], 'wavelet exact')
+
+nPower = 2
 n = 2**nPower
-approxLevel = 2
+approxLevel = 1
 
-x = imread('./lenna.png').mean(axis=2) * 100
-#n = x.shape[0]
-x = arange(n*n).reshape(n,n) * 100 / (n*n)
+x = zeros((n,n)) + 10
 
-h = haarMatrix(n)
-ii = arange(n*n).reshape(n,n).T
-ii = ii[:2**approxLevel, :2**approxLevel]
-waveletCoeffs = ii.flat[:]
-
-# deleting where we don't sample at
 sampleAt = zeros((n,n))
-sampleAt[::n/(2**approxLevel), ::n/(2**approxLevel)] = 1
+sampleAt[::n/2, ::n/2] = 1
 sampleAt = asarray(sampleAt, dtype=bool)
-
-#waveletCoeffs = hstack((waveletCoeffs, n*n-1))
-#sampleAt[-2:, -2:] = True
-
-#def approxWavelet2D(x, sampleAt, waveletCoeffs):
-"""
-    x: the original signal
-    sampleAt: where to sample that signal -- an array of bool's
-    waveletCoeffs: 
-        what wavelet coeffs are you interested in? Note that you
-        *must* sample in appropiate locations to guarantee a correct result.
-        This is ordered as flat, column wise. If you were interested in
-        every location, you would pass an array like so in: 
-
-        >>> arange(n*n).reshape(n,n).T.flat[:]
-"""
-# w = h x (for 1D)
-n = x.shape[0]
-h = haarMatrix(n)
-
-# vec(w) = m vec(x) = vec(c x r)
-m = kron(h,h)
-k = m.copy()
-
-
-# making it flat
 s = sampleAt.T.flat[:]
 
-for i in arange(m.shape[0]):
-    samples = len(argwhere((k[i] != 0) & (s==True)))
-    sampleSpots = len(argwhere((k[i] != 0)))# & (s==s)))
+waveletTerms = arange(n*n).reshape(n,n).T
+# change this with hstack later
+interestedIn = waveletTerms[:2**approxLevel, :2**approxLevel].flat[:]
 
-    if samples != 0:
-        factor = sampleSpots / samples
-        #m[i] = factor * m[i]
+h = haarMatrix(n)
+m = kron(h,h)
 
-# our samples
-y = x.T.flat[:][s]
+# our measurements
+y = x.T.flat[s]
 
 
-# what terms are we interested in?
-i = arange(n*n)
-i = delete(i, waveletCoeffs)
-m = delete(m, i, axis=0)
-
-# deleting the corresponding columns of m
-m = delete(m, argwhere(s==False), axis=1)
-
-# our actual approx, in flat form
-terms = m.dot(y)
-
-# now, put the flat back into a square and zeros otherwise
-approx = zeros((n,n))
-
-for j in arange(len(waveletCoeffs)):
-    approx.flat[waveletCoeffs[j]] = terms[j]
-    #return approx
-
-# len((s == False) & (m[i] != 0))
-#approx = approxWavelet2D(x, sampleAt, waveletCoeffs)
+S2imshow(x, 'original')
 
 
 
 
-exact = h.dot(x).dot(h.T)
-time = h.T.dot(approx).dot(h)
-exactT = x
 
-rate = len(sampleAt[sampleAt == True]) / (n*n)
-S2imshow(exact[:2**approxLevel, :2**approxLevel], 'exact')
-S2imshow(approx[:2**approxLevel, :2**approxLevel], 'approx')
-S2imshow(time, 'approx time, %.0f'%(100*rate)+'\% rate')
-S2imshow(x, 'exact time')
+
+
+
+
 
 

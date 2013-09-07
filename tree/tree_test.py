@@ -15,6 +15,7 @@ from __future__ import division
 from pylab import *
 import pywt
 import random
+import pdb
 
 # a c-style '#define'
 PRINT = False
@@ -569,10 +570,10 @@ def approxWavelet2D(x, interestedIn, sampleAt):
     # deleting the rows where we don't sample
     i = arange(n*n)
     m = delete(m, delete(i, interestedIn), axis=0)
-    print m.shape
 
     # deleting the columns we don't sample at
     m = delete(m, i[logical_not(s)], axis=1)
+    print m.shape
 
     # getting the wavelet coeffs.
     c = m.dot(y)
@@ -586,127 +587,243 @@ def approxWavelet2D(x, interestedIn, sampleAt):
     return z
 
 # basics
-seed(31)
-nPower = 5
-n = 2**nPower
-approxLevel = 2
-h = haarMatrix(n)
-MAX_TERMS = 4
+def tree():
+    seed(31)
+    nPower = 5
+    n = 2**nPower
+    approxLevel = 2
+    MAX_TERMS = 2
 
-threshold = 50e-3
-ar = arange(n, dtype=int)
+    threshold = -1e-3#1e-523
+    ar = arange(n, dtype=int)
 
-# the signal
-x = zeros((n,n)) 
-x[ar, ar] = sin(2.673*pi*ar/n)+1
+    # the signal
+    shift = asarray((ar[::-1] - n/2.3) % n, dtype=int)
+    x = zeros((n,n)) 
+    x[ar, ar] = sin(2.673*pi*ar/n)+4
+    x[shift, ar] = cos(ar)+400
+    #x[1*n/4:3*n/4, 1*n/4:3*n/4] = 5
 
-# sampling at the minimum required
-sampleAt = zeros((n,n))
-sampleAt[::n/4, ::n/4] = 1
-sampleAt = asarray(sampleAt, dtype=bool)
+    #x = imread('tumblr.gif').mean(axis=2)
 
-# where are the wavelet terms?
-waveletTerms = arange(n*n).reshape(n,n).T
-interestedIn = waveletTerms[:2**approxLevel, :2**approxLevel].flat[:]
-interestedIn = hstack((interestedIn))
+    n = x.shape[0]
+    h = haarMatrix(n)
 
-# initial approx
-z = approxWavelet2D(x, interestedIn, sampleAt)
+    # sampling at the minimum required
+    sampleAt = zeros((n,n))
+    sampleAt[::n/4, ::n/4] = 1
+    sampleAt = asarray(sampleAt, dtype=bool)
 
-pwr = makePwr(zeros((n,n))) + nPower
+    # where are the wavelet terms?
+    waveletTerms = arange(n*n).reshape(n,n).T
+    interestedIn = waveletTerms[:2**approxLevel, :2**approxLevel].flat[:]
+    interestedIn = hstack((interestedIn))
 
-level = 0
-MAX_LEVEL = 4
-for level in arange(MAX_LEVEL):
-    print "LEVEL: ", level
-    i = argwhere(abs(z) >= threshold)
+    # initial approx
+    z = approxWavelet2D(x, interestedIn, sampleAt)
+    pwr = makePwr(zeros((n,n))) + nPower
 
-    # only look at the values of the appropiate level
-    yI = i[:,0]
-    xI = i[:,1]
-    trim = pwr[yI, xI] == level
-    if len(i) > 0: i = i[trim]
-    elif len(i)==0: i= arrayI([])
 
-    # for each element, find the corresponding wavelet indicies that matter and
-    # set those to True
+    # wait. do we have to sample evenly?
+    level = 0
+    EVERY_OTHER = 3
+    MAX_LEVEL = 3
+    for level in arange(MAX_LEVEL):
+        print "LEVEL: ", level
+        i = argwhere(abs(z) >= threshold)
+
+        # only look at the values of the appropiate level
+        yI = i[:,0]
+        xI = i[:,1]
+        trim = pwr[yI, xI] == level
+        if len(i) > 0: i = i[trim]
+        elif len(i)==0: i= array([])
+
+        # for each element, find the corresponding wavelet indicies that matter and
+        # set those to True
+        for element in i:
+            ## try reversing [1] and [0]?
+            x1, y1 = waveletIndToTimeInd(element[1], element[0], n)
+            #y1 = y1.reshape(-1,)
+
+            EVERYX = int(len(x1)/4)
+            EVERYY = int(len(y1)/4)
+            x2 = x1[::EVERYX] if EVERYX != 0 else x1[:]
+            y2 = y1[::EVERYY] if EVERYY != 0 else y1[:]
+
+            ## finally. sampling at MAX_TERM locations
+            sampleAt[y2, x2] = True
+
+            ## now where're interested in those locations.
+            term = element[1]*n + element[0]
+            interesting = array([2*term, 2*term+1, 2*term+n, 2*term+n+1])
+            interestedIn = unique(hstack((interestedIn, interesting)))
+
+
+        # finally, approximate the wavelet with those terms again
+        z = approxWavelet2D(x.T, interestedIn, sampleAt)
+
+
+
+    sampleAt[-1, -1] = False
+
+
+
+
+
+
+
+
+    time = h.T.dot(z).dot(h)
+    exact = h.dot(x).dot(h.T)
+    rate = 100 * len(argwhere(sampleAt == True)) / (n*n)
+
+    print "\n\n---------v exact v----------"
+    S2imshow(x, 'exact')
+    S2imshow(exact, 'wavelet exact')
+
+    print "\n\n-----------v reconstructed v----------"
+    S2imshow(z, 'wavelet reconstruction')
+    S2imshow(time, 'time reconstructed, %.2f'%rate+'\% rate')
+    S2imshow(sampleAt, 'where sampled')
+
+
+
+
+
+
+    """
+                                                             
+       find level = 2 and 2 only                                                      
+       n = 8
+                                           
+         0    1   2  3  4   5  6   7       
+       .----|---|--|--|---|---|--|---.                       
+       | 0  | 0 | 1 1 |  2       2   |                       
+       |--------|     |              |                       
+       |    |   |     |              |                       
+       -----|---|------              |                       
+       |        |     |              |                       
+       |        |     |              |                       
+       |        |     |              |                       
+       |        |     |              |                       
+       ---------|---------------------                       
+       |              |              |                       
+       |              |              |                       
+       |              |              |                       
+       |              |              |                       
+       |              |              |                       
+       |              |              |                       
+       .--------------|--------------.                       
+
+
+
+    """
+
+
+
+def seeWhereNonZero(w, threshold, pwr, level):
+    """
+        sees where abs(w) >= threshold. returns 
+            [ y x ]
+            [ y x ]
+            [ y x ]
+    """
+    i = argwhere(abs(w) >= threshold)
+    x = i[:,1]
+    y = i[:,0]
+    trim = pwr[y, x] == level
+    i = i[trim]
+    return i
+
+def putInterestedInIn(w, threshold, pwr, interestedIn):
+    # takes in seeWhereNonZero, currentInterestedIn
+    i = seeWhereNonZero(w, threshold, pwr, level)
+    terms = i[:,1]*n + i[:,0]
+    interesting = array([2*terms, 2*terms+1, 2*terms+n, 2*terms+1])
+    interesting = interesting.flat[:]
+
+    interestedIn = hstack((interestedIn, interesting))
+    return interestedIn
+
+def makeSampleAtTrue(i, sampleAt):
+    # takes in i
     for element in i:
-        ## try reversing [1] and [0]?
-        x1, y1 = waveletIndToTimeInd(element[1], element[0], n)
-        y1 = y1.reshape(-1,)
-        shuffle(x1)
-        shuffle(y1)
-        x2 = x1[:MAX_TERMS]
-        y2 = y1[:MAX_TERMS]
+        y, x = element
+        x1, y1 = waveletIndToTimeInd(x, y, n)
+        
+        # sample evenly
+        # we'll always have at least 2 values
+        EVERY_X = len(x1)/2
+        EVERY_Y = len(y1)/2
+        x2 = x1[::EVERY_X]
+        y2 = y1[::EVERY_Y]
 
-        ## finally. sampling at MAX_TERM locations
         sampleAt[y2, x2] = True
 
-        ## now where're interested in those locations.
-        term = element[1]*n + element[0]
-        interesting = array([2*term, 2*term+1, 2*term+n, 2*term+n+1])
-        interestedIn = unique(hstack((interestedIn, interesting)))
+nPower = 3
+n = 2**nPower
+initialApprox = 1
 
+x = arange(n*n).reshape(n,n)
+x = imread('./tumblr.gif').mean(axis=2)
+n = x.shape[0]
 
-    # finally, approximate the wavelet with those terms again
-    z = approxWavelet2D(x, interestedIn, sampleAt)
-
-
-
-sampleAt[-1, -1] = False
-
+sampleAt = zeros((n,n))
+sampleAt = asarray(sampleAt, dtype=bool)
 
 
 
+h = haarMatrix(n)
+waveletTerms = arange(n*n).reshape(n,n).T
+pwr = makePwr(zeros((n,n))) + nPower
+threshold = -1
+
+
+u_0 = 2**(initialApprox+1)
+interestedIn = waveletTerms[:u_0, :u_0].flat[:]
+sampleAt[::n/u_0, ::n/u_0] = True
+
+pdb.set_trace()
+
+
+w = approxWavelet2D(x, interestedIn, sampleAt)
+threshold = 0
+for level in arange(2):
+    i = seeWhereNonZero(w, threshold, pwr, level)
+    interestedIn = putInterestedInIn(w, threshold, pwr, interestedIn)
+    interestedIn = unique(interestedIn)
+    makeSampleAtTrue(i, sampleAt)
+
+    print len(argwhere(sampleAt == True))
+    print len(interestedIn)
+    w = approxWavelet2D(x.T, interestedIn, sampleAt)
+
+
+#for level:
+#   i = findWhereZero
+#   putInterestedInIn(i)
+#   makeSampleAtTrue(i)
+
+# only works at higher levels because we need to see what indicies correspond
+# to some pixel location
+
+
+inte = zeros((n,n))
+inte.T.flat[interestedIn] = 1
+time = h.T.dot(w).dot(h)
+wExact = h.dot(x).dot(h.T)
+
+S2imshow(sampleAt, 'sampled here')
+S2imshow(w, 'wavelet approx')
+S2imshow(wExact, 'wavelet exact')
+S2imshow(time, 'approx time')
+S2imshow(x, 'exact (ish)')
+S2imshow(inte, 'wavelet terms we\'re interested in')
 
 
 
 
-time = h.T.dot(z).dot(h)
-exact = h.dot(x).dot(h.T)
-rate = 100 * len(argwhere(sampleAt == True)) / (n*n)
-
-print "\n\n---------v exact v----------"
-S2imshow(x, 'exact')
-S2imshow(exact, 'wavelet exact')
-
-print "\n\n-----------v reconstructed v----------"
-S2imshow(z, 'wavelet reconstruction')
-S2imshow(time, 'time reconstructed, %.2f'%rate+'\% rate')
-S2imshow(sampleAt, 'where sampled')
-
-
-
-
-
-
-"""
-                                                         
-   find level = 2 and 2 only                                                      
-   n = 8
-                                       
-     0    1   2  3  4   5  6   7       
-   .----|---|--|--|---|---|--|---.                       
-   | 0  | 0 | 1 1 |  2       2   |                       
-   |--------|     |              |                       
-   |    |   |     |              |                       
-   -----|---|------              |                       
-   |        |     |              |                       
-   |        |     |              |                       
-   |        |     |              |                       
-   |        |     |              |                       
-   ---------|---------------------                       
-   |              |              |                       
-   |              |              |                       
-   |              |              |                       
-   |              |              |                       
-   |              |              |                       
-   |              |              |                       
-   .--------------|--------------.                       
-
-
-
-"""
 
 
 

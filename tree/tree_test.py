@@ -573,7 +573,7 @@ def approxWavelet2D(x, interestedIn, sampleAt):
 
     # deleting the columns we don't sample at
     m = delete(m, i[logical_not(s)], axis=1)
-    print m.shape
+    print "m.shape: ", m.shape
 
     # getting the wavelet coeffs.
     c = m.dot(y)
@@ -733,14 +733,15 @@ def seeWhereNonZero(w, threshold, pwr, level):
     x = i[:,1]
     y = i[:,0]
     trim = pwr[y, x] == level
-    i = i[trim]
+    try: i = i[trim]
+    except: i = i
     return i
 
 def putInterestedInIn(w, threshold, pwr, interestedIn):
     # takes in seeWhereNonZero, currentInterestedIn
     i = seeWhereNonZero(w, threshold, pwr, level)
     terms = i[:,1]*n + i[:,0]
-    interesting = array([2*terms, 2*terms+1, 2*terms+n, 2*terms+1])
+    interesting = array([2*terms, 2*terms+1, 2*terms+n, 2*terms+n+1])
     interesting = interesting.flat[:]
 
     interestedIn = hstack((interestedIn, interesting))
@@ -754,8 +755,8 @@ def makeSampleAtTrue(i, sampleAt):
         
         # sample evenly
         # we'll always have at least 2 values
-        EVERY_X = len(x1)/2
-        EVERY_Y = len(y1)/2
+        EVERY_X = len(x1)/4
+        EVERY_Y = len(y1)/4
         x2 = x1[::EVERY_X]
         y2 = y1[::EVERY_Y]
 
@@ -767,7 +768,9 @@ initialApprox = 1
 
 x = arange(n*n).reshape(n,n)
 x = imread('./tumblr.gif').mean(axis=2)
+#x = imread('./tumblr128.png').mean(axis=2)
 n = x.shape[0]
+nPower = log2(n)
 
 sampleAt = zeros((n,n))
 sampleAt = asarray(sampleAt, dtype=bool)
@@ -780,30 +783,27 @@ pwr = makePwr(zeros((n,n))) + nPower
 threshold = -1
 
 
-u_0 = 2**(initialApprox+1)
-interestedIn = waveletTerms[:u_0, :u_0].flat[:]
-sampleAt[::n/u_0, ::n/u_0] = True
+u_0 = 2**(initialApprox+0)
+u_1 = 2**(initialApprox+1)
+interestedIn = waveletTerms[:u_1, :u_1].flat[:]
+sampleAt[::n/u_1, ::n/u_1] = True
 
-pdb.set_trace()
+#pdb.set_trace()
 
 
 w = approxWavelet2D(x, interestedIn, sampleAt)
-threshold = 0
-for level in arange(2):
+threshold = 0e-3
+MAX_LEVEL = 2
+for level in arange(MAX_LEVEL):
+    print "----------------"
     i = seeWhereNonZero(w, threshold, pwr, level)
     interestedIn = putInterestedInIn(w, threshold, pwr, interestedIn)
     interestedIn = unique(interestedIn)
     makeSampleAtTrue(i, sampleAt)
+    print "len(argwhere(sampleAt==True))", len(argwhere(sampleAt==True))
+    print "len(interestedIn)", len(interestedIn)
 
-    print len(argwhere(sampleAt == True))
-    print len(interestedIn)
     w = approxWavelet2D(x.T, interestedIn, sampleAt)
-
-
-#for level:
-#   i = findWhereZero
-#   putInterestedInIn(i)
-#   makeSampleAtTrue(i)
 
 # only works at higher levels because we need to see what indicies correspond
 # to some pixel location

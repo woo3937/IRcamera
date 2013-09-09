@@ -733,16 +733,24 @@ def seeWhereNonZero(w, threshold, pwr, level):
     x = i[:,1]
     y = i[:,0]
     trim = pwr[y, x] == level
-    try: i = i[trim]
+    try: 
+        i = i[trim]
     except: i = i
     return i
 
-def putInterestedInIn(w, threshold, pwr, interestedIn):
+def putInterestedInIn(w, threshold, pwr, interestedIn, level):
     # takes in seeWhereNonZero, currentInterestedIn
     i = seeWhereNonZero(w, threshold, pwr, level)
+
     terms = i[:,1]*n + i[:,0]
-    interesting = array([2*terms, 2*terms+1, 2*terms+n, 2*terms+n+1])
-    interesting = interesting.flat[:]
+
+    for child in terms:
+        parent = floor(child/2)
+        j = argwhere(parent == interestedIn)
+
+        if len(j) > -1: 
+            interesting = array([2*terms, 2*terms+1, 2*terms+n, 2*terms+n+1])
+            interesting = interesting.flat[:]
 
     interestedIn = hstack((interestedIn, interesting))
     return interestedIn
@@ -756,8 +764,8 @@ def makeSampleAtTrue(i, sampleAt):
         # sample evenly
         # we'll always have at least 2 values
         DIV = 4
-        EVERY_X = len(x1)/DIV
-        EVERY_Y = len(y1)/DIV
+        EVERY_X = ceil(len(x1)/DIV)
+        EVERY_Y = ceil(len(y1)/DIV)
         x2 = x1[::EVERY_X]
         y2 = y1[::EVERY_Y]
 
@@ -770,7 +778,7 @@ initialApprox = 1
 
 x = arange(n*n).reshape(n,n)
 x = imread('./tumblr.gif').mean(axis=2)
-#x = imread('./tumblr128.png').mean(axis=2)
+x = imread('./tumblr128.png').mean(axis=2)
 n = x.shape[0]
 nPower = log2(n)
 
@@ -791,15 +799,17 @@ sampleAt[::n/u_1, ::n/u_1] = True
 
 #pdb.set_trace()
 
+# wait. we have to look at interestedIn. level1 not interested for some node,
+# but it's children we are interested in.
 
 w = approxWavelet2D(x, interestedIn, sampleAt)
 threshold = 10e-3
-MAX_LEVEL = 2
+MAX_LEVEL = 4
 for level in arange(MAX_LEVEL):
-    threshold = 200e-3 * mean(x[sampleAt]) * 2**(-level)
+    threshold = 4e-3 * mean(x[sampleAt]) * 2**(-level)
     # {20, 100}e-3 work well here
     i = seeWhereNonZero(w, threshold, pwr, level)
-    interestedIn = putInterestedInIn(w, threshold, pwr, interestedIn)
+    interestedIn = putInterestedInIn(w, threshold, pwr, interestedIn, level)
     interestedIn = unique(interestedIn)
     makeSampleAtTrue(i, sampleAt)
 
@@ -817,6 +827,7 @@ for level in arange(MAX_LEVEL):
 
 inte = zeros((n,n))
 inte.T.flat[interestedIn] = 1
+inte = inte * (pwr + 1)
 time = h.T.dot(w).dot(h)
 wExact = h.dot(x).dot(h.T)
 
@@ -825,7 +836,7 @@ S2imshow(abs(w), 'abs(wavelet) approx')
 S2imshow(wExact, 'wavelet exact')
 S2imshow(time, 'approx time')
 S2imshow(x, 'exact (ish)')
-S2imshow(inte, 'wavelet terms we\'re interested in')
+S2imshow(inte[0:32, 0:32], 'wavelet terms we\'re interested in')
 
 
 

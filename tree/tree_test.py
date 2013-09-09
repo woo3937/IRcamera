@@ -755,12 +755,14 @@ def makeSampleAtTrue(i, sampleAt):
         
         # sample evenly
         # we'll always have at least 2 values
-        EVERY_X = len(x1)/4
-        EVERY_Y = len(y1)/4
+        DIV = 4
+        EVERY_X = len(x1)/DIV
+        EVERY_Y = len(y1)/DIV
         x2 = x1[::EVERY_X]
         y2 = y1[::EVERY_Y]
 
         sampleAt[y2, x2] = True
+        sampleAt[x2, y2] = True
 
 nPower = 3
 n = 2**nPower
@@ -780,7 +782,6 @@ sampleAt = asarray(sampleAt, dtype=bool)
 h = haarMatrix(n)
 waveletTerms = arange(n*n).reshape(n,n).T
 pwr = makePwr(zeros((n,n))) + nPower
-threshold = -1
 
 
 u_0 = 2**(initialApprox+0)
@@ -792,18 +793,23 @@ sampleAt[::n/u_1, ::n/u_1] = True
 
 
 w = approxWavelet2D(x, interestedIn, sampleAt)
-threshold = 0e-3
+threshold = 10e-3
 MAX_LEVEL = 2
 for level in arange(MAX_LEVEL):
-    print "----------------"
+    threshold = 200e-3 * mean(x[sampleAt]) * 2**(-level)
+    # {20, 100}e-3 work well here
     i = seeWhereNonZero(w, threshold, pwr, level)
     interestedIn = putInterestedInIn(w, threshold, pwr, interestedIn)
     interestedIn = unique(interestedIn)
     makeSampleAtTrue(i, sampleAt)
-    print "len(argwhere(sampleAt==True))", len(argwhere(sampleAt==True))
-    print "len(interestedIn)", len(interestedIn)
+
 
     w = approxWavelet2D(x.T, interestedIn, sampleAt)
+
+    print "----------------"
+    print "threshold: ", threshold
+    print "len(argwhere(sampleAt==True))", len(argwhere(sampleAt==True))
+    print "len(interestedIn)", len(interestedIn)
 
 # only works at higher levels because we need to see what indicies correspond
 # to some pixel location
@@ -815,7 +821,7 @@ time = h.T.dot(w).dot(h)
 wExact = h.dot(x).dot(h.T)
 
 S2imshow(sampleAt, 'sampled here')
-S2imshow(w, 'wavelet approx')
+S2imshow(abs(w), 'abs(wavelet) approx')
 S2imshow(wExact, 'wavelet exact')
 S2imshow(time, 'approx time')
 S2imshow(x, 'exact (ish)')

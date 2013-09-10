@@ -741,16 +741,9 @@ def seeWhereNonZero(w, threshold, pwr, level):
 def putInterestedInIn(w, threshold, pwr, interestedIn, level):
     # takes in seeWhereNonZero, currentInterestedIn
     i = seeWhereNonZero(w, threshold, pwr, level)
-
     terms = i[:,1]*n + i[:,0]
-
-    for child in terms:
-        parent = floor(child/2)
-        j = argwhere(parent == interestedIn)
-
-        if len(j) > -1: 
-            interesting = array([2*terms, 2*terms+1, 2*terms+n, 2*terms+n+1])
-            interesting = interesting.flat[:]
+    interesting = array([2*terms, 2*terms+1, 2*terms+n, 2*terms+n+1])
+    interesting = interesting.flat[:]
 
     interestedIn = hstack((interestedIn, interesting))
     return interestedIn

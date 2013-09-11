@@ -739,9 +739,15 @@ def seeWhereNonZero(w, threshold, pwr, level):
     return i
 
 def putInterestedInIn(w, threshold, pwr, interestedIn, level):
-    # takes in seeWhereNonZero, currentInterestedIn
+    """
+        takes in seeWhereNonZero, currentInterestedIn
+
+        it needs to put the non-zero terms in if the parents are inteteresting.
+    """
+
     i = seeWhereNonZero(w, threshold, pwr, level)
     terms = i[:,1]*n + i[:,0]
+
     interesting = array([2*terms, 2*terms+1, 2*terms+n, 2*terms+n+1])
     interesting = interesting.flat[:]
 
@@ -765,13 +771,14 @@ def makeSampleAtTrue(i, sampleAt):
         sampleAt[y2, x2] = True
         sampleAt[x2, y2] = True
 
+
 nPower = 3
 n = 2**nPower
 initialApprox = 1
 
 x = arange(n*n).reshape(n,n)
 x = imread('./tumblr.gif').mean(axis=2)
-x = imread('./tumblr128.png').mean(axis=2)
+#x = imread('./tumblr128.png').mean(axis=2)
 n = x.shape[0]
 nPower = log2(n)
 
@@ -797,7 +804,7 @@ sampleAt[::n/u_1, ::n/u_1] = True
 
 w = approxWavelet2D(x, interestedIn, sampleAt)
 threshold = 10e-3
-MAX_LEVEL = 4
+MAX_LEVEL = 3
 for level in arange(MAX_LEVEL):
     threshold = 4e-3 * mean(x[sampleAt]) * 2**(-level)
     # {20, 100}e-3 work well here

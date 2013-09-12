@@ -773,7 +773,7 @@ def makeSampleAtTrue(i, sampleAt):
         
         # sample evenly
         # we'll always have at least 2 values
-        DIV = 4
+        DIV = 8
         EVERY_X = ceil(len(x1)/DIV)
         EVERY_Y = ceil(len(y1)/DIV)
         x2 = x1[::EVERY_X]
@@ -815,9 +815,10 @@ sampleAt[::n/u_1, ::n/u_1] = True
 
 w = approxWavelet2D(x, interestedIn, sampleAt)
 threshold = 10e-3
-MAX_LEVEL = 6
+MAX_LEVEL = 3
 for level in arange(MAX_LEVEL):
-    threshold = 1e-3 * mean(x[sampleAt]) * 2**(-level)
+    threshold = 4e-3 * mean(x[sampleAt]) * 2**(-level)
+    threshold = 8e-3
     # {20, 100}e-3 work well here
     i = seeWhereNonZero(w, threshold, pwr, level)
     interestedIn = putInterestedInIn(w, threshold, pwr, interestedIn, level)
@@ -843,11 +844,12 @@ time = h.T.dot(w).dot(h)
 wExact = h.dot(x).dot(h.T)
 
 S2imshow(sampleAt, 'sampled here')
-S2imshow(abs(w), 'abs(wavelet) approx')
-S2imshow(wExact, 'wavelet exact')
+#S2imshow(abs(w), 'abs(wavelet) approx')
+#S2imshow(wExact, 'wavelet exact')
 S2imshow(time, 'approx time')
 S2imshow(x, 'exact (ish)')
-S2imshow(inte[0:32, 0:32], 'wavelet terms we\'re interested in')
+u = 2**MAX_LEVEL
+S2imshow(inte[0:u, 0:u], 'wavelet terms we\'re interested in')
 
 
 

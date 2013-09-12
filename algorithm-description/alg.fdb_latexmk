@@ -1,14 +1,14 @@
 # Fdb version 3
-["bibtex alg"] 1378221466 "alg.aux" "alg.bbl" "alg" 1378221785
+["bibtex alg"] 1378953604 "alg.aux" "alg.bbl" "alg" 1378955546
   "/usr/local/texlive/2013/texmf-dist/bibtex/bst/base/plain.bst" 1292289607 20613 bd3fbfa9f64872b81ac57a0dd2ed855f ""
   "BibDesk.bib" 1377184584 31119 a154e11b11623b14c3065b2288018ef3 ""
-  "alg.aux" 1378221784 2961 6f44195d4342468cf8fa0f0ae02ddd22 ""
+  "alg.aux" 1378955545 3052 826348b13c1fab10db444f0ab7f0cca6 ""
   "alg.bcf" 0 -1 0 ""
   (generated)
   "alg.bbl"
   "alg.blg"
-["pdflatex"] 1378221784 "/Users/scott/Developer/IRcamera/algorithm-description/alg.tex" "alg.pdf" "alg" 1378221785
-  "/Users/scott/Developer/IRcamera/algorithm-description/alg.tex" 1378221783 7182 e904d5b91ed81ab8a14297b03233d7d4 ""
+["pdflatex"] 1378955545 "/Users/scott/Developer/IRcamera/algorithm-description/alg.tex" "alg.pdf" "alg" 1378955546
+  "/Users/scott/Developer/IRcamera/algorithm-description/alg.tex" 1378955544 8846 b904e8b58b5e40776bac37cacce7daec ""
   "/usr/local/texlive/2013/texmf-dist/fonts/map/fontname/texfonts.map" 1272929888 3287 e6b82fe08f5336d4d5ebc73fb1152e87 ""
   "/usr/local/texlive/2013/texmf-dist/fonts/tfm/public/amsfonts/cmextra/cmex7.tfm" 1246382020 1004 54797486969f23fa377b128694d548df ""
   "/usr/local/texlive/2013/texmf-dist/fonts/tfm/public/amsfonts/cmextra/cmex8.tfm" 1246382020 988 bdf658c3bfc2d96d3c8b02cfc1c94c20 ""
@@ -25,6 +25,7 @@
   "/usr/local/texlive/2013/texmf-dist/fonts/tfm/public/cm/cmsy10.tfm" 1136768653 1124 6c73e740cf17375f03eec0ee63599741 ""
   "/usr/local/texlive/2013/texmf-dist/fonts/tfm/public/cm/cmsy6.tfm" 1136768653 1116 933a60c408fc0a863a92debe84b2d294 ""
   "/usr/local/texlive/2013/texmf-dist/fonts/tfm/public/cm/cmsy8.tfm" 1136768653 1120 8b7d695260f3cff42e636090a8002094 ""
+  "/usr/local/texlive/2013/texmf-dist/fonts/tfm/public/cm/cmti10.tfm" 1136768653 1480 aa8e34af0eb6a2941b776984cf1dfdc4 ""
   "/usr/local/texlive/2013/texmf-dist/fonts/tfm/public/cm/cmtt10.tfm" 1136768653 768 1321e9409b4137d6fb428ac9dc956269 ""
   "/usr/local/texlive/2013/texmf-dist/fonts/tfm/public/cm/cmtt12.tfm" 1136768653 772 9a936b7f5e2ff0557fce0f62822f0bbf ""
   "/usr/local/texlive/2013/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx10.pfb" 1248133631 34811 78b52f49e893bcba91bd7581cdc144c0 ""
@@ -38,6 +39,7 @@
   "/usr/local/texlive/2013/texmf-dist/fonts/type1/public/amsfonts/cm/cmr7.pfb" 1248133631 32762 224316ccc9ad3ca0423a14971cfa7fc1 ""
   "/usr/local/texlive/2013/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb" 1248133631 32569 5e5ddc8df908dea60932f3c484a54c0d ""
   "/usr/local/texlive/2013/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy7.pfb" 1248133631 32716 08e384dc442464e7285e891af9f45947 ""
+  "/usr/local/texlive/2013/texmf-dist/fonts/type1/public/amsfonts/cm/cmti10.pfb" 1248133631 37944 359e864bd06cde3b1cf57bb20757fb06 ""
   "/usr/local/texlive/2013/texmf-dist/fonts/type1/public/amsfonts/cm/cmtt10.pfb" 1248133631 31099 c85edf1dd5b9e826d67c9c7293b6786c ""
   "/usr/local/texlive/2013/texmf-dist/fonts/type1/public/amsfonts/cm/cmtt12.pfb" 1248133631 24252 1e4e051947e12dfb50fee0b7f4e26e3a ""
   "/usr/local/texlive/2013/texmf-dist/tex/context/base/supp-pdf.mkii" 1337017135 71627 94eb9990bed73c364d7f53f960cc8c5b ""
@@ -152,16 +154,16 @@
   "/usr/local/texlive/2013/texmf-var/fonts/map/pdftex/updmap/pdftex.map" 1369923225 1072746 3ce1f23f203cb4a0015ca3c8411dee4a ""
   "/usr/local/texlive/2013/texmf-var/web2c/pdftex/pdflatex.fmt" 1369923264 3827029 ad4432546849f432c3154779662c76c8 ""
   "/usr/local/texlive/2013/texmf.cnf" 1369923207 577 cbc827f6294276973a1952e86e8ad73a ""
-  "alg.aux" 1378221784 2961 6f44195d4342468cf8fa0f0ae02ddd22 ""
-  "alg.bbl" 1378221467 49 0eba253fc001332e731e8aba3f23127b "bibtex alg"
-  "alg.out" 1378221784 717 574645f43ecf690e1a8734dbee80b456 ""
-  "alg.tex" 1378221783 7182 e904d5b91ed81ab8a14297b03233d7d4 ""
-  "alg.toc" 1378221784 884 7d1b5214e0f321a1ed28de1741fdd7ee ""
+  "alg.aux" 1378955545 3052 826348b13c1fab10db444f0ab7f0cca6 ""
+  "alg.bbl" 1378953605 49 0eba253fc001332e731e8aba3f23127b "bibtex alg"
+  "alg.out" 1378955545 775 13a4f745e82a356d70b483507ae5ec4c ""
+  "alg.tex" 1378955544 8846 b904e8b58b5e40776bac37cacce7daec ""
+  "alg.toc" 1378955545 957 efb3bff18758cda6e96d2481796f8484 ""
   "better_diagram.pdf" 1376772471 3623 b763a06ce3d81954d01a9cff5f389872 ""
   "signs.pdf" 1377020103 3125 c3f967ef03af9dab63e7aedc71b98643 ""
   (generated)
   "alg.out"
-  "alg.aux"
   "alg.toc"
+  "alg.aux"
   "alg.pdf"
   "alg.log"

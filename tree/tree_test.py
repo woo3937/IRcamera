@@ -782,6 +782,19 @@ def makeSampleAtTrue(i, sampleAt):
         sampleAt[y2, x2] = True
         sampleAt[x2, y2] = True
 
+def scaleWavelet(wavelet, sampleAt):
+    n = wavelet.shape[0]
+    for y in arange(n):
+        for x in arange(n):
+            y1, x1 = waveletIndToTimeInd(y, x, n)
+            # kinda like n^2 for the whole image.
+            n2 = len(x1) * len(y1)
+            i = argwhere(sampleAt[y1, x1] == True)
+            m = len(i)
+            if m != 0:
+                wavelet[y, x] = wavelet[y, x] * n2 / m
+    return wavelet
+
 
 nPower = 3
 n = 2**nPower
@@ -815,7 +828,7 @@ sampleAt[::n/u_1, ::n/u_1] = True
 
 w = approxWavelet2D(x, interestedIn, sampleAt)
 threshold = 10e-3
-MAX_LEVEL = 3
+MAX_LEVEL = 2
 for level in arange(MAX_LEVEL):
     threshold = 4e-3 * mean(x[sampleAt]) * 2**(-level)
     threshold = 8e-3
@@ -825,8 +838,10 @@ for level in arange(MAX_LEVEL):
     interestedIn = unique(interestedIn)
     makeSampleAtTrue(i, sampleAt.T)
 
+ 
 
     w = approxWavelet2D(x.T, interestedIn, sampleAt)
+    w = scaleWavelet(w, sampleAt)
 
     print "----------------"
     print "threshold: ", threshold

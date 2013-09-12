@@ -111,6 +111,7 @@
 
                 In our case, we have $w = c x r$, where $c$ performs the complete wavelet transform on the columns and $r$ the complete transform on the rows. 
 
+
                 \subsubsection{Scaling}
                     We are currently saying ``we're interested in these coefficients, and don't care where they lie.'' That means that to get an accurate reconstruction, we have to have scale our function right.
 
@@ -138,10 +139,24 @@
 
 
 
+
+            \subsection{The tree}
+                The idea is simple: where the coefficients in the wavelet tree are nonzero, go further down the tree. But, how do we decide when a coefficient is nonzero? What we currently do is simply see if there nonzero after the \textit{initial} approximation, and this tree is never updated. That part is ``easy.''
+
+                Another thing that I find interesting and confusing is we know that the energy in the transform remains the same. In mathematical terms, it's $||x|| = ||w||$. This norm can either be the $||\cdot||_2^2$ or the Fourbineas (yeah, spelling) norm.
+
+                But we're not interested in $x$. We interested in sampling $x$, meaning $Sx$, where $S$ is just a $m \times n$ matrix with one 1 per row. That means that the total energy is off by a factor of $n^2 / m$ ($m$ being the locations we sample at, $n$ being the width/height of our image). But, that only corresponds to each term being off by \textit{exactly} $n^2 / m$.
+
+                What we ideally want is to reconstruct the wavelet term \textit{exactly} (correctly scaled) at each level. Using the tree case, that means that the percentage of the original value increases as you go down the tree. The lower terms are closer to the original values while the higher terms are reduced at a much lower rate. The top term samples at $2^n$ locations while some term $k$ levels down samples at $2^k$ locations.
+
+                Does that mean we just have to normalize each wavelet coefficient by $k / m$ ($k$ where that term samples at, $m$ how many samples you have there). I'll ask Akshay to be sure before I try (hello Akshay!).
+
+
+
+
             \bibliographystyle{plain}
             \bibliography{BibDesk}
             \printbibliography{}
-
 \end{document}
 
 

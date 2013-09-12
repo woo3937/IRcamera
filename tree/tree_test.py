@@ -753,17 +753,16 @@ def putInterestedInIn(w, threshold, pwr, interestedIn, level):
     interesting = array([2*terms, 2*terms+1, 2*terms+n, 2*terms+n+1])
     interesting = interesting.flat[:]
 
-    #kids = []
-    #for child in interesting:
-        #if child in parents:
-            #kids += [child]
+    kids = []
+    for child in interesting:
+        if child in parents:
+            kids += [child]
+    kids = asarray(kids, dtype=int)
 
-    interestedIn = hstack((interestedIn, interesting))
+    #interestedIn = hstack((interestedIn, interesting))
+    # enforcing the tree structure...
+    interestedIn = hstack((interestedIn, kids))
 
-    #print "len(kids): ", len(kids)
-    #print "len(interesting): ", len(interesting)
-    #kids = asarray(kids)
-    #kids = hstack((interestedIn, kids))
     return interestedIn
 
 def makeSampleAtTrue(i, sampleAt):
@@ -816,9 +815,9 @@ sampleAt[::n/u_1, ::n/u_1] = True
 
 w = approxWavelet2D(x, interestedIn, sampleAt)
 threshold = 10e-3
-MAX_LEVEL = 3
+MAX_LEVEL = 6
 for level in arange(MAX_LEVEL):
-    threshold = 4e-3 * mean(x[sampleAt]) * 2**(-level)
+    threshold = 1e-3 * mean(x[sampleAt]) * 2**(-level)
     # {20, 100}e-3 work well here
     i = seeWhereNonZero(w, threshold, pwr, level)
     interestedIn = putInterestedInIn(w, threshold, pwr, interestedIn, level)

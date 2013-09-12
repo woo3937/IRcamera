@@ -744,6 +744,8 @@ def putInterestedInIn(w, threshold, pwr, interestedIn, level):
 
         it needs to put the non-zero terms in if the parents are inteteresting.
     """
+    parents = interestedIn
+    parents = hstack((interestedIn, parents*2, parents*2+1, parents*2+n, parents*2+1+n))
 
     i = seeWhereNonZero(w, threshold, pwr, level)
     terms = i[:,1]*n + i[:,0]
@@ -751,7 +753,17 @@ def putInterestedInIn(w, threshold, pwr, interestedIn, level):
     interesting = array([2*terms, 2*terms+1, 2*terms+n, 2*terms+n+1])
     interesting = interesting.flat[:]
 
+    #kids = []
+    #for child in interesting:
+        #if child in parents:
+            #kids += [child]
+
     interestedIn = hstack((interestedIn, interesting))
+
+    #print "len(kids): ", len(kids)
+    #print "len(interesting): ", len(interesting)
+    #kids = asarray(kids)
+    #kids = hstack((interestedIn, kids))
     return interestedIn
 
 def makeSampleAtTrue(i, sampleAt):
@@ -778,7 +790,7 @@ initialApprox = 1
 
 x = arange(n*n).reshape(n,n)
 x = imread('./tumblr.gif').mean(axis=2)
-#x = imread('./tumblr128.png').mean(axis=2)
+x = imread('./tumblr128.png').mean(axis=2)
 n = x.shape[0]
 nPower = log2(n)
 
@@ -811,7 +823,7 @@ for level in arange(MAX_LEVEL):
     i = seeWhereNonZero(w, threshold, pwr, level)
     interestedIn = putInterestedInIn(w, threshold, pwr, interestedIn, level)
     interestedIn = unique(interestedIn)
-    makeSampleAtTrue(i, sampleAt)
+    makeSampleAtTrue(i, sampleAt.T)
 
 
     w = approxWavelet2D(x.T, interestedIn, sampleAt)

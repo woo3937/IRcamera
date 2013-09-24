@@ -255,7 +255,7 @@ void mainIST(int width, int height,
     fflush(stdout);
 
     /*writeImage("y.pdf", zeros, width, height);*/
-    writeImage("FISTA.png", xold,  width, height);
+    writeImage("FISTA_p=20percent.png", xold,  width, height);
     /*writeImage("xold1.png", xold1, width, height);*/
 
     free(y);

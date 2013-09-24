@@ -123,6 +123,7 @@ unsigned char findPec(unsigned char comm, unsigned char lsb, unsigned char msb);
 void testSpeed(CPhidgetStepperHandle horizStepper, CPhidgetStepperHandle vertStepper,
         int width, int height);
 void setMotorToInitialState(CPhidgetStepperHandle stepper, __int64 loc);
+void testIRSensor();
 
 
 int main(int argc, char **argv){
@@ -179,7 +180,7 @@ int main(int argc, char **argv){
 
     /*goDeltaAngle(vertStepper, -180);*/
 
-    int N = 64;
+    int N = 256;
     int width  = N;
     int height = N;
 
@@ -189,21 +190,29 @@ int main(int argc, char **argv){
     // getting the wait times right
     wait_ms = (46 * wait_ms) / 51;
     printf("wait_ms: %d\n", wait_ms);
-    getMeasurementsFromBranch(horizStepper, vertStepper, xold, wait_ms,
-            0, width/1, 0, height/1, 1, width, height);
+    /*testIRSensor();*/
+    /*getMeasurementsFromBranch(horizStepper, vertStepper, xold, wait_ms,*/
+            /*0, width/1, 0, height/1, 1, width, height);*/
     /*getMeasurementsFromBranch(horizStepper, vertStepper, xold, 46,*/
-            /*width/2, width/1, height/2, height/1, 1, width, height);*/
-    writeImage("best.png", xold, width, height);
-
+            /*0*width/1, width/1, 0*height/1, height/1, 1, width, height);*/
+    /*writeImage("full.png", xold, width, height);*/
+    mainIST(width, height, horizStepper, vertStepper);
 
     setMotorToInitialState(horizStepper, (__int64)loc);
     setMotorToInitialState(vertStepper, (__int64)loc);
+
     /*goDeltaAngle(horizStepper, 15);*/
-    /*goDeltaAngle(vertStepper, 20);*/
+    /*goDeltaAngle(vertStepper, -10);*/
     // setting it back to the middle
     delay(5000);
     // ending I2C operations
     bcm2835_i2c_end();
+}
+void testIRSensor(){
+    float temp;
+    temp = readTemp();
+    printf("tempTest: %f\n", temp);
+
 }
 void setMotorToInitialState(CPhidgetStepperHandle stepper, __int64 loc){
     setVelocity(stepper, 1e-2);

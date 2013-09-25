@@ -1,8 +1,9 @@
 function funs = funct
-  funs.haarMatrix = @haarMatrix;
-  funs.haarPwr    = @haarPwr;
-  funs.S2imshow   = @S2imshow;
-  funs.haarInd    = @haarInd;
+    funs.haarMatrix    = @haarMatrix;
+    funs.haarPwr       = @haarPwr;
+    funs.S2imshow      = @S2imshow;
+    funs.haarInd       = @haarInd;
+    funs.approxWavelet = @approxWavelet;
 end
 
 function h=haarMatrix(n)
@@ -10,6 +11,7 @@ function h=haarMatrix(n)
     % w = h x
     %
     % assumes a column w and column x
+
     level = log2(n);
 
     % init'ing
@@ -62,6 +64,7 @@ function S2imshow(x, t)
 end
 
 function [y]=haarInd(ind, n)
+    % HAARIND
     re = zeros(n,n);
     h = haarMatrix(n);
 
@@ -71,4 +74,31 @@ function [y]=haarInd(ind, n)
 
     % return...
     y = i;
+end
+
+function w=approxWavelet(x, sampleAt, m)
+    % APPROXWAVELET
+    % x: the signal
+    % sampleAt: where to sample. 0 for don'ts, 1 for do
+    % m: how far in the tree to go down. 1 is the tree root
+    % returns an unscaled wavelet
+    n = size(x); n = n(1);
+    h = haarMatrix(n);
+    H = kron(h, h);
+
+    % delete where we don't sample...
+    s = sampleAt(:);
+    i = 1:n^2;
+
+    H = H(:, i(~~s));
+
+    % the terms further down the tree will be zero no matter what
+    terms = reshape(1:n^2, n, n);
+    toKeep = terms(1:2^m, 1:2^m);
+    % we must ensure that we're always sampling at the edges
+
+    H = H(toKeep, :);
+
+    % return...
+    w = H * x(~~sampleAt);
 end

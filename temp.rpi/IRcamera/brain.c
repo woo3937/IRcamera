@@ -10,8 +10,8 @@
 
 // for FISTA
 // cut-off value and sampling rate
-#define CUT 2.2
-#define P 0.2
+#define CUT 18.2
+#define P 0.5
 
     // the nice stuff python has
     void getCol(float * in, int col, float * out, int width, int height);

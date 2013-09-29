@@ -180,7 +180,7 @@ int main(int argc, char **argv){
 
     /*goDeltaAngle(vertStepper, -180);*/
 
-    int N = 256;
+    int N = 128;
     int width  = N;
     int height = N;
 
@@ -201,8 +201,8 @@ int main(int argc, char **argv){
     setMotorToInitialState(horizStepper, (__int64)loc);
     setMotorToInitialState(vertStepper, (__int64)loc);
 
-    /*goDeltaAngle(horizStepper, 15);*/
-    /*goDeltaAngle(vertStepper, -10);*/
+    /*goDeltaAngle(horizStepper, -15);*/
+    /*goDeltaAngle(vertStepper, -20);*/
     // setting it back to the middle
     delay(5000);
     // ending I2C operations

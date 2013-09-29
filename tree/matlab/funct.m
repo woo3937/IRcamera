@@ -1,9 +1,14 @@
-function funs = funct
-    funs.haarMatrix    = @haarMatrix;
-    funs.haarPwr       = @haarPwr;
-    funs.S2imshow      = @S2imshow;
-    funs.haarInd       = @haarInd;
-    funs.approxWavelet = @approxWavelet;
+function f = funct
+    f.haarMatrix            = @haarMatrix;
+    f.haarPwr               = @haarPwr;
+    f.S2imshow              = @S2imshow;
+    f.haarInd               = @haarInd;
+    f.approxWavelet         = @approxWavelet;
+    f.haarInd2D             = @haarInd2D;
+    f.scaleWavelet          = @scaleWavelet;
+    f.reshapeWavelet        = @reshapeWavelet;
+    f.sampleInDetail        = @sampleInDetail;
+    f.approxScaleAndReshape = @approxScaleAndReshape;
 end
 
 function h=haarMatrix(n)
@@ -81,7 +86,7 @@ function w=approxWavelet(x, sampleAt, m)
     % x: the signal
     % sampleAt: where to sample. 0 for don'ts, 1 for do
     % m: how far in the tree to go down. 1 is the tree root
-    % returns an unscaled wavelet
+    % returns an unscaled wavelet in 1D
     n = size(x); n = n(1);
     h = haarMatrix(n);
     H = kron(h, h);
@@ -101,4 +106,78 @@ function w=approxWavelet(x, sampleAt, m)
 
     % return...
     w = H * x(~~sampleAt);
+end
+
+function i=haarInd2D(ind, n);
+    % HAARIND2D
+    % n as the width/height of the image.
+    % ind as in which index that matters
+    h = haarMatrix(n);
+    H = kron(h, h);
+    G = H(ind, :);
+    % return...
+    i = find(G ~= 0);
+end
+
+function w=scaleWavelet(w, sampleAt, m)
+    % SCALEWAVELET -- scale the wavelet to so extra relative energy isn't in
+    % where it samples more.
+    % w -- the wavelet in 1D (even though it's 2D)
+    % sampleAt -- where to sample
+    % m
+
+    [n, k] = size(sampleAt);
+    idx = reshape(1:n^2, n, n);
+    idx = idx(1:2^m, 1:2^m);
+
+    % now, scale wavelet
+    [lenw, junk] = size(w);
+    for i=1:lenw
+        ind = haarInd2D(idx(i), n);
+        mm = sum(sampleAt(ind));
+        n2 = size(ind); n2 = n2(2);
+        factor = n2 / mm;
+        w(i) = factor .* w(i);
+    end
+
+    %return...
+    w = w;
+end
+
+function z=reshapeWavelet(w, m, n)
+    w = reshape(w, 2^m, 2^m);
+    z = zeros(n,n);
+    z(1:2^m, 1:2^m) = w;
+end
+function s=sampleInDetail(w, sampleAt, threshold, treeLevel)
+    % SAMPLEAT  -- see where sample at in more detail
+    % w         -- your input signal, in the haar domain
+    % sampleAt  -- where you're currently sampling
+    % threshold -- where should we look more closely?
+    % treeLevel -- how deep in the tree to look
+    [n junk] = size(w);
+    pwr = haarPwr(n)+1;
+    i = find((abs(w) >= threshold) & (pwr == treeLevel));
+    [ind j] = size(i);
+    s = sampleAt;
+    for ii=1:ind
+        k = haarInd2D(i(ii), n);
+        [kk jj] = size(k);
+        j = k(ceil(rand()*jj));
+        s(j) = 1;
+    end
+
+    % return...
+    s = s;
+end
+
+function w=approxScaleAndReshape(x, sampleAt, m)
+    [n j] = size(x);
+    w = approxWavelet(x, sampleAt, m);
+    w = scaleWavelet(w, sampleAt, m);
+    w = reshapeWavelet(w, m, n);
+
+    % return...
+    w = w;
+
 end

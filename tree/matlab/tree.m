@@ -18,14 +18,17 @@ x = mean(x, 3);
 % making sampleAt
 sampleAt = zeros(n,n);
 sampleAt([1, n/2+1, n^2/2+1, n^2/2+1+n/2]) = 1;
+interestedIn = [1, 2, n, n+1];
+m = 1;
 
 
-threshold = 20;
-
+threshold = 50;
+w = f.approxScaleAndReshape(x, sampleAt, m, interestedIn);
 for m=1:howFar
     display(m)
-    w        = f.approxScaleAndReshape(x, sampleAt, m);
-    sampleAt = f.sampleInDetail(w, sampleAt, threshold, m);
+    interestedIn = f.seeWhereNonZero(w, threshold);
+    w            = f.approxScaleAndReshape(x, sampleAt, m, interestedIn);
+    sampleAt     = f.sampleInDetail(w, sampleAt, threshold, m);
 end
 
 w = f.approxScaleAndReshape(x, sampleAt, m-1);
@@ -39,6 +42,6 @@ time = h' * w * h;
 %timeE = h' * wE * h;
 
 f.S2imshow(time, 'approx');
-%f.S2imshow(timeE, 'exact');
+f.S2imshow(w, 'exact');
 f.S2imshow(sampleAt, 'sampleAt');
 %%close all;

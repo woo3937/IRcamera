@@ -159,10 +159,11 @@ int main(int argc, char **argv){
     float loc = ANGLE/2;
     // what location gives that angle?
     loc = loc * (1200 * 16) / 360.0f;   // deg * steps/deg
+    __int64 sendLoc = (__int64)loc;
 
     // setting the current position, and checking
-    CPhidgetStepper_setCurrentPosition(horizStepper, 0, (__int64)loc);
-    CPhidgetStepper_setCurrentPosition(vertStepper, 0, (__int64)loc);
+    CPhidgetStepper_setCurrentPosition(horizStepper, 0, sendLoc);
+    CPhidgetStepper_setCurrentPosition(vertStepper,  0, sendLoc);
 
     // setting vertStepper to be slower -- more mass/load.
     // vertStepper can max out then.
@@ -171,28 +172,26 @@ int main(int argc, char **argv){
     setAcceleration(vertStepper, 5e-2);
     setAcceleration(horizStepper, 1e-1);
 
-    /*goDeltaAngle(vertStepper, -180);*/
-
     int N = 128;
     int width  = N;
     int height = N;
 
-    float * xold = (float *)malloc(sizeof(float) * width *height);
-    for (i=0; i<N*N; i++) xold[i] = 0;
+    /*float * xold = (float *)malloc(sizeof(float) * width *height);*/
+    /*for (i=0; i<N*N; i++) xold[i] = 0;*/
     int wait_ms = 40;
-    // getting the wait times right
+    /*// getting the wait times right*/
     wait_ms = (46 * wait_ms) / 51;
     printf("wait_ms: %d\n", wait_ms);
-    /*testIRSensor();*/
-    /*getMeasurementsFromBranch(horizStepper, vertStepper, xold, wait_ms,*/
-            /*0, width/1, 0, height/1, 1, width, height);*/
-    /*getMeasurementsFromBranch(horizStepper, vertStepper, xold, 46,*/
-            /*0*width/1, width/1, 0*height/1, height/1, 1, width, height);*/
+    /*[>testIRSensor();<]*/
+    /*[>getMeasurementsFromBranch(horizStepper, vertStepper, xold, wait_ms,<]*/
+            /*[>0, width/1, 0, height/1, 1, width, height);<]*/
+    /*[>getMeasurementsFromBranch(horizStepper, vertStepper, xold, 46,<]*/
+            /*[>0*width/1, width/1, 0*height/1, height/1, 1, width, height);<]*/
 
-    /*writeImage("full.png", xold, width, height);*/
+    /*[>writeImage("full.png", xold, width, height);<]*/
     mainIST(width, height, horizStepper, vertStepper);
-    setMotorToInitialState(horizStepper, (__int64)loc);
-    setMotorToInitialState(vertStepper, (__int64)loc);
+    setMotorToInitialState(horizStepper, sendLoc);
+    setMotorToInitialState(vertStepper,  sendLoc);
 
     /*goDeltaAngle(horizStepper, -15);*/
     /*goDeltaAngle(vertStepper, -20);*/

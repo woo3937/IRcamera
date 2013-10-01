@@ -240,21 +240,31 @@ void mainIST(int width, int height,
     }
     /*gotoLocation(horizStepper, 0, loc);*/
     /*gotoLocation(vertStepper, 0, loc);*/
+    printf("After gotoLoc\n");
+
+    printf("Before FISTA\n");
 
     FISTA(xold, xold1, y, idx, width, height, p, tn, tn1, its);
+    printf("After FISTA\n");
 
-    // making sure the sensor doesn't give junk (-271.68)
+
     for (i=0; i<10; i++){
-        printf("xold[i] = %f \n", xold[i]);    }
+        printf("xold[i] = %f \n", xold[i]);
+    }
+
 
     float * zeros   = (float *)malloc(sizeof(float) * n);
     for(i=0; i<n; i++) zeros[i] = 0;
     for(i=0; i<upper; i++) zeros[idx[i]] = y[i];
 
+
+    /*for (i=0; i<n; i++) printf("%f\n", y[i]);*/
     printf("Saving the image\n");
     fflush(stdout);
-    // write the image, with python
-    writeImage("FISTA.png", xold,  width, height);
+
+    /*writeImage("y.pdf", zeros, width, height);*/
+    writeImage("FISTA_p=20percent.png", xold,  width, height);
+    /*writeImage("xold1.png", xold1, width, height);*/
 
     free(y);
     free(xold);

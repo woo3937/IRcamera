@@ -9,7 +9,6 @@ function f = funct
     f.reshapeWavelet        = @reshapeWavelet;
     f.sampleInDetail        = @sampleInDetail;
     f.approxScaleAndReshape = @approxScaleAndReshape;
-    f.seeWhereNonZero       = @seeWhereNonZero;
 end
 
 function h=haarMatrix(n)
@@ -82,7 +81,7 @@ function [y]=haarInd(ind, n)
     y = i;
 end
 
-function w=approxWavelet(x, sampleAt, interestedIn)
+function w=approxWavelet(x, sampleAt, m)
     % APPROXWAVELET
     % x: the signal
     % sampleAt: where to sample. 0 for don'ts, 1 for do
@@ -103,8 +102,7 @@ function w=approxWavelet(x, sampleAt, interestedIn)
     toKeep = terms(1:2^m, 1:2^m);
     % we must ensure that we're always sampling at the edges
 
-    %H = H(toKeep, :);
-    H = H(interestedIn, :);
+    H = H(toKeep, :);
 
     % return...
     w = H * x(~~sampleAt);
@@ -173,20 +171,13 @@ function s=sampleInDetail(w, sampleAt, threshold, treeLevel)
     s = s;
 end
 
-function w=approxScaleAndReshape(x, sampleAt, m, interestedIn)
+function w=approxScaleAndReshape(x, sampleAt, m)
     [n j] = size(x);
-    w = approxWavelet(x, sampleAt, interestedIn);
+    w = approxWavelet(x, sampleAt, m);
     w = scaleWavelet(w, sampleAt, m);
     w = reshapeWavelet(w, m, n);
 
     % return...
     w = w;
 
-end
-
-function i=seeWhereNonZero(w, threshold)
-    i = find(abs(w) >= threshold);
-
-    % return...
-    i = i;
 end

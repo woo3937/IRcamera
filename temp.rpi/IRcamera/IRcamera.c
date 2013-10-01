@@ -92,18 +92,11 @@
 #include "IRcamera.h"
 #include <unistd.h>
 
-/*#define WIDTH 100*/
-/*#define HEIGHT 100*/
-
 #define PWR_PIN 4
 
 #define BAUD_RATE 100e3
 #define DEBUG_PRINT 1
 
-/*#define WAIT_MS 40 // note that the motors (as of 2013-06-27) wait until they're in position*/
-/*#define SAME_IMAGE_FILE 1*/
-/*#define MIN_TEMP 10*/
-/*#define MAX_TEMP 60*/
 
 #define ADDRESS 0x00
 #define COMMAND 0x25
@@ -195,9 +188,9 @@ int main(int argc, char **argv){
             /*0, width/1, 0, height/1, 1, width, height);*/
     /*getMeasurementsFromBranch(horizStepper, vertStepper, xold, 46,*/
             /*0*width/1, width/1, 0*height/1, height/1, 1, width, height);*/
+
     /*writeImage("full.png", xold, width, height);*/
     mainIST(width, height, horizStepper, vertStepper);
-
     setMotorToInitialState(horizStepper, (__int64)loc);
     setMotorToInitialState(vertStepper, (__int64)loc);
 

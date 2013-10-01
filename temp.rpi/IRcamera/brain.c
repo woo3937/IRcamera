@@ -8,9 +8,17 @@
 
 #define DEBUG_PRINT 1
 
+/*
+ * The sampling in mainIST takes about 5m35s for N=128 and p=0.5. FISTA
+ * takes about 20s (for 400 iterations).
+ *
+ * -- Scott Sievert, 2013-9-30
+ *      (after Akshay said get the times)
+ */
+
 // for FISTA
 // cut-off value and sampling rate
-#define CUT 18.2
+#define CUT 8.0
 #define P 0.5
 
     // the nice stuff python has

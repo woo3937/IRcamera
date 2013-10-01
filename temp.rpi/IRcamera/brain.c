@@ -238,8 +238,8 @@ void mainIST(int width, int height,
             }
         }
     }
-    gotoLocation(horizStepper, 0, loc);
-    gotoLocation(vertStepper, 0, loc);
+    /*gotoLocation(horizStepper, 0, loc);*/
+    /*gotoLocation(vertStepper, 0, loc);*/
     printf("After gotoLoc\n");
 
     printf("Before FISTA\n");

@@ -42,3 +42,8 @@ f.S2imshow(time, 'approx');
 %f.S2imshow(timeE, 'exact');
 f.S2imshow(sampleAt, 'sampleAt');
 %%close all;
+
+% 2
+p = 1/450;
+phi = 0.5;
+m = phi * (501 + 1/p) + 167.5

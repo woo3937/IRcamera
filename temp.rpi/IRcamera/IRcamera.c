@@ -173,7 +173,7 @@ int main(int argc, char **argv){
     setAcceleration(vertStepper, 5e-2);
     setAcceleration(horizStepper, 1e-1);
 
-    int N = 128;
+    int N = 1024;
     int width  = N;
     int height = N;
 

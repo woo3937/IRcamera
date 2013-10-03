@@ -6,8 +6,6 @@ nPower = 6;
 n = 2^nPower; 
 
 
-% what level to approx to?
-howFar = 4;
 
 % making the signal
 x = zeros(n,n); x(n/2+1:n, n/2+1:n)=10; x(5, 4)=10;
@@ -15,35 +13,33 @@ x = imread('../tumblr.gif');
 x = mean(x, 3);
 [n j] = size(x);
 
+
 % making sampleAt
 sampleAt = zeros(n,n);
 sampleAt([1, n/2+1, n^2/2+1, n^2/2+1+n/2]) = 1;
 
 
-threshold = 20;
+% what level to approx to?
+howFar = 4;
 
-for m=1:howFar
-    display(m)
+% our threshold -- everything below this is set to 0
+threshold = 40;
+
+for m=1:howFar,
     w        = f.approxScaleAndReshape(x, sampleAt, m);
     sampleAt = f.sampleInDetail(w, sampleAt, threshold, m);
 end
 
-w = f.approxScaleAndReshape(x, sampleAt, m-1);
-
-%% exact
-%wE = f.approxWavelet(x, ones(n,n), nPower);
-%wE = reshape(wE, n, n);
+w = f.approxScaleAndReshape(x, sampleAt, m);
 
 h = f.haarMatrix(n);
+wE = h * x * h';
 time = h' * w * h;
-%timeE = h' * wE * h;
 
-f.S2imshow(time, 'approx');
-%f.S2imshow(timeE, 'exact');
-f.S2imshow(sampleAt, 'sampleAt');
-%%close all;
+%f.S2imshow(wE, 'exact')
+f.S2imshow(w, 'approx w')
+f.S2imshow(wE, 'exact w')
+f.S2imshow(sampleAt, 'sampled')
+f.S2imshow(time, 'time w')
+f.S2imshow(x, 'time exact')
 
-% 2
-p = 1/450;
-phi = 0.5;
-m = phi * (501 + 1/p) + 167.5

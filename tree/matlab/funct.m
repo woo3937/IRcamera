@@ -133,11 +133,11 @@ function w=scaleWavelet(w, sampleAt, m)
     % now, scale wavelet
     [lenw, junk] = size(w);
     for i=1:lenw
-        ind = haarInd2D(idx(i), n);
-        mm = sum(sampleAt(ind));
-        n2 = size(ind); n2 = n2(2);
-        factor = n2 / mm;
-        w(i) = factor .* w(i);
+        ind     = haarInd2D(idx(i), n);
+        mm      = sum(sampleAt(ind));
+        [j, n2] = size(ind);
+        factor  = n2 / mm;
+        w(i)    = factor .* w(i);
     end
 
     %return...
@@ -149,6 +149,14 @@ function z=reshapeWavelet(w, m, n)
     z = zeros(n,n);
     z(1:2^m, 1:2^m) = w;
 end
+
+% 1 5 9 d
+% 2 6 a e    
+% 3 7 b f    
+% 4 8 c g    
+% we want 1, 3, 9 and 11
+% that's 1, n-1, n^2/2+1, n^2/2 + n/2
+
 function s=sampleInDetail(w, sampleAt, threshold, treeLevel)
     % SAMPLEAT  -- see where sample at in more detail
     % w         -- your input signal, in the haar domain
@@ -162,8 +170,12 @@ function s=sampleInDetail(w, sampleAt, threshold, treeLevel)
     s = sampleAt;
     for ii=1:ind
         k = haarInd2D(i(ii), n);
-        [kk jj] = size(k);
-        j = k(ceil(rand()*jj));
+        [jj nn] = size(k);
+        % there are nn elements. nn^2-->nn and nn-->ceil(sqrt(nn)) (approx!)
+        mm = ceil(sqrt(nn));
+        idx = [0, mm/2, nn/2, (nn + mm)/2] + 1;
+        idx = uint16(idx);
+        j = k(idx);
         s(j) = 1;
     end
 
@@ -176,6 +188,9 @@ function w=approxScaleAndReshape(x, sampleAt, m)
     w = approxWavelet(x, sampleAt, m);
     w = scaleWavelet(w, sampleAt, m);
     w = reshapeWavelet(w, m, n);
+
+    i = isnan(w);
+    w(i) = 0;
 
     % return...
     w = w;

@@ -1,6 +1,8 @@
 function f = FoneD
-    f.haarMatrix = @haarMatrix;
-    f.haarInd1D  = @haarInd1D;
+    f.haarMatrix      = @haarMatrix;
+    f.haarInd1D       = @haarInd1D;
+    f.findNonZero     = @findNonZero;
+    f.approxWavelet1D = @approxWavelet1D;
 end
 
 function h=haarMatrix(n)
@@ -36,3 +38,34 @@ function j=haarInd1D(i, n)
     % return...
     j = j;
 end
+
+function i=findNonZero(w, threshold)
+    % FINDNONZERO
+    % sees where we're above some threshold
+    i = find(abs(w) >= threshold);
+    % return...
+    i = i;
+end
+
+function w=approxWavelet1D(x, sampleAt, m)
+    % approx wavelet
+    [n junk] = size(x);
+    h = haarMatrix(n);
+
+    % delete where we don't sample
+    toDelete = find(sampleAt == 0);
+    h(:, toDelete) = [];
+
+    % delete where we're not interested in
+    i = 1:n;
+    toDelete = find(i > 2^m);
+    h(toDelete, :) = [];
+
+    w = h * x(~~sampleAt);
+    % return...
+    z = zeros(n, 1);
+    lenw = length(w);
+    z(1:lenw) = w;
+    w = z;
+end
+

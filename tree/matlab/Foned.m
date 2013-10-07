@@ -1,8 +1,10 @@
 function f = FoneD
-    f.haarMatrix      = @haarMatrix;
-    f.haarInd1D       = @haarInd1D;
-    f.findNonZero     = @findNonZero;
-    f.approxWavelet1D = @approxWavelet1D;
+    f.haarMatrix            = @haarMatrix;
+    f.haarInd1D             = @haarInd1D;
+    f.findNonZero           = @findNonZero;
+    f.approxWavelet1D       = @approxWavelet1D;
+    f.scaleWavelet          = @scaleWavelet;
+    f.approxWaveletAndScale = @approxWaveletAndScale;
 end
 
 function h=haarMatrix(n)
@@ -69,3 +71,26 @@ function w=approxWavelet1D(x, sampleAt, m)
     w = z;
 end
 
+function w=scaleWavelet(w, sampleAt)
+    [n j] = size(w);
+
+    % the indices we need to scale
+    i = find(w ~= 0);
+
+    for j=1:length(i),
+        ii = i(j); % the index we need to scale
+        k = haarInd1D(ii, n);
+        m = sum(sampleAt(k));
+        n2 = length(k);
+        w(j) = w(j) * n2 / m;
+    end
+
+    % return...
+    w = w;
+end
+
+function w=approxWaveletAndScale(x, sampleAt, m)
+    w = approxWavelet1D(x, sampleAt, m);
+    w = scaleWavelet(w, sampleAt);
+
+end

@@ -1,14 +1,14 @@
 # Fdb version 3
-["bibtex alg"] 1378953604 "alg.aux" "alg.bbl" "alg" 1381196683
+["bibtex alg"] 1381197663 "alg.aux" "alg.bbl" "alg" 1381198199
   "/usr/local/texlive/2013/texmf-dist/bibtex/bst/base/plain.bst" 1292289607 20613 bd3fbfa9f64872b81ac57a0dd2ed855f ""
   "BibDesk.bib" 1377184584 31119 a154e11b11623b14c3065b2288018ef3 ""
-  "alg.aux" 1378955545 3052 826348b13c1fab10db444f0ab7f0cca6 ""
+  "alg.aux" 1381198198 3046 685978d30f918db2ca074c748fad5c17 ""
   "alg.bcf" 0 -1 0 ""
   (generated)
   "alg.bbl"
   "alg.blg"
-["pdflatex"] 1378955545 "/Users/scott/Developer/IRcamera/algorithm-description/alg.tex" "alg.pdf" "alg" 1381196683
-  "/Users/scott/Developer/IRcamera/algorithm-description/alg.tex" 1378955716 8846 b904e8b58b5e40776bac37cacce7daec ""
+["pdflatex"] 1381198198 "/Users/scott/Developer/IRcamera/algorithm-description/alg.tex" "alg.pdf" "alg" 1381198199
+  "/Users/scott/Developer/IRcamera/algorithm-description/alg.tex" 1381198197 9801 970c05202c3db0b8e5b2731d13d1bf8f ""
   "/usr/local/texlive/2013/texmf-dist/fonts/map/fontname/texfonts.map" 1272929888 3287 e6b82fe08f5336d4d5ebc73fb1152e87 ""
   "/usr/local/texlive/2013/texmf-dist/fonts/tfm/public/amsfonts/cmextra/cmex7.tfm" 1246382020 1004 54797486969f23fa377b128694d548df ""
   "/usr/local/texlive/2013/texmf-dist/fonts/tfm/public/amsfonts/cmextra/cmex8.tfm" 1246382020 988 bdf658c3bfc2d96d3c8b02cfc1c94c20 ""
@@ -154,11 +154,11 @@
   "/usr/local/texlive/2013/texmf-var/fonts/map/pdftex/updmap/pdftex.map" 1369923225 1072746 3ce1f23f203cb4a0015ca3c8411dee4a ""
   "/usr/local/texlive/2013/texmf-var/web2c/pdftex/pdflatex.fmt" 1369923264 3827029 ad4432546849f432c3154779662c76c8 ""
   "/usr/local/texlive/2013/texmf.cnf" 1369923207 577 cbc827f6294276973a1952e86e8ad73a ""
-  "alg.aux" 1378955545 3052 826348b13c1fab10db444f0ab7f0cca6 ""
-  "alg.bbl" 1378953605 49 0eba253fc001332e731e8aba3f23127b "bibtex alg"
-  "alg.out" 1378955545 775 13a4f745e82a356d70b483507ae5ec4c ""
-  "alg.tex" 1378955716 8846 b904e8b58b5e40776bac37cacce7daec ""
-  "alg.toc" 1378955545 957 efb3bff18758cda6e96d2481796f8484 ""
+  "alg.aux" 1381198198 3046 685978d30f918db2ca074c748fad5c17 ""
+  "alg.bbl" 1381197663 49 0eba253fc001332e731e8aba3f23127b "bibtex alg"
+  "alg.out" 1381198198 769 c2116d8964e03afb73493955cd0b46dc ""
+  "alg.tex" 1381198197 9801 970c05202c3db0b8e5b2731d13d1bf8f ""
+  "alg.toc" 1381198198 951 3fae274abb4668dcef903b0a04f0036b ""
   "better_diagram.pdf" 1376772471 3623 b763a06ce3d81954d01a9cff5f389872 ""
   "signs.pdf" 1377020103 3125 c3f967ef03af9dab63e7aedc71b98643 ""
   (generated)

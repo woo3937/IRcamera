@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.1415926-2.5-1.40.14 (TeX Live 2013) (format=pdflatex 2013.5.30)  11 SEP 2013 22:12
+This is pdfTeX, Version 3.1415926-2.5-1.40.14 (TeX Live 2013) (format=pdflatex 2013.5.30)  7 OCT 2013 21:09
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
@@ -478,20 +478,20 @@ LaTeX Info: Redefining \labelcpageref on input line 2163.
 ) (./alg.aux)
 \openout1 = `alg.aux'.
 
-LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 20.
-LaTeX Font Info:    ... okay on input line 20.
-LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 20.
-LaTeX Font Info:    ... okay on input line 20.
-LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 20.
-LaTeX Font Info:    ... okay on input line 20.
-LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 20.
-LaTeX Font Info:    ... okay on input line 20.
-LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 20.
-LaTeX Font Info:    ... okay on input line 20.
-LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 20.
-LaTeX Font Info:    ... okay on input line 20.
-LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 20.
-LaTeX Font Info:    ... okay on input line 20.
+LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 23.
+LaTeX Font Info:    ... okay on input line 23.
+LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 23.
+LaTeX Font Info:    ... okay on input line 23.
+LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 23.
+LaTeX Font Info:    ... okay on input line 23.
+LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 23.
+LaTeX Font Info:    ... okay on input line 23.
+LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 23.
+LaTeX Font Info:    ... okay on input line 23.
+LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 23.
+LaTeX Font Info:    ... okay on input line 23.
+LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 23.
+LaTeX Font Info:    ... okay on input line 23.
 *geometry* driver: auto-detecting
 *geometry* detected driver: pdftex
 *geometry* verbose mode - [ preamble ] result:
@@ -555,7 +555,7 @@ Package caption Info: hyperref package is loaded.
 Package caption Info: wrapfig package is loaded.
 Package caption Info: End \AtBeginDocument code.
 \AtBeginShipoutBox=\box40
-Package hyperref Info: Link coloring ON on input line 20.
+Package hyperref Info: Link coloring ON on input line 23.
 (/usr/local/texlive/2013/texmf-dist/tex/latex/hyperref/nameref.sty
 Package: nameref 2012/10/27 v2.43 Cross-referencing by name of section
 (/usr/local/texlive/2013/texmf-dist/tex/generic/oberdiek/gettitlestring.sty
@@ -563,9 +563,9 @@ Package: gettitlestring 2010/12/03 v1.4 Cleanup title references (HO)
 )
 \c@section@level=\count143
 )
-LaTeX Info: Redefining \ref on input line 20.
-LaTeX Info: Redefining \pageref on input line 20.
-LaTeX Info: Redefining \nameref on input line 20.
+LaTeX Info: Redefining \ref on input line 23.
+LaTeX Info: Redefining \pageref on input line 23.
+LaTeX Info: Redefining \nameref on input line 23.
 (./alg.out) (./alg.out)
 \@outlinefile=\write4
 \openout4 = `alg.out'.
@@ -576,18 +576,18 @@ LaTeX Info: Redefining \nameref on input line 20.
 
 [1
 
-{/usr/local/texlive/2013/texmf-var/fonts/map/pdftex/updmap/pdftex.map}] <signs.pdf, id=78, 52.77956pt x 52.71426pt>
+{/usr/local/texlive/2013/texmf-var/fonts/map/pdftex/updmap/pdftex.map}] <signs.pdf, id=79, 52.77956pt x 52.71426pt>
 File: signs.pdf Graphic file (type pdf)
 <use signs.pdf>
-Package pdftex.def Info: signs.pdf used on input line 97.
+Package pdftex.def Info: signs.pdf used on input line 108.
 (pdftex.def)             Requested size: 81.70192pt x 81.60973pt.
 
-Package wrapfig Warning: Stationary wrapfigure forced to float on input line 103.
+Package wrapfig Warning: Stationary wrapfigure forced to float on input line 114.
 
-[2 <./signs.pdf>] <better_diagram.pdf, id=94, 402.4344pt x 402.78731pt>
+[2 <./signs.pdf>] <better_diagram.pdf, id=95, 402.4344pt x 402.78731pt>
 File: better_diagram.pdf Graphic file (type pdf)
 <use better_diagram.pdf>
-Package pdftex.def Info: better_diagram.pdf used on input line 132.
+Package pdftex.def Info: better_diagram.pdf used on input line 143.
 (pdftex.def)             Requested size: 402.43341pt x 402.78632pt.
 
 LaTeX Warning: `h' float specifier changed to `ht'.
@@ -597,8 +597,8 @@ LaTeX Warning: `h' float specifier changed to `ht'.
 LaTeX Warning: Empty `thebibliography' environment on input line 3.
 
 )
-/Users/scott/Developer/IRcamera/algorithm-description/alg.tex:159: Undefined control sequence.
-l.159             \printbibliography
+/Users/scott/Developer/IRcamera/algorithm-description/alg.tex:170: Undefined control sequence.
+l.170             \printbibliography
                                     {}
 The control sequence at the end of the top line
 of your error message was never \def'ed. If you have
@@ -606,29 +606,29 @@ misspelled it (e.g., `\hobx'), type `I' and the correct
 spelling (e.g., `I\hbox'). Otherwise just continue,
 and I'll forget about whatever was undefined.
 
-Package atveryend Info: Empty hook `BeforeClearDocument' on input line 160.
-[3] [4 <./better_diagram.pdf>]
-Package atveryend Info: Empty hook `AfterLastShipout' on input line 160.
+Package atveryend Info: Empty hook `BeforeClearDocument' on input line 171.
+[3] [4] [5 <./better_diagram.pdf>]
+Package atveryend Info: Empty hook `AfterLastShipout' on input line 171.
 (./alg.aux)
-Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 160.
-Package atveryend Info: Executing hook `AtEndAfterFileList' on input line 160.
+Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 171.
+Package atveryend Info: Executing hook `AtEndAfterFileList' on input line 171.
 Package rerunfilecheck Info: File `alg.out' has not changed.
-(rerunfilecheck)             Checksum: 13A4F745E82A356D70B483507AE5EC4C;775.
-Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 160.
+(rerunfilecheck)             Checksum: C2116D8964E03AFB73493955CD0B46DC;769.
+Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 171.
  ) 
 Here is how much of TeX's memory you used:
- 17136 strings out of 493315
- 311729 string characters out of 6137904
+ 17140 strings out of 493315
+ 311747 string characters out of 6137904
  409881 words of memory out of 5000000
- 20281 multiletter control sequences out of 15000+600000
+ 20284 multiletter control sequences out of 15000+600000
  9706 words of font info for 36 fonts, out of 8000000 for 9000
  957 hyphenation exceptions out of 8191
- 56i,8n,55p,518b,325s stack positions out of 5000i,500n,10000p,200000b,80000s
+ 56i,8n,55p,518b,333s stack positions out of 5000i,500n,10000p,200000b,80000s
 </usr/local/texlive/2013/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx10.pfb></usr/local/texlive/2013/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx12.pfb></usr/local/texlive/2013/texmf-dist/fonts/type1/public/amsfonts/cm/cmex10.pfb></usr/local/texlive/2013/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi10.pfb></usr/local/texlive/2013/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi7.pfb></usr/local/texlive/2013/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb></usr/local/texlive/2013/texmf-dist/fonts/type1/public/amsfonts/cm/cmr12.pfb></usr/local/texlive/2013/texmf-dist/fonts/type1/public/amsfonts/cm/cmr17.pfb></usr/local/texlive/2013/texmf-dist/fonts/type1/public/amsfonts/cm/cmr7.pfb></usr/local/texlive/2013/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb></usr/local/texlive/2013/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy7.pfb></usr/local/texlive/2013/texmf-dist/fonts/type1/public/amsfonts/cm/cmti10.pfb></usr/local/texlive/2013/texmf-dist/fonts/type1/public/amsfonts/cm/cmtt10.pfb></usr/local/texlive/2013/texmf-dist/fonts/type1/public/amsfonts/cm/cmtt12.pfb>
-Output written on alg.pdf (4 pages, 158044 bytes).
+Output written on alg.pdf (5 pages, 159813 bytes).
 PDF statistics:
- 165 PDF objects out of 1000 (max. 8388607)
- 139 compressed objects within 2 object streams
- 20 named destinations out of 1000 (max. 500000)
+ 170 PDF objects out of 1000 (max. 8388607)
+ 143 compressed objects within 2 object streams
+ 21 named destinations out of 1000 (max. 500000)
  111 words of extra memory for PDF output out of 10000 (max. 10000000)
 

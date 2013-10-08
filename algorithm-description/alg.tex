@@ -16,6 +16,9 @@
 \author{Scott Sievert\\ \texttt{sieve121@umn.edu}}
 
 \newcommand{\kron}{http://en.wikipedia.org/wiki/Kronecker\_product\#Matrix\_equations}
+\newcommand{\perseval}{http://en.wikipedia.org/wiki/Parseval's_theorem}
+\newcommand{\ft}{\texttt}
+\newcommand{\fb}{\textbf}
 
 \begin{document}
 
@@ -85,9 +88,17 @@
 
             We know that $h^{-1} x = w $. Since we know that  $h_{i, j} = 0$, we know that $x_j$ won't matter for the $i$th element of $w$.
             
-        \subsection{The actual reconstruction}
+        \subsection{Scaling the wavelet}
+            We know that samples in spaces where there aren't many samples are much more important. We therefore have to inflate the wavelet coeffecients to stay true to \href{\perseval}{Peserval's Thm}.
 
-        We approximate the first $m=2^{level}$ terms of the wavelet transform. If these coefficients are large enough ($|w_i|> \lambda$), we sample more at the indices corresponding to that wavelet location.
+            For the first wavelet coeff., $w(1) = w n / m$ where $n$ the length of our signal, and $m$ is where we sample at. If the signal is 16 components long and we only sample at 4 locations, it has to be inflated by a factor $16/4 = 4$.
+
+            But, that breaks down for the lower terms. The lower terms are of different signs. If we sample frequently in the first half of our signal, our term looks something like $[+~+~+~+~+~+~-~-~-~]$ -- more positives than negatives, pushing our coeff. more positive. 
+
+            That means we have to scale each term in the Haar matrix. Since the Haar wavelet has positive and negatives of equal scale, we can look to see how many sampled locations lay within that region, inflating by $n / m$. $n$ is how wide the region is, and $m$ is (again) how many samples lie within that region.
+
+
+
 
 
     \section{Two Dimensions}

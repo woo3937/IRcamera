@@ -63,7 +63,9 @@ function w=approxWavelet1D(x, sampleAt, m)
     toDelete = find(i > 2^m);
     h(toDelete, :) = [];
 
+    display(h)
     w = h * x(~~sampleAt);
+    display(w)
     % return...
     z = zeros(n, 1);
     lenw = length(w);
@@ -72,17 +74,26 @@ function w=approxWavelet1D(x, sampleAt, m)
 end
 
 function w=scaleWavelet(w, sampleAt)
+    % see how many samples are in that region. put that sample as (for example)
+    % 16x more important -- kind of image inpainting.
     [n j] = size(w);
 
     % the indices we need to scale
     i = find(w ~= 0);
 
     for j=1:length(i),
-        ii = i(j); % the index we need to scale
-        k = haarInd1D(ii, n);
-        m = sum(sampleAt(k));
-        n2 = length(k);
-        w(j) = w(j) * n2 / m;
+        k      = haarInd1D(i(j), n);
+        mm     = sum(sampleAt(k));
+        n2     = length(k);
+        factor = n2 / mm;
+        w(j)   = w(j) * factor;
+
+        display('--------------')
+        display(i(j))
+        display(n2)
+        display(mm)
+        display(factor)
+        
     end
 
     % return...

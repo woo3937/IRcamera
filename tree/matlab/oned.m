@@ -6,40 +6,25 @@ f = Foned();
 % sample more there
 
 % making x, sampleAt
-nPower = 5;
+nPower = 3;
 n = 2^nPower;
 t = linspace(0, 5, n);
 x = 1 ./ (1 + exp(-8 * (t-2.5)));
-x = x' + 1;
+x = 0 .* t;
+x = x' + 2;
 
 sampleAt = zeros(n, 1);
 sampleAt(1:4:n) = 1;
-sampleAt(10:20) = 1;
+%sampleAt(62:4:72) = 1;
+%sampleAt(1:10) = 1;
+sampleAt(1:4) = 1;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % how far to approx the levels?
-m = 3;
+m = 1;
 
 w = f.approxWavelet1D(x, sampleAt, m);
-
-%function w=scaleWavelet(w, sampleAt)
-    [n j] = size(w);
-
-    % the indices we need to scale
-    i = find(w ~= 0);
-
-    for j=1:length(i),
-        ii = i(j);
-        k = f.haarInd1D(ii, n);
-        m = sum(sampleAt(k)); n2 = length(k);
-        factor = n2 / m;
-        w(j) = w(j) * factor;
-
-        display('-------')
-        display(factor);
-        display(ii)
-        display(n);
-    end
+w = f.scaleWavelet(w, sampleAt);
 
 
 h = f.haarMatrix(n);
@@ -47,19 +32,22 @@ wE = h * x;
 t = h' * w;
 
 figure()
-plot(x, 'ro-');
 hold on;
-plot(t, 'bo-');
+plot(x, 'bo-');
+plot(t, 'ro-');
 title('Time');
-legend('exact', 'approx', 'Location', 'Best')
+stem(1:n, sampleAt, 'g-')
+legend('exact', 'approx', 'sampled here', 'Location', 'Best')
+
 
 
 figure()
-plot(w, 'ro-');
 hold on;
-plot(wE, 'bo-');
+plot(w(1:2^m), 'ro-');
+plot(wE(1:2^m), 'bo-');
 title('Wavelet');
 legend('approx', 'exact', 'Location', 'Best')
+
 
 
 

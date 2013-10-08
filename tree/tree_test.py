@@ -218,6 +218,7 @@ def findIndiciesForHaar(n):
 
 def findElement(array, error_value):
     idx = -1
+    n = len(array)
     while idx == -1:
         idx = array[np.random.randint(0, n)]
     return idx
@@ -277,6 +278,7 @@ def oneD():
     x  = 1 / (1 + exp(500 * (t - maxx*1/4)**2))
     x += 1 / (1 + exp(500 * (t - maxx*3/4)**2))
     x += 1 / (1 + exp(500 * (t - maxx*2/4)**2))
+    x += 1
 
     # select random indicies from this
     haarToTimeInd = findIndiciesForHaar(n)
@@ -293,6 +295,7 @@ def oneD():
         w = approxWavelet(x, sam, 2**level)
         print abs(w).max()
 
+        # where is it above the threshold?
         j = argwhere(abs(asarray(w).reshape(-1,)) > threshold)
 
         # we have the indicies where it's off (in the wavelet domain)
@@ -796,89 +799,91 @@ def scaleWavelet(wavelet, sampleAt):
                 wavelet[x, y] = wavelet[x, y] * n2 / m
     return wavelet
 
-nPower = 3
-n = 2**nPower
-initialApprox = 1
+def twoD():
+    """ failed -- doesn't work """
+    nPower = 3
+    n = 2**nPower
+    initialApprox = 1
 
-x = arange(n*n).reshape(n,n)
-x = imread('./tumblr.gif').mean(axis=2)
-x = imread('./tumblr128.png').mean(axis=2)
-#x = zeros((16, 16))
-#x = imread('./peppers.gif').mean(axis=2)
-n = x.shape[0]
-nPower = log2(n)
+    x = arange(n*n).reshape(n,n)
+    x = imread('./tumblr.gif').mean(axis=2)
+    x = imread('./tumblr128.png').mean(axis=2)
+    #x = zeros((16, 16))
+    #x = imread('./peppers.gif').mean(axis=2)
+    n = x.shape[0]
+    nPower = log2(n)
 
-sampleAt = zeros((n,n))
-sampleAt = asarray(sampleAt, dtype=bool)
-
-
-
-h = haarMatrix(n)
-waveletTerms = arange(n*n).reshape(n,n).T
-pwr = makePwr(zeros((n,n))) + nPower
+    sampleAt = zeros((n,n))
+    sampleAt = asarray(sampleAt, dtype=bool)
 
 
-u_0 = 2**(initialApprox+0)
-u_1 = 2**(initialApprox+1)
-interestedIn = waveletTerms[:u_1, :u_1].flat[:]
-sampleAt[::n/u_1, ::n/u_1] = True
 
-#pdb.set_trace()
-
-# wait. we have to look at interestedIn. level1 not interested for some node,
-# but it's children we are interested in.
-
-# sampleAt and scaleWavelet don't play nice together
-# no, that's sampleAt and interestedIn
-# or is it my threshold and the scaling?
-
-# what jarvis was really saying:
-#   you could be giving the wrong energy to the wrong components -- scaling
-#   them incorrectly. So, test your scaling function....
-
-w = approxWavelet2D(x, interestedIn, sampleAt)
-w = scaleWavelet(w, sampleAt)
-threshold = 10e-3
-MAX_LEVEL = 4
-for level in arange(MAX_LEVEL):
-    threshold = 1 * mean(x[sampleAt]) * 2**(-level)
-    threshold = threshold * 2 * 1e-0
-
-    i = seeWhereNonZero(w, threshold, pwr, level)
-    interestedIn = putInterestedInIn(w, threshold, pwr, interestedIn, level)
-    interestedIn = unique(interestedIn)
-    makeSampleAtTrue(i, sampleAt.T)
-
-    w = approxWavelet2D(x.T, interestedIn, sampleAt)
-    w = scaleWavelet(w, sampleAt)#.T)
-
-    print "----------------"
-    print "threshold: ", threshold
-    print "len(argwhere(sampleAt==True))", len(argwhere(sampleAt==True))
-    print "len(interestedIn)", len(interestedIn)
-    print "abs(w).max(): ", abs(w).max()
-
-# only works at higher levels because we need to see what indicies correspond
-# to some pixel location
-
-# it could be...
-#   scaleWavelet
-#   interestedIn and sampleAt
-# oh hell, test it out with sampleAt more dense in one interestedIn square
+    h = haarMatrix(n)
+    waveletTerms = arange(n*n).reshape(n,n).T
+    pwr = makePwr(zeros((n,n))) + nPower
 
 
-inte = zeros((n,n))
-inte.T.flat[interestedIn] = 1
-inte = inte * (pwr + 1)
-time = h.T.dot(w).dot(h)
-wExact = h.dot(x).dot(h.T)
-error = abs(w-wExact)
+    u_0 = 2**(initialApprox+0)
+    u_1 = 2**(initialApprox+1)
+    interestedIn = waveletTerms[:u_1, :u_1].flat[:]
+    sampleAt[::n/u_1, ::n/u_1] = True
 
-S2imshow(error[0:8, 0:8], 'error')
-S2imshow(sampleAt, 'sampled here')
-S2imshow(time, 'approx time')
-S2imshow(x, 'exact (ish)')
-u = 2**(MAX_LEVEL+1)
-S2imshow(inte[0:u, 0:u], 'wavelet terms we\'re interested in')
+    #pdb.set_trace()
+
+    # wait. we have to look at interestedIn. level1 not interested for some node,
+    # but it's children we are interested in.
+
+    # sampleAt and scaleWavelet don't play nice together
+    # no, that's sampleAt and interestedIn
+    # or is it my threshold and the scaling?
+
+    # what jarvis was really saying:
+    #   you could be giving the wrong energy to the wrong components -- scaling
+    #   them incorrectly. So, test your scaling function....
+
+    w = approxWavelet2D(x, interestedIn, sampleAt)
+    w = scaleWavelet(w, sampleAt)
+    threshold = 10e-3
+    MAX_LEVEL = 4
+    for level in arange(MAX_LEVEL):
+        threshold = 1 * mean(x[sampleAt]) * 2**(-level)
+        threshold = threshold * 2 * 1e-0
+
+        i = seeWhereNonZero(w, threshold, pwr, level)
+        interestedIn = putInterestedInIn(w, threshold, pwr, interestedIn, level)
+        interestedIn = unique(interestedIn)
+        makeSampleAtTrue(i, sampleAt.T)
+
+        w = approxWavelet2D(x.T, interestedIn, sampleAt)
+        w = scaleWavelet(w, sampleAt)#.T)
+
+        print "----------------"
+        print "threshold: ", threshold
+        print "len(argwhere(sampleAt==True))", len(argwhere(sampleAt==True))
+        print "len(interestedIn)", len(interestedIn)
+        print "abs(w).max(): ", abs(w).max()
+
+    # only works at higher levels because we need to see what indicies correspond
+    # to some pixel location
+
+    # it could be...
+    #   scaleWavelet
+    #   interestedIn and sampleAt
+    # oh hell, test it out with sampleAt more dense in one interestedIn square
+
+
+    inte = zeros((n,n))
+    inte.T.flat[interestedIn] = 1
+    inte = inte * (pwr + 1)
+    time = h.T.dot(w).dot(h)
+    wExact = h.dot(x).dot(h.T)
+    error = abs(w-wExact)
+
+    S2imshow(error[0:8, 0:8], 'error')
+    S2imshow(sampleAt, 'sampled here')
+    S2imshow(time, 'approx time')
+    S2imshow(x, 'exact (ish)')
+    u = 2**(MAX_LEVEL+1)
+    S2imshow(inte[0:u, 0:u], 'wavelet terms we\'re interested in')
 
 

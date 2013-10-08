@@ -49,7 +49,7 @@ function i=findNonZero(w, threshold)
     i = i;
 end
 
-function w=approxWavelet1D(x, sampleAt, interestedIn)
+function w=approxWavelet1D(x, sampleAt, m)
     % approx wavelet
     [n junk] = size(x);
     h = haarMatrix(n);
@@ -60,16 +60,14 @@ function w=approxWavelet1D(x, sampleAt, interestedIn)
 
     % delete where we're not interested in
     i = 1:n;
-    %toDelete = find(i > 2^m);
-    %h(toDelete, :) = [];
-    h = h(interestedIn, :);
-    display(size(h))
+    toDelete = find(i > 2^m);
+    h(toDelete, :) = [];
 
     w = h * x(~~sampleAt);
     % return...
     z = zeros(n, 1);
     lenw = length(w);
-    z(interestedIn) = w;
+    z(1:lenw) = w;
     w = z;
 end
 

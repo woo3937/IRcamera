@@ -2,16 +2,17 @@ clc; clear all; close all;
 rand('seed', 42);
 f = funct;
 
-nPower = 6;
+nPower = 8;
 n = 2^nPower; 
 
 
 
 % making the signal
-x = zeros(n,n); x(n/2+1:n, n/2+1:n)=10; x(5, 4)=10;
-x = imread('../tumblr.gif');
+x = zeros(n,n); x(n/2+1:n, n/2+1:n)=10; 
+x(5, 4)=10;
+x = imread('../tumblr128.png');
 x = mean(x, 3);
-[n j] = size(x);
+[n, ~] = size(x);
 
 
 % making sampleAt
@@ -20,7 +21,7 @@ sampleAt([1, n/2+1, n^2/2+1, n^2/2+1+n/2]) = 1;
 
 
 % what level to approx to?
-howFar = 4;
+howFar = 2;
 
 % our threshold -- everything below this is set to 0
 threshold = 40;
@@ -30,6 +31,7 @@ for m=1:howFar,
     sampleAt = f.sampleInDetail(w, sampleAt, threshold, m);
 end
 
+% to complete the last iteration
 w = f.approxScaleAndReshape(x, sampleAt, m);
 
 h = f.haarMatrix(n);

@@ -24,22 +24,31 @@ sampleAt(j(1:10)) = 1;
 x = x';
 sampleAt = sampleAt';
 
-
+% for sampleInDetail, we can take interestedIn in then take the corresponding
+% terms.
+threshold = 2;
 
 interestedIn = [];
 interestedIn = [interestedIn 1 2 3 4];
 
 A = f.approxWavelet(x, sampleAt, interestedIn);
+% see where interested
+interesting = find(abs(A) > threshold)';
+a = [interesting zeros(size(interestedIn) - size(interesting))];
+interesedIn = unique([interestedIn a]);
+
+% sample in detail
+interestedIn = interestedIn;
+sampleAt = sampleAt;
+%% function sampleInDetail(interestedIn, sampleAt)
+
 
 h = f.haarMatrix(n);
 
 X = h' * A;
+w = h * x;
 
-
-%plot(t, x);
-%hold on;
-%plot(t(1:10), w(1:10), 'g');
+plot(t(1:10), w(1:10), 'b');
 hold on;
 plot(t(1:10), A(1:10), 'r');
 
-%f.S2imshow(w, 'original wavelet');

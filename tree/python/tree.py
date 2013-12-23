@@ -72,21 +72,33 @@ def addToInterestedIn(interestedIn, level):
     interestedIn = unique(interestedIn)
 
     return interestedIn
+def scaleAndApproxWavelet(x, sampleAt, interestedIn, h=None):
+    """ """
+    i = arange(len(sampleAt)-1, dtype=int)
+    prod = sampleAt[i+1] - sampleAt[i]
+    prod = hstack((prod, N-sampleAt[-1]))
+    x_scaled = x[sampleAt] * prod
 
-N = 32
+    h = h[:, sampleAt]
+    h = h[interestedIn, :]
+
+    w_hat = h.dot(x_scaled)
+    ret = zeros(len(x))
+    ret[interestedIn] = w_hat
+    return ret
+
+N = 2048
 h = haarMatrix(N)
 x = linspace(-1,1,N)
 a = 1/5
 x = exp(-x**2 / a**2) / (a * sqrt(pi))
 #x = ones(N)
-x = ones(N)
 
 interestedIn = arange(6)
 sampleAt = array([], dtype=int)
 
 sampleAt = sampleInDetail(interestedIn, sampleAt, h   = h)
-w_hat    = approxWavelet(x, sampleAt, interestedIn, h = h)
-w_hat    = scaleWavelet(w_hat)
+w_hat = scaleAndApproxWavelet(x, sampleAt, interestedIn, h=h)
 
 # now, we can approximate the wavelet from an arbitrary number of samples. not
 # we need to choose the best places to sample at the right locations ==>
@@ -94,28 +106,25 @@ w_hat    = scaleWavelet(w_hat)
     # 2. see where non-zero
     # 3. add the non-zero locations to "interestedIn"
 
-"""
-    threshold = 0.5
-    # in that arange(1,4), 0*2 = 0 ==> steady state, no change
-    for iteration in arange(1,6): 
-        # adding to interestedIn
-        interestedIn = addToInterestedIn(interestedIn, iteration)
+threshold = 0.5
+# in that arange(1,4), 0*2 = 0 ==> steady state, no change
+for iteration in arange(1,6): 
+    # adding to interestedIn
+    interestedIn = addToInterestedIn(interestedIn, iteration)
 
-        # sample in detail
-        sampleAt = sampleInDetail(interestedIn, sampleAt, h=h)
+    # sample in detail
+    sampleAt = sampleInDetail(interestedIn, sampleAt, h=h)
 
-        # approx and scale the wavelet
-        w_hat = approxWavelet(x, sampleAt, interestedIn, h=h)
-        w_hat = scaleWavelet(w_hat)
+    # approx and scale the wavelet
+    w_hat = scaleAndApproxWavelet(x, sampleAt, interestedIn, h=h)
 
-        # where is it greater than the threshold?
-        i = argwhere(abs(w_hat[:2**(iteration+1)]) >= threshold)
-        interestedIn = unique(i)
-        # we need to add to interestedIn. in the terms that are non-zero, we need to add
-        # the sub-terms, then sample in detail, then approx the wavelet
-        
-        # right. I went over this before. they might be more clustered by the negative terms.
-"""
+    # where is it greater than the threshold?
+    i = argwhere(abs(w_hat[:2**(iteration+1)]) >= threshold)
+    interestedIn = unique(i)
+    # we need to add to interestedIn. in the terms that are non-zero, we need to add
+    # the sub-terms, then sample in detail, then approx the wavelet
+    
+    # right. I went over this before. they might be more clustered by the negative terms.
 
 
 w = h.dot(x)

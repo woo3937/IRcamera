@@ -29,7 +29,6 @@ def sampleInDetail(interestedIn, sampleAt, h=None):
 
     # collect the unique terms
     sampleAt = unique(sampleAt)
-
     return sampleAt
 def approxWavelet(x, sampleAt, interestedIn, h=None):
     """
@@ -40,7 +39,10 @@ def approxWavelet(x, sampleAt, interestedIn, h=None):
     h_hat = h_hat[interestedIn, :]
     w_hat = h_hat.dot(x_hat)
     # now we have the proper wavwelet, but not scaled
-    return w_hat
+
+    w_hat2 = zeros(len(x))
+    w_hat2[interestedIn] = w_hat
+    return w_hat2
 def findIndiciesThatMatter(element):
     i = argwhere(h[element,:] != 0)
     i = reshape(i, -1)
@@ -51,41 +53,82 @@ def scaleWavelet(w_hat):
         m  for the number of samples in the space
     """
     for i in arange(len(w_hat)):
+        if w_hat[i] == 0: continue
         n2 = findIndiciesThatMatter(i)
         m = argwhere(n2 == sampleAt[:,newaxis])
         m = len(m)
         n2 = len(n2)
         w_hat[i] = w_hat[i] * n2 / m
     return w_hat
+def addToInterestedIn(interestedIn, level):
+    """ level=XXX for the base term. it's the level we're going to """
+    # we have [0 1 2 3] ==> [0 1 2 3 4 5 6 7]
+
+    # get the bottom level of terms
+    bottomLevel = interestedIn[interestedIn >= 2**(level-1)]
+
+    # add to interestedIn
+    nextLevel = 2 * bottomLevel
+    interestedIn = hstack((interestedIn, nextLevel, nextLevel+1))
+    interestedIn = unique(interestedIn)
+
+    return interestedIn
 
 N = 32
 h = haarMatrix(N)
-x = linspace(0,N-1,N)
+x = linspace(-1,1,N)
+a = 1/5
+x = exp(-x**2 / a**2) / (a * sqrt(pi))
 #x = ones(N)
 
-interestedIn = arange(8)
+interestedIn = arange(N//4)
 sampleAt = array([], dtype=int)
 
 sampleAt = sampleInDetail(interestedIn, sampleAt, h=h)
 w_hat = approxWavelet(x, sampleAt, interestedIn, h=h)
 w_hat = scaleWavelet(w_hat)
 
+# now, we can approximate the wavelet from an arbitrary number of samples. not
+# we need to choose the best places to sample at the right locations ==>
+    # 1. approximate the wavelet
+    # 2. see where non-zero
+    # 3. add the non-zero locations to "interestedIn"
 
+threshold = 1
+# in that arange(1,4), 0*2 = 0 ==> steady state, no change
+for iteration in arange(1,4): 
+    # adding to interestedIn
+    interestedIn = addToInterestedIn(interestedIn, iteration)
+    #interestedIn = interestedIn[interestedIn < N]
 
+    # sample in detail
+    sampleAt = sampleInDetail(interestedIn, sampleAt, h=h)
 
+    # approx and scale the wavelet
+    w_hat = approxWavelet(x, sampleAt, interestedIn, h=h)
+    w_hat = scaleWavelet(w_hat)
 
+    # where is it greater than the threshold?
+    i = argwhere(abs(w_hat[:2**(iteration+1)]) >= threshold)
+    interestedIn = unique(i)
+    # we need to add to interestedIn. in the terms that are non-zero, we need to add
+    # the sub-terms, then sample in detail, then approx the wavelet
 
 
 
 w = h.dot(x)
 figure()
-plot(w, marker='o')
-plot(w_hat, marker='o')
+plot(w, marker='o', label='Exact')
+plot(w_hat, marker='o', label='Approx')
+legend()
+show()
+
+figure()
+plot(inv(h).dot(w), marker='o')
+plot(inv(h).dot(w_hat), marker='o')
 show()
 
 
 
-
-
-
+# 0 1 | 2 3 | 4 5 6 7 | 8 9 10 11 12 13 14 15
 

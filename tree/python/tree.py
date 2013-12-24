@@ -69,6 +69,7 @@ def sampleInDetail(interestedIn, sampleAt, h=None):
                 time[0,0], time[0,halfwayH], time[halfwayV,0], time[halfwayV,halfwayH]))
 
     sampleAt = unique(sampleAt)
+    sampleAt = asarray(sampleAt, dtype=int)
     return sampleAt
 
 N = 2**2
@@ -82,8 +83,39 @@ interestedIn = array([0,1,N,N+1, 3])
 # we're currently limited to below the highest order (or corners?) by
 # reshapeToPixels -- a small fix I don't feel like doing now.
 
-# scaleAndApprox
+sampleAt = sampleInDetail(interestedIn, sampleAt, h=h)
+
 # addSubTerms
+
+#def scaleAndApprox
+# mutliply x to stand for the other components
+fill_in = zeros((N,N))
+fill_in.T.flat[sampleAt] = 1
+
+# we want to take the starting index and see where non-zero around it
+i = argwhere(fill_in == 1)
+for y2,x2 in i:
+    count = 0
+    for count in arange(N):
+        count += 1
+        if x2+count >= N or y2+count >= N: break
+        if fill_in[y2+count, x2+count] == 1: break
+    print count
+    fill_in[y2, x2] = count * count
+    #print x2,y2
+x = x * fill_in
+
+h = h[:,sampleAt]
+h = h[interestedIn, :]
+
+w_hat = h.dot(x.T.flat[sampleAt])
+w_hat2 = zeros((N,N))-1
+w_hat2.T.flat[interestedIn] = w_hat
+
+figure()
+imshow(w_hat2, interpolation='nearest')
+colorbar()
+show()
 
 
 

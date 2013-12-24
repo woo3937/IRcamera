@@ -1,6 +1,5 @@
 from __future__ import division
 from pylab import *
-from functions import haarMatrix
 """
 COPYRIGHT BY SparKEL Lab, University of Minnesota
 ADVISOR OF LAB    : Prof. Jarvis Haupt ( jdhaupt@umn.edu  )
@@ -11,138 +10,92 @@ looks for the edges in an image, because that's the interesting part of an
 image. The other areas, the "flat" areas, can be approximated with just a
 couple samples.
 """
+def haarMatrix(n, level=-1):
+    """ 
+    assumes n is to make a haar matrix for signal of size n
 
-def sampleInDetail(interestedIn, sampleAt, h=None):
+    returns matrix as in 
+        w = h x
     """
-        gets two samples per term
-        h is the haarMatrix as in w = h x
-        depends on global scope for `h = haarMatrix(n)`
-    """
-    for i in interestedIn:
-        non_zero = where(h[i,:] != 0)[0]
-
-        # how many terms do we want to sample at?
-        number_of_terms = len(non_zero)//2
-        sampleHere = non_zero[::number_of_terms]
-        sampleAt = hstack((sampleAt, sampleHere))
-
-    # collect the unique terms
-    sampleAt = unique(sampleAt)
-    return sampleAt
-def findIndiciesThatMatter(element):
+    if level == -1: level = log2(n)
+    #level = log2(n)
+    nc = 1/sqrt(2)
+    h = array([1])
+    lp = array([1, 1])
+    hp = array([1, -1])
+    for i in arange(level):
+        fir = kron(h, lp)
+        sec = kron(eye(h.shape[0]), hp)
+        h = nc * vstack((fir, sec))
+    return h
+def waveletIndexToTime(element, h=None):
     i = argwhere(h[element,:] != 0)
     i = reshape(i, -1)
     return i
-def addToInterestedIn(interestedIn, level):
-    """ level=XXX for the base term. it's the level we're going to """
-    # we have [0 1 2 3] ==> [0 1 2 3 4 5 6 7]
+def reshapeToPixels(pix):
+    """ reshapes an array of pixel values to the values they take. ie, does
 
-    # get the bottom level of terms
-    bottomLevel = interestedIn[interestedIn >= 2**(level-1)]
-
-    # add to interestedIn
-    nextLevel = 2 * bottomLevel
-    interestedIn = hstack((interestedIn, nextLevel, nextLevel+1))
-    interestedIn = unique(interestedIn)
-
-    return interestedIn
-def scaleAndApproxWavelet(x, sampleAt, interestedIn, h=None, N=None):
-    """ 
-        deletes the rows and columns out of `h` then multiplies each term by
-        how many it terms it stands for -- how many empty spaces can be filled
-        by that one term.
+    requires dynamic scope for N
+    
+    > reshapeToPixels(waveletIndexToTime(0, h=h))
+    >> array([[0, 2],
+              [1, 3]])
     """
-    i = arange(len(sampleAt)-1, dtype=int)
-    prod = sampleAt[i+1] - sampleAt[i]
-    prod = hstack((prod, N-sampleAt[-1]))
-    x_scaled = x[sampleAt] * prod
+    if len(pix) == N**2: return pix.reshape(N,N).T
+    else:
+        a = diff(pix) - 1
+        pixelsInLine = nonzero(a)[0][0] + 1
+        i = arange(len(pix)/pixelsInLine, dtype=int)
+        #one = pix[pixelsInLine*i]
+        #two = pix[pixelsInLine*i+1]
 
-    h = h[:, sampleAt]
-    h = h[interestedIn, :]
+        done = zeros(len(pix)/pixelsInLine)
+        for j in arange(pixelsInLine):
+            part = pix[pixelsInLine*i + j]
+            done = vstack((done, part))
 
-    w_hat = h.dot(x_scaled)
-    ret = zeros(len(x))
-    ret[interestedIn] = w_hat
-    return ret
+        done = done[1:]
+        return done
+def sampleInDetail(interestedIn, sampleAt, h=None):
+    """ takes in interestedIn and samples at (just) enough locations for that """
+    for i in interestedIn:
+        time = waveletIndexToTime(i, h=h)
+        time = reshapeToPixels(time)
 
-def oneD():
-    """
-        this function approximates the wavelet transform with edge detection <more description>.
-
-        we have to add to interestedIn (which wavelet terms we're interested in) each time;
-        we have to go down those branches. 
-
-        for approximating the wavelet transform, we "fill in" for the missing pixels, 
-        kind of like a really poor inpainting job. what if for some wavelet term 
-        it's more clustered? we can't do `n / m` then.
-    """
-    N = 2**11
-    h = haarMatrix(N)
-    x = linspace(-1,1,N)
-    a = 1/5
-    x = exp(-x**2 / a**2) / (a * sqrt(pi))
-    #x = ones(N)
-
-    interestedIn = arange(6)
-    sampleAt = array([], dtype=int)
-
-    sampleAt = sampleInDetail(interestedIn, sampleAt, h   = h)
-    w_hat = scaleAndApproxWavelet(x, sampleAt, interestedIn, h=h, N=N)
-
-    # now, we can approximate the wavelet from an arbitrary number of samples. not
-    # we need to choose the best places to sample at the right locations ==>
-        # 1. approximate the wavelet
-        # 2. see where non-zero
-        # 3. add the non-zero locations to "interestedIn"
-
-    # what's the threshold, and how far?
-    threshold = 0.5
-    level = 6
-    # in that arange(1,4), 0*2 = 0 ==> steady state, no change
-    for iteration in arange(1,level): 
-        threshold = 2**-iteration * 0.5
-        print "Threshold: ", threshold
-
-        # adding the subterms to interestedIn
-        interestedIn = addToInterestedIn(interestedIn, iteration)
-
-        # sample in detail
-        sampleAt = sampleInDetail(interestedIn, sampleAt, h=h)
-
-        # approx and scale the wavelet
-        w_hat = scaleAndApproxWavelet(x, sampleAt, interestedIn, h=h, N=N)
-
-        # where is it greater than the threshold?
-        # we're seeing where in the current "level" it's greater than the threshold
-        i = argwhere(abs(w_hat[:2**(iteration+1)]) >= threshold)
-        interestedIn = unique(i)
+        halfwayH = time[0,:].size/2
+        halfwayV = time[:,0].size/2
         
-        # right. I went over this before. they might be more clustered by the negative terms.
+        sampleAt = hstack((sampleAt, \
+                time[0,0], time[0,halfwayH], time[halfwayV,0], time[halfwayV,halfwayH]))
+
+    sampleAt = unique(sampleAt)
+    return sampleAt
+
+N = 2**2
+h = haarMatrix(N)
+h = kron(h,h)
+
+x = ones((N,N))
+
+sampleAt = array([])
+interestedIn = array([0,1,N,N+1, 3])
+# we're currently limited to below the highest order (or corners?) by
+# reshapeToPixels -- a small fix I don't feel like doing now.
+
+# scaleAndApprox
+# addSubTerms
 
 
-    w = h.dot(x)
-    figure()
-    plot(w[0:2**level], marker='.', label='Exact')
-    plot(w_hat[0:2**level], marker='.', label='Approx')
-    legend()
-    show()
-
-    figure()
-    plot(sampleAt, 'o')
-    show()
-
-    exact = inv(h).dot(w)
-    approx = inv(h).dot(w_hat)
-
-    figure()
-    plot(inv(h).dot(w), marker=' ', label='Exact')
-    plot(inv(h).dot(w_hat), marker=' ', label='Approx')
-    plot(abs(exact - approx), label='Error')
-    legend()
-    show()
-
-    print "Sampling rate: ", len(sampleAt) / N
 
 
-    # 0 1 | 2 3 | 4 5 6 7 | 8 9 10 11 12 13 14 15
+
+#   0 4 8 c
+#   1 5 9 d 
+#   2 6 a e
+#   3 7 b f
+
+
+
+
+
 

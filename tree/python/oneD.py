@@ -118,7 +118,7 @@ threshold = 0.5
 level = 6
 # in that arange(1,4), 0*2 = 0 ==> steady state, no change
 for iteration in arange(1,level): 
-    threshold = 2**-iteration * 0.5
+    threshold = 2**-iteration * threshold
     print "Threshold: ", threshold
 
     # adding the subterms to interestedIn

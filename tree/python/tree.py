@@ -50,10 +50,12 @@ def reshapeToPixels(pix):
     if len(pix) == N**2: return pix.reshape(N,N).T
     elif sum(abs(a-b))==0:
         # if pix contains something in the top row...
-        i = arange(len(pix)/2, dtype=int)
-        one = pix[2*i]
-        two = pix[2*i+1]
-        done = vstack((one,two))
+        #i = arange(len(pix)/2, dtype=int)
+        #one = pix[2*i]
+        #two = pix[2*i+1]
+        #done = vstack((one,two))
+        done = reshape(pix, (-1,N)).T
+        # make the rows the proper length
         return done
     else:
         a = diff(pix) - 1
@@ -70,18 +72,14 @@ def reshapeToPixels(pix):
 def sampleInDetail(interestedIn, sampleAt, h=None):
     """ takes in interestedIn and samples at (just) enough locations for that """
     for i in interestedIn:
-        try:
-            time = waveletIndexToTime(i, h=h)
-            time = reshapeToPixels(time)
+        time = waveletIndexToTime(i, h=h)
+        time = reshapeToPixels(time)
 
-            halfwayH = time[0,:].size/2
-            halfwayV = time[:,0].size/2
-            
-            sampleAt = hstack((sampleAt, \
-                    time[0,0], time[0,halfwayH], time[halfwayV,0], time[halfwayV,halfwayH]))
-        except:
-            print "Except!"
-            continue
+        halfwayH = time[0,:].size/2
+        halfwayV = time[:,0].size/2
+        
+        sampleAt = hstack((sampleAt, \
+                time[0,0], time[0,halfwayH], time[halfwayV,0], time[halfwayV,halfwayH]))
 
     sampleAt = unique(sampleAt)
     sampleAt = asarray(sampleAt, dtype=int)
@@ -218,29 +216,8 @@ N = 2**3
 x = arange(N*N).reshape(N,N).T
 h = haarMatrix(N)
 h = kron(h,h)
-interestedIn = arange(N*N)
+interestedIn = array([0,1,N,N+1,2*N,2*N+1,3*N])
 sampleAt = array([])
 
-for i in interestedIn:
-    #try:
-    time = waveletIndexToTime(i, h=h)
-    time = reshapeToPixels(time)
-
-    halfwayH = time[0,:].size/2
-    halfwayV = time[:,0].size/2
-    
-    sampleAt = hstack((sampleAt, \
-            time[0,0], time[0,halfwayH], time[halfwayV,0], time[halfwayV,halfwayH]))
-    #except:
-        ##print "---------------------"
-        ##print i
-        #i = arange(len(time)/2, dtype=int)
-        #one = time[2*i]
-        #two = time[2*i+1]
-        #done = vstack((one,two))
-        ##print time
-        #continue
-
-sampleAt = unique(sampleAt)
-sampleAt = asarray(sampleAt, dtype=int)
+sampleAt = sampleInDetail(interestedIn, sampleAt, h=h)
 print sampleAt

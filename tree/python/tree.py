@@ -425,13 +425,14 @@ s2 = asarray(s2, dtype=int)
 
 
 for index in arange(len(i)):
-    #sampleIndex = int(s2[index])
     i[index] = x.T.flat[s2][index] * ones(i[index].shape)
 
     # where did we sample?
-    y2, x2 = s2[index]//N, s2[index]%N
+    x2, y2 = s2[index]//N, s2[index]%N
     square = i[index]
     #approx[y2, x2] = i[index]
+    approx[y2:y2+square.shape[0], x2:x2+square.shape[1]] = square
+    
     print x2, y2
 
 #i = array(i)

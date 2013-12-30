@@ -387,7 +387,8 @@ def trial():
                 break
         #approx[y2:y2+rect+inc_Y-1, x2:x2+rect+inc_X-1] = approx[y2, x2]
 def recurse(A):
-    if A.shape[0]>A.shape[1]:   #split longest axis first
+    """ from stackoverflow: http://stackoverflow.com/questions/20794303/numpy-split-2d-array-into-sub-arrays-based-on-indices """
+    if A.shape[0]>A.shape[1]:   # split longest axis first
         if not np.isnan( A[0,A.shape[1]//2]):
             return [rect for part in np.split(A, 2, axis=1) for rect in recurse(part)]
         if not np.isnan( A[A.shape[0]//2,0]):
@@ -414,8 +415,27 @@ approx.T.flat[sampleAt] = x.T.flat[sampleAt]
 
 i = recurse(approx)
 
+s2 = zeros((N,N))-1
+s2.T.flat[sampleAt] = sampleAt
+s2 = s2[s2 != -1]
+s2 = asarray(s2, dtype=int)
+
+# i goes normal wise
+# s2 goes "kron" wise
+
+
 for index in arange(len(i)):
-    i[index] = x.flat[sampleAt][index] * ones(i[index].shape)
+    #sampleIndex = int(s2[index])
+    i[index] = x.T.flat[s2][index] * ones(i[index].shape)
+
+    # where did we sample?
+    y2, x2 = s2[index]//N, s2[index]%N
+    square = i[index]
+    #approx[y2, x2] = i[index]
+    print x2, y2
+
+#i = array(i)
+
 
 
 s = zeros((N,N))

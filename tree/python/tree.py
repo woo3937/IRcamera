@@ -1,5 +1,8 @@
 from __future__ import division
 from pylab import *
+import ipdb
+
+#from IST import idwt2_full, dwt2_full
 """
 COPYRIGHT BY SparKEL Lab, University of Minnesota
 ADVISOR OF LAB    : Prof. Jarvis Haupt ( jdhaupt@umn.edu  )
@@ -10,6 +13,7 @@ looks for the edges in an image, because that's the interesting part of an
 image. The other areas, the "flat" areas, can be approximated with just a
 couple samples.
 """
+
 def haarMatrix(n, level=-1):
     """ 
     assumes n is to make a haar matrix for signal of size n
@@ -95,13 +99,20 @@ def scaleAndApprox(x, sampleAt, interestedIn, h=None):
         h=h          : kron(h,h), the 2D haar matrix. only required so additional computation
                          not needed.
 
-        There could be errors in this function. It assumes that each pixel stands
-        for a region of pixels in the same rectangle (a fair assumption). But it
-        also assumes that this rectangle is bounded by the nearest sample locations
-        *in the same column/row.* If you have samples not bounded by these rules,
-        this approximation would fail. But it works since we sample at those
-        locations with sampleInDetail -- the least number of terms to accurately
-        approximate the wavelet.
+        This function *can not* assume that each wavelet term has a rectangle
+        bounded by other terms in the same rows/columns. Two boxes may overlap
+        in this situation:
+
+            x   x   x
+
+            x       x
+            x       x
+            x       x
+            ...
+
+        We need to have a "box array" to fix this: what pixels have we already
+        used to make boxes?
+
     """
     x = x.copy()
     h = h.copy()
@@ -122,12 +133,11 @@ def scaleAndApprox(x, sampleAt, interestedIn, h=None):
         for countY in arange(N):
             countY += 1
             if y2+countY >= N: break
-            if fill_in[y2+countY,x2] == 1: break
+            if fill_in[y2+countY,x2] != 0: break
         fill_in[y2, x2] = countY * countX
     x *= fill_in
+    #print fill_in[fill_in != 0]
 
-    print "interestedIn.max(): ", interestedIn.max()
-    print "h.shape: ", h.shape
     h = h[:,sampleAt]
     h = h[interestedIn, :]
 
@@ -135,15 +145,16 @@ def scaleAndApprox(x, sampleAt, interestedIn, h=None):
     w_hat2 = zeros((N,N))
     w_hat2.T.flat[interestedIn] = w_hat
     return w_hat2
-def addSubTerms(interestedIn):
+def addSubTerms(interestedIn, N):
     interesting = array([2*interestedIn, 2*interestedIn+1, \
                          2*interestedIn+N, 2*interestedIn+N+1 ])
     interesting = unique(interesting.flat[:])
     interestedIn = hstack((interesting, interestedIn))
+    interestedIn = unique(interestedIn)
     return interestedIn
 
 def tree():
-    N = 2**6
+    N = 2**4
     x = ones((N,N))
     x[:N/2, :] = 0
     x = imread('tumblr128.png')
@@ -152,7 +163,6 @@ def tree():
     N = x.shape[0]
     h = haarMatrix(N)
     h = kron(h,h)
-
 
     sampleAt = array([])
     interestedIn = array([0,1,N,N+1])
@@ -166,33 +176,51 @@ def tree():
     level = 4
     for iteration in arange(1, level):
         threshold = 2**-iteration * threshold
-        print "Threshold: ", threshold
 
         # adding the subterms
-        interestedIn = addSubTerms(interestedIn)
+        interestedIn = addSubTerms(interestedIn, N)
+        #print interestedIn
+
+        # sample more at those locations
         sampleAt = sampleInDetail(interestedIn, sampleAt, h=h)
+
+        # approximate the wavelet at those locations
         w_hat = scaleAndApprox(x, sampleAt, interestedIn, h=h)
-        i = argwhere(abs(w_hat.T.flat[:] >= threshold))
+
+        # see where >= threshold.
+        # fix so it's only looking at the last level?
+        i = argwhere(abs(w_hat.T.flat[:] > threshold))
+
+
         interestedIn = unique(i)
 
     h = haarMatrix(N)
     h = kron(h,h)
-    #w_hat = scaleAndApprox(x, sampleAt, interestedIn, h=h)
+
     w = h.dot(x.T.flat[:])
     w = w.reshape((N,N))
 
-    x_hat = inv(h).dot(w_hat.T.flat[:])
-    x_hat = x_hat.reshape(N,N)
+    w = np.round(w)
+    w_hat = np.round(w_hat)
+    w = w.T
+
+    s = zeros((N,N))
+    s.T.flat[sampleAt] = 1
 
     figure()
-    imshow(w_hat, interpolation='nearest')
-    title('w_hat')
+    imshow(s, interpolation='nearest')
+    title('SampleAt')
+    show()
+
+    figure()
+    imshow(w_hat[:2**level, :2**level], interpolation='nearest')
+    title('w_hat -- approx')
     colorbar()
     show()
 
     figure()
-    imshow(w, interpolation='nearest')
-    title('w')
+    imshow(w[:2**level, :2**level], interpolation='nearest')
+    title('w -- exact')
     colorbar()
     show()
 
@@ -205,19 +233,196 @@ def tree():
     title('Error')
     show()
 
+def testSampling():
+    N = 2**3
+    x = arange(N*N).reshape(N,N).T
+    h = haarMatrix(N)
+    h = kron(h,h)
+    interestedIn = array([0,1,N,N+1,2*N,2*N+1,3*N])
+    sampleAt = array([])
+
+    sampleAt = sampleInDetail(interestedIn, sampleAt, h=h)
+
+    w_hat = scaleAndApprox(x, sampleAt, interestedIn, h=h)
+
+    w = h.dot(x.T.flat[:])
+    w = reshape(w, (N,N)).T
+    w = np.round(w)
+    w_hat = np.round(w_hat)
+
     figure()
-    imshow(x_hat, interpolation='nearest')
+    imshow(w_hat, interpolation='nearest')
     colorbar()
-    title('Time')
     show()
 
-#def testSampling():
+    figure()
+    imshow(w, interpolation='nearest')
+    colorbar()
+    show()
+
+def testScaleAndApprox():
+    N = 2**4
+    x = ones((N,N))
+    x[:N/2, :N/2] = 0
+    h = haarMatrix(N)
+    h = kron(h,h)
+    sampleAt = array([])
+    interestedIn = array([0,1,N,N+1, 2*N, 5*N+1, 11*N+1])
+    sampleAt = sampleInDetail(interestedIn, sampleAt, h=h)
+
+    w_hat = scaleAndApprox(x, sampleAt, interestedIn, h=h)
+    w = dwt2_full(x)
+
+
+
+
+    #error = abs(w - w_hat)
+    #figure()
+    #imshow(error, interpolation='nearest')
+    #colorbar()
+    #title('error')
+    #show()
+
+    interesting=zeros((N,N))
+    interesting.T.flat[interestedIn] = 1
+    interesting[0:9,0:9] *= 2
+    interesting[0:5,0:5] *= 2
+    interesting[0:2,0:2] *= 2
+
+    figure()
+    imshow(interesting, interpolation='nearest')
+    colorbar()
+    show()
+
+    figure()
+    imshow(w_hat, interpolation='nearest')
+    colorbar()
+    title('w hat -- approx')
+    show()
+
+    figure()
+    imshow(w, interpolation='nearest')
+    colorbar()
+    title('w -- exact')
+    show()
+
+
+    s = zeros((N,N))
+    s.T.flat[sampleAt] = 1
+    figure()
+    imshow(s, interpolation='nearest')
+    show()
+
+
+def iDontKnow():
+    N = 2**4
+    x = ones((N,N))
+    x[:N/2, :N/2] = 0
+    h = haarMatrix(N)
+    h = kron(h,h)
+    sampleAt = array([])
+    interestedIn = array([0,1,N,N+1, 2*N, 5*N+1, 13*N+5])
+    sampleAt = sampleInDetail(interestedIn, sampleAt, h=h)
+
+    #w_hat = scaleAndApprox(x, sampleAt, interestedIn, h=h)
+    boxes = zeros((N,N))
+    boxes.T.flat[sampleAt] = 1
+
+    for i in sampleAt:
+        # keep expanding by going diagonally until you hit an edge?
+        # go diagonally until you hit a "1" then go in the x/y direction?
+        continue
+        
+
+
+    h = h[:,sampleAt]
+    h = h[interestedIn, :]
+
+    w_hat = h.dot(x.T.flat[sampleAt])
+    w_hat2 = zeros((N,N))
+    w_hat2.T.flat[interestedIn] = w_hat
+    # return...
+    w_hat = w_hat2.copy()
+
+    s = zeros((N,N))
+    s.T.flat[sampleAt] = 1
+    figure()
+    imshow(s, interpolation='nearest')
+    show()
+
+    figure()
+    imshow(w_hat, interpolation='nearest')
+    show()
+
+# make a rectangle bounded by the other terms
+# fill that rectangle with the sampleAt value
+
+# can fill in rectangles as of now
+#ipdb.set_trace()
+def trial():
+    for y2, x2 in i[:-1]:
+        # we have the point
+        # make a rectangle
+        for rect in arange(1,N):
+            # see if we've hit a sampleAt
+            if x2+rect+0 > N or y2+rect+0 > N: break
+            elif sum(isnan(approx[y2:y2+rect, x2:x2+rect])==False) > 1: break
+        approx[y2:y2+rect-1, x2:x2+rect-1] = approx[y2, x2]
+        # okay, we've hit a sampleAt. but to increase in the x/y direction?
+        if   sum(isnan(approx[y2:y2+rect, x2:x2+rect+1])==False) > 1: increase = "y"
+        elif sum(isnan(approx[y2:y2+rect+1, x2:x2+rect])==False) > 1: increase = "x"
+        else: increase="none"
+
+        # keep increasing until we hit a sampleAt
+        inc_Y = 0; inc_X = 0;
+        for inc in arange(1,N):
+            if increase=="x": 
+                inc_X += 1; inc_Y = 0
+            elif increase=="y": 
+                inc_X = 0; inc_Y += 1
+            else: 
+                inc_X = 0; inc_Y = 0
+            if sum(isnan(approx[y2:y2+rect+inc_Y, x2:x2+rect+inc_X])==False)>=2:
+                print approx[y2:y2+rect+inc_Y, x2:x2+rect+inc_X]
+                break
+        #approx[y2:y2+rect+inc_Y-1, x2:x2+rect+inc_X-1] = approx[y2, x2]
+def recurse(A):
+    if A.shape[0]>A.shape[1]:   #split longest axis first
+        if not np.isnan( A[0,A.shape[1]//2]):
+            return [rect for part in np.split(A, 2, axis=1) for rect in recurse(part)]
+        if not np.isnan( A[A.shape[0]//2,0]):
+            return [rect for part in np.split(A, 2, axis=0) for rect in recurse(part)]
+    else:
+        if not np.isnan( A[A.shape[0]//2,0]):
+            return [rect for part in np.split(A, 2, axis=0) for rect in recurse(part)]
+        if not np.isnan( A[0,A.shape[1]//2]):
+            return [rect for part in np.split(A, 2, axis=1) for rect in recurse(part)]
+    return [A]
+#def approxImage(x, sampleAt):
 N = 2**3
-x = arange(N*N).reshape(N,N).T
 h = haarMatrix(N)
 h = kron(h,h)
-interestedIn = array([0,1,N,N+1,2*N,2*N+1,3*N])
+x = arange(N*N).reshape(N,N)
+interestedIn = array([0,1,N,N+1, 2*N, 26, 3])
 sampleAt = array([])
-
 sampleAt = sampleInDetail(interestedIn, sampleAt, h=h)
-print sampleAt
+
+approx = zeros((N,N))+nan
+
+# for term in sampleAt
+approx.T.flat[sampleAt] = x.T.flat[sampleAt]
+
+
+
+s = zeros((N,N))
+s.T.flat[sampleAt] = 1
+figure()
+imshow(s, interpolation='nearest')
+show()
+
+figure()
+imshow(approx, interpolation='nearest')
+show()
+
+
+

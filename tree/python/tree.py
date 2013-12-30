@@ -412,6 +412,10 @@ approx = zeros((N,N))+nan
 # for term in sampleAt
 approx.T.flat[sampleAt] = x.T.flat[sampleAt]
 
+i = recurse(approx)
+
+for index in arange(len(i)):
+    i[index] = x.flat[sampleAt][index] * ones(i[index].shape)
 
 
 s = zeros((N,N))
